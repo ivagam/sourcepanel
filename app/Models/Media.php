@@ -13,7 +13,7 @@ class Media extends Model
     protected $primaryKey = 'media_id';
 
     protected $fillable = [
-        'category_id', 'file_path', 'file_type', 'created_by',
+        'category_id', 'file_path', 'file_type', 'created_by', 'category_ids'
     ];
 
     public function category()

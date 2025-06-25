@@ -31,6 +31,17 @@ class MediaController extends Controller
             'media_file' => 'required|file|mimes:jpg,jpeg,png,pdf,docx,mp4|max:20480',
         ]);
 
+         $categoryId = $request->category_id;
+            $categoryIds = [];
+
+            while ($categoryId) {
+                $category = \App\Models\Category::find($categoryId);
+                if (!$category) break;
+
+                array_unshift($categoryIds, $category->category_id); // prepend
+                $categoryId = $category->subcategory_id;
+            }
+
         if ($request->hasFile('media_file')) {
             $file = $request->file('media_file');
             $filename = time() . '_' . $file->getClientOriginalName();
@@ -44,6 +55,7 @@ class MediaController extends Controller
             'file_path' => $filePath,
             'file_type' => $extension,
             'created_by' => session('user_id'),
+            'category_ids' => implode(',', $categoryIds),
         ]);
 
         return redirect()->route('mediaList')->with('success', 'Media uploaded successfully.');
@@ -62,12 +74,12 @@ class MediaController extends Controller
                 unlink($filePath);
             }
         } catch (\Exception $e) {
-            return redirect()->route('mediaIndex')->with('error', 'File deletion failed: ' . $e->getMessage());
+            return redirect()->route('mediaList')->with('error', 'File deletion failed: ' . $e->getMessage());
         }
 
         $media->delete();
 
-        return redirect()->route('mediaIndex')->with('success', 'Media deleted successfully.');
+        return redirect()->route('mediaList')->with('success', 'Media deleted successfully.');
     }
   
    

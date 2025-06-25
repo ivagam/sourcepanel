@@ -17,7 +17,7 @@ class Image extends Model
     protected $keyType = 'int';
     
     protected $fillable = [
-        'product_id', 'media_id', 'file_path', 'created_by'
+        'product_id', 'file_path', 'created_by'
     ];
 
    public function product()
@@ -25,9 +25,5 @@ class Image extends Model
         return $this->belongsTo(Product::class, 'product_id', 'product_id');
     }
 
-    public function media()
-    {
-        return $this->belongsTo(Media::class, 'media_id');
-}
    
 }

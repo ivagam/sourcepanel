@@ -208,7 +208,7 @@
     let chart = null;
 
 function loadSalesData(filter = 'today') {
-    fetch(`/source_panel/dashboard/sales-data?filter=${filter}`)
+    fetch(`/sourcepanel/dashboard/sales-data?filter=${filter}`)
         .then(response => response.json())
         .then(data => {
             document.getElementById('salesAmount').innerText = `$${data.totalSales.toLocaleString()}`;

@@ -145,6 +145,7 @@ class ProductController extends Controller
     public function deleteProduct($product_id)
     {
         $product = Product::where('product_id', $product_id)->firstOrFail();
+            Image::where('product_id', $product_id)->delete();
         $product->delete();
         return redirect()->route('productList')->with('success', 'Product deleted successfully!');
     }

@@ -102,6 +102,10 @@ Route::prefix('product')->middleware('auth')->group(function () {
         Route::put('/updateProduct/{id}', 'updateProduct')->name('updateProduct');
         Route::delete('/deleteProduct/{id}', 'deleteProduct')->name('deleteProduct');
         Route::get('/by-category/{id}', 'getByCategory')->name('byCategory');
+        Route::post('/upload-temp-image', 'uploadTempImage')->name('uploadTempImage');
+        Route::post('/delete-image', 'deleteImage')->name('deleteImage');
+
+
     });
 });
 

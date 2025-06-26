@@ -10,11 +10,11 @@ use Illuminate\Support\Facades\Hash;
 class CategoryController extends Controller
 {
     public function index()
-{
-    $categorys = Category::with('subcategory')->orderBy('created_at', 'desc')->paginate(10);
-    $domains = Domain::orderBy('domain_name')->get();
-    return view('category.index', compact('categorys', 'domains'));
-}
+    {
+        $categorys = Category::with('subcategory')->orderBy('created_at', 'desc')->paginate(10);
+        $domains = Domain::orderBy('domain_name')->get();
+        return view('category.index', compact('categorys', 'domains'));
+    }
 
 public function store(Request $request)
 {
@@ -33,12 +33,12 @@ public function store(Request $request)
 }
 
 public function edit($id)
-{
-    $editcategory = Category::findOrFail($id);
-    $categorys = Category::all();
-    $domains = Domain::all();
-    return view('category.index', compact('editcategory', 'categorys', 'domains'));
-}
+    {
+        $editcategory = Category::findOrFail($id);
+        $categorys = Category::with('subcategory')->orderBy('created_at', 'desc')->paginate(10);
+        $domains = Domain::orderBy('domain_name')->get();
+        return view('category.index', compact('editcategory', 'categorys', 'domains'));
+    }
 
 public function update(Request $request, $id)
 {

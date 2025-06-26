@@ -9,20 +9,28 @@ use App\Models\Domain;
 use App\Models\Media;
 use App\Models\Image;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
     public function addProduct()
     {
-        $media = Media::all();
-        $categories = Category::all();
-        $domains = Domain::orderBy('domain_name')->get();
-        return view('product.addProduct', compact('categories', 'domains', 'media'));
+        $totalProducts = DB::table('products')->count();
+        $product = new Product();
+        $product->product_name        = 'xyz ' .$totalProducts;
+        $product->category_id         = 0;
+        $product->created_by          = session('user_id');
+        $product->save();
+
+        $lastInsertedId = $product->product_id;
+
+        return redirect()->route('editProduct', ['id' => $lastInsertedId])
+                     ->with('success', 'Product created successfully!');
     }
 
     public function productList()
     {
-        $products = Product::join('category', 'products.category_id', '=', 'category.category_id')
+        $products = Product::leftJoin('category', 'products.category_id', '=', 'category.category_id')
             ->select('products.*', 'category.category_name')
             ->paginate(10);
         return view('product.productList', compact('products'));
@@ -33,7 +41,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'product_name'      => 'required|string|max:255',
             'product_price'     => 'required|numeric',
-            'category_id'       => 'required|exists:category,category_id',
+            'category_id'        => 'required|integer|min:0',
             'description'       => 'nullable|string',
             'meta_keywords'     => 'nullable|string',
             'meta_description'  => 'nullable|string',
@@ -85,30 +93,16 @@ class ProductController extends Controller
 
     public function updateProduct(Request $request, $id)
     {
-        $request->validate([
-            'product_name'      => 'required|string|max:255',
-            'product_price'     => 'required|numeric',
-            'category'          => 'required|exists:category,category_id',
-            'description'       => 'nullable|string',
-            'meta_keywords'     => 'nullable|string',
-            'meta_description'  => 'nullable|string',
-            'domains'           => 'required|array',
-            'domains.*'         => 'exists:domains,domain_id',
-            'images.*'          => 'nullable|file|mimes:jpg,jpeg,png,gif,webp|max:20480', // max 20MB per file
-            'existing_images'   => 'nullable|array',
-            'existing_images.*' => 'string',
-        ]);
-
         $product = Product::findOrFail($id);
 
-        $product->product_name = $request->product_name;
-        $product->product_price = $request->product_price;
-        $product->category_id = $request->category;
+        $product->product_name = $request->product_name ?? $product->product_name;
+        $product->product_price = $request->product_price ?? $product->product_price;
+        $product->category_id = $request->category ?? $product->category_id;
         $product->description = $request->description;
         $product->meta_keywords = $request->meta_keywords;
         $product->meta_description = $request->meta_description;
-        $product->domains = implode(',', $request->domains);
-        $product->product_url = Str::slug($request->product_name);
+        $product->domains = is_array($request->domains) ? implode(',', $request->domains) : $product->domains;
+        $product->product_url = $request->product_name ? Str::slug($request->product_name) : $product->product_url;
         $product->created_by = session('user_id');
         $product->save();
 
@@ -118,24 +112,18 @@ class ProductController extends Controller
             ->whereNotIn('file_path', $existingImages)
             ->delete();
 
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $file) {
-                $filename = time() . '_' . $file->getClientOriginalName();            
-                $path = $file->storeAs('uploads', $filename, 'public');
-
+        foreach ($existingImages as $path) {
+            if (!Image::where('product_id', $product->product_id)->where('file_path', $path)->exists()) {
                 Image::create([
                     'product_id' => $product->product_id,
-                    'file_path'  => 'uploads/' . $filename,
+                    'file_path' => $path,
                     'created_by' => session('user_id'),
                 ]);
             }
         }
 
         if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Product updated successfully!'
-            ]);
+            return response()->json(['success' => true, 'message' => 'Product updated successfully!']);
         }
 
         return redirect()->route('productList')->with('success', 'Product updated successfully!');
@@ -163,4 +151,50 @@ class ProductController extends Controller
 
         return response()->json($media);
     }
+
+    public function uploadTempImage(Request $request)
+{
+    $request->validate([
+        'file' => 'required|file|mimes:jpg,jpeg,png,gif,webp|max:20480',
+        'product_id' => 'required|integer|exists:products,product_id',
+    ]);
+
+    if ($request->hasFile('file')) {
+        $file = $request->file('file');
+        $filename = time() . '_' . $file->getClientOriginalName();
+        $file->move(public_path('uploads'), $filename);
+
+        // Save image record in DB
+        $image = Image::create([
+            'product_id' => $request->product_id,
+            'file_path'  => 'uploads/' . $filename,
+            'created_by' => session('user_id'),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'file_path' => $image->file_path,
+            'image_id' => $image->id,  // or image_id if your PK is different
+        ]);
+    }
+
+    return response()->json(['success' => false, 'message' => 'No file uploaded.'], 400);
+}
+
+public function deleteImage(Request $request)
+{
+    $filePath = $request->file_path;
+
+    $image = Image::where('file_path', $filePath)->first();
+    if ($image) {
+        $image->delete();
+        $fullPath = public_path($filePath);
+        if (file_exists($fullPath)) {
+            unlink($fullPath);
+        }
+        return response()->json(['success' => true]);
+    }
+
+    return response()->json(['success' => false, 'message' => 'Image not found.']);
+}
 }

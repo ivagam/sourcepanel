@@ -34,4 +34,21 @@ class Category extends Model
         $domainIds = explode(',', $this->domains);
         return Domain::whereIn('domain_id', $domainIds)->get();
     }
+
+    public function parent()
+    {
+        return $this->belongsTo(Category::class, 'subcategory_id', 'category_id');
+    }
+
+    public function getFullPathAttribute()
+    {
+        $names = [];
+        $category = $this;
+        while ($category) {
+            array_unshift($names, $category->category_name);
+            $category = $category->parent;
+        }
+        return implode(' → ', $names);
+    }
+
 }

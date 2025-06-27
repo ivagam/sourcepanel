@@ -1,0 +1,64 @@
+@extends('layout.layout')
+
+@php
+    $title = 'Category List';
+    $subTitle = 'All Categories';
+@endphp
+
+@section('content')
+@if(session('success'))
+    <div class="alert alert-success">{{ session('success') }}</div>
+@endif
+
+<div class="card h-100 p-0 radius-12">
+    <div class="card-body p-24">
+        <h5 class="card-title mb-3">Category List</h5>
+        <div class="table-responsive scroll-sm">
+            <table class="table bordered-table mb-0" data-page-length='10'>
+                <thead>
+                    <tr>
+                        <th>S.L</th>
+                        <th>Category Name</th>
+                        <th>Sub Category Name</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($categorys as $key => $category)
+                        <tr>
+                            <td>{{ $categorys->firstItem() + $key }}</td>
+                            <td>{{ $category->category_name }}</td>
+                            <td>{{ $category->subcategory ? $category->subcategory->category_name : '-' }}</td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center gap-10">
+                                    <a href="{{ route('editcategory', $category->category_id) }}">
+                                        <button type="button" class="bg-success-focus text-success-600 bg-hover-success-200 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle">
+                                            <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
+                                        </button>
+                                    </a>
+                                    <form action="{{ route('deletecategory', $category->category_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this category?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="remove-item-btn bg-danger-focus bg-hover-danger-200 text-danger-600 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle">
+                                            <iconify-icon icon="fluent:delete-24-regular" class="menu-icon"></iconify-icon>
+                                        </button>
+                                    </form>                                          
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="4" class="text-center">No categories found.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+            <div class="mt-3">
+                {{ $categorys->links() }}
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+<script>
+    setTimeout(() => $(".alert").fadeOut("slow"), 3000);
+</script>

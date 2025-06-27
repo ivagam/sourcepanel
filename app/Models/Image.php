@@ -17,7 +17,7 @@ class Image extends Model
     protected $keyType = 'int';
     
     protected $fillable = [
-        'product_id', 'file_path', 'created_by'
+        'serial_no', 'product_id', 'file_path', 'created_by'
     ];
 
    public function product()

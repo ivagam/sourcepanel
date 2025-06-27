@@ -59,10 +59,10 @@ Route::prefix('users')->middleware('auth')->group(function () {
     });
 });
 
-
 Route::prefix('category')->middleware('auth')->group(function () {
     Route::controller(CategoryController::class)->group(function () {
-        Route::get('/category', 'index')->name('categoryIndex');
+        Route::get('/list', 'index')->name('categoryList');
+        Route::get('/add', 'create')->name('addcategory');
         Route::post('/store', 'store')->name('storecategory');
         Route::get('/edit/{id}', 'edit')->name('editcategory');
         Route::put('/update/{id}', 'update')->name('updatecategory');
@@ -104,7 +104,7 @@ Route::prefix('product')->middleware('auth')->group(function () {
         Route::get('/by-category/{id}', 'getByCategory')->name('byCategory');
         Route::post('/upload-temp-image', 'uploadTempImage')->name('uploadTempImage');
         Route::post('/delete-image', 'deleteImage')->name('deleteImage');
-
+        Route::post('/product/update-image-order', 'updateImageOrder')->name('updateImageOrder');
 
     });
 });

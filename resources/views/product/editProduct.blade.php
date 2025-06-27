@@ -120,6 +120,18 @@
                             <input type="hidden" name="existing_images[]" value="{{ $image->file_path }}">
                         @endforeach
 
+                        <div id="imageOrderBox" class="d-flex flex-wrap mt-3 gap-2">
+                            @foreach($product->images->sortBy('serial_no') as $image)
+                                <div class="position-relative image-box" data-id="{{ $image->image_id }}">
+                                    <img src="{{ url('public/' . $image->file_path) }}" class="img-thumbnail" style="width: 120px; height: 120px;">
+                                    <div class="d-flex justify-content-between mt-1">
+                                        <button type="button" class="btn btn-sm btn-secondary move-left" title="Move Left">←</button>
+                                        <button type="button" class="btn btn-sm btn-secondary move-right" title="Move Right">→</button>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
                         <div class="col-md-12">
                             <button class="btn btn-primary" type="submit">Update</button>
                         </div>
@@ -134,10 +146,14 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.2/dropzone.min.css" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.2/min/dropzone.min.js"></script>
 
-
+@php
+    $lastSerial = $product->images->max('serial_no') ?? 0;
+@endphp
 
 <script>
 Dropzone.autoDiscover = false;
+
+let uploadIndex = {{ $lastSerial + 1 }};
 
 const editDropzone = new Dropzone("#dropzoneEdit", {
     url: "{{ route('uploadTempImage') }}",
@@ -150,10 +166,13 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
     maxFilesize: 20,
     addRemoveLinks: true,
     dictDefaultMessage: "Drag files or click to upload",
-    params: {
-        product_id: "{{ $product->product_id }}"
+    init: function () {
+        this.on("sending", function (file, xhr, formData) {
+            formData.append("serial_no", uploadIndex++);
+            formData.append("product_id", "{{ $product->product_id }}");
+        });
     },
-    success: function(file, response) {
+    success: function (file, response) {
         if (response.success) {
             let input = document.createElement('input');
             input.type = "hidden";
@@ -170,7 +189,7 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
             file.previewElement.appendChild(checkmark);
         }
     },
-    error: function(file, errorMessage) {
+    error: function (file, errorMessage) {
         alert("Upload failed: " + errorMessage);
     }
 });
@@ -221,6 +240,52 @@ editDropzone.on("removedfile", function(file) {
             console.error('Error deleting image:', error);
         });
     }
+});
+
+
+function updateSerials() {
+    let imageOrder = [];
+    document.querySelectorAll('#imageOrderBox .image-box').forEach((box, index) => {
+        const imageId = box.getAttribute('data-id');
+        imageOrder.push({ id: imageId, serial_no: index + 1 });
+    });
+
+    fetch("{{ route('updateImageOrder') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ images: imageOrder })
+    })
+    .then(res => res.json())
+    .then(res => {
+        if (!res.success) {
+            alert("Image order update failed");
+        }
+    });
+}
+
+document.querySelectorAll('.move-left').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const current = this.closest('.image-box');
+        const prev = current.previousElementSibling;
+        if (prev) {
+            current.parentNode.insertBefore(current, prev);
+            updateSerials();
+        }
+    });
+});
+
+document.querySelectorAll('.move-right').forEach(btn => {
+    btn.addEventListener('click', function () {
+        const current = this.closest('.image-box');
+        const next = current.nextElementSibling;
+        if (next) {
+            current.parentNode.insertBefore(next, current);
+            updateSerials();
+        }
+    });
 });
 </script>
 

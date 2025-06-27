@@ -21,11 +21,20 @@
                 </a>
             </li>
 
-            <li>
-                  <a href="{{ route('categoryIndex') }}">
-                    <iconify-icon icon="heroicons:table-cells" class="menu-icon"></iconify-icon>
+            <li class="dropdown">
+                <a  href="javascript:void(0)">
+                    <iconify-icon icon="heroicons:film" class="menu-icon"></iconify-icon>
                     <span>Category</span>
                 </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a  href="{{ route('categoryList') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Category List</a>
+                    </li>
+                    <li>
+                        <a  href="{{ route('addcategory') }}"><i class="ri-circle-fill circle-icon text-warning-main w-auto"></i> Add Category</a>
+                    </li>
+                    
+                </ul>
             </li>
             
             <li class="dropdown">

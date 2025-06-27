@@ -166,6 +166,7 @@ class ProductController extends Controller
 
         // Save image record in DB
         $image = Image::create([
+            'serial_no' =>  $request->serial_no ?? 0,
             'product_id' => $request->product_id,
             'file_path'  => 'uploads/' . $filename,
             'created_by' => session('user_id'),
@@ -197,4 +198,15 @@ public function deleteImage(Request $request)
 
     return response()->json(['success' => false, 'message' => 'Image not found.']);
 }
+
+    public function updateImageOrder(Request $request)
+        {
+            $images = $request->images;
+
+            foreach ($images as $img) {
+                \App\Models\Image::where('image_id', $img['id'])->update(['serial_no' => $img['serial_no']]);
+            }
+
+            return response()->json(['success' => true]);
+        }
 }

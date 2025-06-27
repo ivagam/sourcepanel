@@ -123,7 +123,7 @@
                         <div id="imageOrderBox" class="d-flex flex-wrap mt-3 gap-2">
                             @foreach($product->images->sortBy('serial_no') as $image)
                                 <div class="position-relative image-box" data-id="{{ $image->image_id }}">
-                                    <img src="{{ url('public/' . $image->file_path) }}" class="img-thumbnail" style="width: 120px; height: 120px;">
+                                    <img src="{{ env('SOURCE_PANEL_IMAGE_URL') . $image->file_path }}" class="img-thumbnail" style="width: 120px; height: 120px;">
                                     <div class="d-flex justify-content-between mt-1">
                                         <button type="button" class="btn btn-sm btn-secondary move-left" title="Move Left">←</button>
                                         <button type="button" class="btn btn-sm btn-secondary move-right" title="Move Right">→</button>
@@ -206,7 +206,7 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
         filePath: "{{ $image->file_path }}"
     };
     editDropzone.emit("addedfile", file{{ $index }});
-    editDropzone.emit("thumbnail", file{{ $index }}, "{{ url('public/' . $image->file_path) }}");
+    editDropzone.emit("thumbnail", file{{ $index }}, "{{ env('SOURCE_PANEL_IMAGE_URL') . $image->file_path }}");
     editDropzone.emit("complete", file{{ $index }});
     file{{ $index }}.previewElement.classList.add('dz-success', 'dz-complete');
     editDropzone.files.push(file{{ $index }});

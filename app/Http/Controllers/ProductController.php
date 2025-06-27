@@ -31,8 +31,10 @@ class ProductController extends Controller
     public function productList()
     {
         $products = Product::leftJoin('category', 'products.category_id', '=', 'category.category_id')
-            ->select('products.*', 'category.category_name')
-            ->paginate(10);
+                    ->select('products.*', 'category.category_name')
+                    ->orderBy('products.product_id', 'desc')
+                    ->paginate(10);
+
         return view('product.productList', compact('products'));
     }
 
@@ -66,7 +68,7 @@ class ProductController extends Controller
         foreach ($request->file('images') as $imageFile) {
             $filename = time() . '_' . $imageFile->getClientOriginalName();
             $imageFile->move(public_path('uploads'), $filename);
-            $filePath = 'uploads/' . $filename;
+            $filePath = $filename;
 
             Image::create([
                 'product_id' => $product->product_id,
@@ -168,7 +170,7 @@ class ProductController extends Controller
         $image = Image::create([
             'serial_no' =>  $request->serial_no ?? 0,
             'product_id' => $request->product_id,
-            'file_path'  => 'uploads/' . $filename,
+            'file_path'  => $filename,
             'created_by' => session('user_id'),
         ]);
 

@@ -17,7 +17,7 @@ class Category extends Model
     protected $keyType = 'int';
     
     protected $fillable = [
-        'category_name', 'subcategory_id', 'domains', 'created_by'
+        'category_name', 'subcategory_id', 'alice_name', 'domains', 'created_by'
     ];
 
     public function subcategory()

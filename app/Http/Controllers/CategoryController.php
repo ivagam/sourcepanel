@@ -33,6 +33,7 @@ class CategoryController extends Controller
         Category::create([
             'category_name' => $request->category_name,
             'subcategory_id' => $request->subcategory_id,
+            'alice_name' => $request->alice_name,
             'domains' => implode(',', $request->domains),
             'created_by' => session('user_id'),
         ]);
@@ -59,6 +60,7 @@ class CategoryController extends Controller
         Category::where('category_id', $id)->update([
             'category_name' => $request->category_name,
             'subcategory_id' => $request->subcategory_id,
+            'alice_name'     => $request->alice_name,
             'domains' => implode(',', $request->domains),
             'created_by' => session('user_id'),
         ]);

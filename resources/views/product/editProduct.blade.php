@@ -249,6 +249,7 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
 
 editDropzone.on("removedfile", function(file) {
     if (file.existing && file.filePath) {
+        // Remove hidden input
         const inputs = document.querySelectorAll('input[name="existing_images[]"]');
         inputs.forEach(input => {
             if (input.value === file.filePath) {
@@ -256,6 +257,19 @@ editDropzone.on("removedfile", function(file) {
             }
         });
 
+        // Remove image from reorder box
+        document.querySelectorAll('#imageOrderBox .image-box').forEach(box => {
+            if (
+                box.getAttribute('data-id') === file.image_id?.toString() ||
+                box.querySelector('img')?.getAttribute('src')?.includes(file.filePath)
+            ) {
+                box.remove();
+            }
+        });
+
+        updateSerials();
+        
+        // Send delete request to server
         fetch("{{ route('deleteImage') }}", {
             method: 'POST',
             headers: {

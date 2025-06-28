@@ -89,6 +89,14 @@
                 </div>
                 <div class="card-body">
                 <div class="table-responsive scroll-sm">
+
+                <div class="d-flex justify-content-end mb-3">
+                    <div class="input-group" style="max-width: 300px;">
+                        <input type="text" id="categorySearch" class="form-control" placeholder="Search Category...">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    </div>
+                </div>
+
                 <table class="table bordered-table mb-0" data-page-length='10'>
                 <thead>
                             <tr>

@@ -13,7 +13,14 @@
 <div class="card h-100 p-0 radius-12">
     <div class="card-body p-24">
         <h5 class="card-title mb-3">Category List</h5>
-        <div class="table-responsive scroll-sm">
+        <div class="table-responsive scroll-sm">      
+            <div class="d-flex justify-content-end mb-3">
+                <div class="input-group" style="max-width: 300px;">
+                    <input type="text" id="categorySearch" class="form-control" placeholder="Search Category...">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                </div>
+            </div>
+
             <table class="table bordered-table mb-0" data-page-length='10'>
                 <thead>
                     <tr>
@@ -59,6 +66,32 @@
 </div>
 @endsection
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.js"></script>
+
+@push('scripts')
 <script>
-    setTimeout(() => $(".alert").fadeOut("slow"), 3000);
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('categorySearch');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function () {
+            const value = this.value.toLowerCase();
+            const rows = document.querySelectorAll("table tbody tr");
+
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(value) ? '' : 'none';
+            });
+        });
+    }
+
+    // Auto-hide success alert after 3 seconds
+    setTimeout(() => {
+        document.querySelectorAll('.alert').forEach(alert => {
+            alert.style.transition = 'opacity 0.5s';
+            alert.style.opacity = 0;
+            setTimeout(() => alert.remove(), 500);
+        });
+    }, 3000);
+});
 </script>
+@endpush

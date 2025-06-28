@@ -19,6 +19,7 @@ class ProductController extends Controller
         $product = new Product();
         $product->product_name        = 'xyz ' .$totalProducts;
         $product->category_id         = 0;
+        $product->product_url         = Str::slug($product->product_name);
         $product->created_by          = session('user_id');
         $product->save();
 
@@ -43,7 +44,7 @@ class ProductController extends Controller
         $validated = $request->validate([
             'product_name'      => 'required|string|max:255',
             'product_price'     => 'required|numeric',
-            'category_id'        => 'required|integer|min:0',
+            'category_id'       => 'required|integer|min:0',
             'description'       => 'nullable|string',
             'meta_keywords'     => 'nullable|string',
             'meta_description'  => 'nullable|string',
@@ -155,34 +156,33 @@ class ProductController extends Controller
     }
 
     public function uploadTempImage(Request $request)
-{
-    $request->validate([
-        'file' => 'required|file|mimes:jpg,jpeg,png,gif,webp|max:20480',
-        'product_id' => 'required|integer|exists:products,product_id',
-    ]);
-
-    if ($request->hasFile('file')) {
-        $file = $request->file('file');
-        $filename = time() . '_' . $file->getClientOriginalName();
-        $file->move(public_path('uploads'), $filename);
-
-        // Save image record in DB
-        $image = Image::create([
-            'serial_no' =>  $request->serial_no ?? 0,
-            'product_id' => $request->product_id,
-            'file_path'  => $filename,
-            'created_by' => session('user_id'),
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:jpg,jpeg,png,gif,webp|max:20480',
+            'product_id' => 'required|integer|exists:products,product_id',
         ]);
 
-        return response()->json([
-            'success' => true,
-            'file_path' => $image->file_path,
-            'image_id' => $image->id,  // or image_id if your PK is different
-        ]);
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads'), $filename);
+
+            $image = Image::create([
+                'serial_no' =>  $request->serial_no ?? 0,
+                'product_id' => $request->product_id,
+                'file_path'  => $filename,
+                'created_by' => session('user_id'),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'file_path' => $image->file_path,
+                'image_id' => $image->image_id,
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'No file uploaded.'], 400);
     }
-
-    return response()->json(['success' => false, 'message' => 'No file uploaded.'], 400);
-}
 
 public function deleteImage(Request $request)
 {

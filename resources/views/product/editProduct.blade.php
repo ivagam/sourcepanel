@@ -173,22 +173,56 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
         });
     },
     success: function (file, response) {
-        if (response.success) {
-            let input = document.createElement('input');
-            input.type = "hidden";
-            input.name = "existing_images[]";
-            input.value = response.file_path;
-            document.getElementById("productEditForm").appendChild(input);
+    if (response.success) {
+        let input = document.createElement('input');
+        input.type = "hidden";
+        input.name = "existing_images[]";
+        input.value = response.file_path;
+        document.getElementById("productEditForm").appendChild(input);
 
-            file.existing = true;
-            file.filePath = response.file_path;
+        file.existing = true;
+        file.filePath = response.file_path;
 
-            let checkmark = document.createElement('div');
-            checkmark.className = 'dz-success-icon';
-            checkmark.innerHTML = '✔️';
-            file.previewElement.appendChild(checkmark);
-        }
-    },
+        let checkmark = document.createElement('div');
+        checkmark.className = 'dz-success-icon';
+        checkmark.innerHTML = '✔️';
+        file.previewElement.appendChild(checkmark);
+
+        // ✅ ADD NEW IMAGE TO IMAGE ORDER BOX FOR REORDERING
+        const container = document.createElement('div');
+        container.className = "position-relative image-box";
+        container.setAttribute("data-id", response.image_id || 'new-' + Date.now()); // Use fallback ID if image_id missing
+
+        container.innerHTML = `
+            <img src="{{ env('SOURCE_PANEL_IMAGE_URL') }}/` + response.file_path + `" class="img-thumbnail" style="width: 120px; height: 120px;">
+            <div class="d-flex justify-content-between mt-1">
+                <button type="button" class="btn btn-sm btn-secondary move-left" title="Move Left">←</button>
+                <button type="button" class="btn btn-sm btn-secondary move-right" title="Move Right">→</button>
+            </div>
+        `;
+
+        document.getElementById("imageOrderBox").appendChild(container);
+
+        container.querySelector('.move-left').addEventListener('click', function () {
+            const current = this.closest('.image-box');
+            const prev = current.previousElementSibling;
+            if (prev) {
+                current.parentNode.insertBefore(current, prev);
+                updateSerials();
+            }
+        });
+
+        container.querySelector('.move-right').addEventListener('click', function () {
+            const current = this.closest('.image-box');
+            const next = current.nextElementSibling;
+            if (next) {
+                current.parentNode.insertBefore(next, current);
+                updateSerials();
+            }
+        });
+    }
+},
+
     error: function (file, errorMessage) {
         alert("Upload failed: " + errorMessage);
     }

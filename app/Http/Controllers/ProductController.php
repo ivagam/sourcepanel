@@ -156,33 +156,52 @@ class ProductController extends Controller
     }
 
     public function uploadTempImage(Request $request)
-    {
-        $request->validate([
-            'file' => 'required|file|mimes:jpg,jpeg,png,gif,webp|max:20480',
-            'product_id' => 'required|integer|exists:products,product_id',
-        ]);
+{
+    $request->validate([
+        'file' => 'required|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,webm|max:51200',
+        'product_id' => 'required|integer|exists:products,product_id',
+    ]);
 
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads'), $filename);
+    if ($request->hasFile('file')) {
+        $file = $request->file('file');
 
-            $image = Image::create([
-                'serial_no' =>  $request->serial_no ?? 0,
-                'product_id' => $request->product_id,
-                'file_path'  => $filename,
-                'created_by' => session('user_id'),
-            ]);
+        // Create sanitized and unique file name
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = strtolower($file->getClientOriginalExtension());
+        $sanitizedName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $originalName);
+        $filename = time() . '_' . uniqid() . '_' . $sanitizedName . '.' . $extension;
 
-            return response()->json([
-                'success' => true,
-                'file_path' => $image->file_path,
-                'image_id' => $image->image_id,
-            ]);
+        // Create uploads folder if it doesn't exist
+        $uploadPath = public_path('uploads');
+        if (!file_exists($uploadPath)) {
+            mkdir($uploadPath, 0777, true);
         }
 
-        return response()->json(['success' => false, 'message' => 'No file uploaded.'], 400);
+        // Move file to uploads folder
+        try {
+            $file->move($uploadPath, $filename);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Upload failed: ' . $e->getMessage()], 500);
+        }
+
+        // ✅ Store ONLY the filename (not "uploads/...")
+        $image = Image::create([
+            'serial_no'   => $request->serial_no ?? 0,
+            'product_id'  => $request->product_id,
+            'file_path'   => $filename, // <-- only filename here
+            'created_by'  => session('user_id'),
+        ]);
+
+        return response()->json([
+            'success'   => true,
+            'file_path' => $image->file_path,
+            'image_id'  => $image->image_id,
+        ]);
     }
+
+    return response()->json(['success' => false, 'message' => 'No file uploaded.'], 400);
+}
+
 
 public function deleteImage(Request $request)
 {

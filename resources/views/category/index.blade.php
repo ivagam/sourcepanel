@@ -110,7 +110,7 @@
                             @forelse($categorys as $key => $category)
                                 <tr>
                                      <td>
-                                        <div class="d-flex align-items-center gap-10">                                    
+                                        <div class="d-flex align-items-center gap-10">
                                             {{ $key + 1 }}
                                         </div>
                                     </td>

@@ -111,7 +111,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Product Images <span class="text-danger">*</span></label>
+                            <label class="form-label">Uploads Files<span class="text-danger">*</span></label>
                             <div class="dropzone" id="dropzoneEdit"></div>
                         </div>
 
@@ -123,7 +123,20 @@
                         <div id="imageOrderBox" class="d-flex flex-wrap mt-3 gap-2">
                             @foreach($product->images->sortBy('serial_no') as $image)
                                 <div class="position-relative image-box" data-id="{{ $image->image_id }}">
-                                    <img src="{{ env('SOURCE_PANEL_IMAGE_URL') . $image->file_path }}" class="img-thumbnail" style="width: 120px; height: 120px;">
+                                    @php
+                                        $ext = strtolower(pathinfo($image->file_path, PATHINFO_EXTENSION));
+                                        $videoExtensions = ['mp4', 'mov', 'avi', 'webm'];
+                                    @endphp
+
+                                    @if(in_array($ext, $videoExtensions))
+                                        <video width="120" height="120" controls>
+                                            <source src="{{ env('SOURCE_PANEL_IMAGE_URL') . $image->file_path }}" type="video/{{ $ext }}">
+                                            Your browser does not support the video tag.
+                                        </video>
+                                    @else
+                                        <img src="{{ env('SOURCE_PANEL_IMAGE_URL') . $image->file_path }}" class="img-thumbnail" style="width: 120px; height: 120px;">
+                                    @endif
+
                                     <div class="d-flex justify-content-between mt-1">
                                         <button type="button" class="btn btn-sm btn-secondary move-left" title="Move Left">←</button>
                                         <button type="button" class="btn btn-sm btn-secondary move-right" title="Move Right">→</button>
@@ -162,7 +175,7 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
     headers: {
         'X-CSRF-TOKEN': '{{ csrf_token() }}'
     },
-    acceptedFiles: ".jpg,.jpeg,.png,.gif,.webp",
+    acceptedFiles: ".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.webm",
     maxFilesize: 20,
     addRemoveLinks: true,
     dictDefaultMessage: "Drag files or click to upload",
@@ -173,74 +186,100 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
         });
     },
     success: function (file, response) {
-    if (response.success) {
-        let input = document.createElement('input');
-        input.type = "hidden";
-        input.name = "existing_images[]";
-        input.value = response.file_path;
-        document.getElementById("productEditForm").appendChild(input);
+        if (response.success) {
+            let input = document.createElement('input');
+            input.type = "hidden";
+            input.name = "existing_images[]";
+            input.value = response.file_path;
+            document.getElementById("productEditForm").appendChild(input);
 
-        file.existing = true;
-        file.filePath = response.file_path;
+            file.existing = true;
+            file.filePath = response.file_path;
 
-        let checkmark = document.createElement('div');
-        checkmark.className = 'dz-success-icon';
-        checkmark.innerHTML = '✔️';
-        file.previewElement.appendChild(checkmark);
+            let checkmark = document.createElement('div');
+            checkmark.className = 'dz-success-icon';
+            checkmark.innerHTML = '✔️';
+            file.previewElement.appendChild(checkmark);
 
-        // ✅ ADD NEW IMAGE TO IMAGE ORDER BOX FOR REORDERING
-        const container = document.createElement('div');
-        container.className = "position-relative image-box";
-        container.setAttribute("data-id", response.image_id || 'new-' + Date.now()); // Use fallback ID if image_id missing
+            // Add new image or video preview box for ordering
+            const container = document.createElement('div');
+            container.className = "position-relative image-box";
+            container.setAttribute("data-id", response.image_id || 'new-' + Date.now());
 
-        container.innerHTML = `
-            <img src="{{ env('SOURCE_PANEL_IMAGE_URL') }}/` + response.file_path + `" class="img-thumbnail" style="width: 120px; height: 120px;">
-            <div class="d-flex justify-content-between mt-1">
-                <button type="button" class="btn btn-sm btn-secondary move-left" title="Move Left">←</button>
-                <button type="button" class="btn btn-sm btn-secondary move-right" title="Move Right">→</button>
-            </div>
-        `;
+            let isVideo = response.file_path.match(/\.(mp4|mov|avi|webm)$/i);
+            let baseUrl = "{{ rtrim(env('SOURCE_PANEL_IMAGE_URL'), '/') }}";
+            let previewHTML = isVideo
+                ? `<video width="120" height="120" controls>
+                    <source src="` + baseUrl + `/` + response.file_path + `" type="` + getMimeType(response.file_path) + `">
+                   Your browser does not support the video tag.
+                   </video>`
+                : `<img src="` + baseUrl + `/` + response.file_path + `" class="img-thumbnail" style="width: 120px; height: 120px;">`;
 
-        document.getElementById("imageOrderBox").appendChild(container);
+            container.innerHTML = `
+                ${previewHTML}
+                <div class="d-flex justify-content-between mt-1">
+                    <button type="button" class="btn btn-sm btn-secondary move-left" title="Move Left">←</button>
+                    <button type="button" class="btn btn-sm btn-secondary move-right" title="Move Right">→</button>
+                </div>
+            `;
 
-        container.querySelector('.move-left').addEventListener('click', function () {
-            const current = this.closest('.image-box');
-            const prev = current.previousElementSibling;
-            if (prev) {
-                current.parentNode.insertBefore(current, prev);
-                updateSerials();
-            }
-        });
+            document.getElementById("imageOrderBox").appendChild(container);
 
-        container.querySelector('.move-right').addEventListener('click', function () {
-            const current = this.closest('.image-box');
-            const next = current.nextElementSibling;
-            if (next) {
-                current.parentNode.insertBefore(next, current);
-                updateSerials();
-            }
-        });
-    }
-},
+            container.querySelector('.move-left').addEventListener('click', function () {
+                const current = this.closest('.image-box');
+                const prev = current.previousElementSibling;
+                if (prev) {
+                    current.parentNode.insertBefore(current, prev);
+                    updateSerials();
+                }
+            });
 
+            container.querySelector('.move-right').addEventListener('click', function () {
+                const current = this.closest('.image-box');
+                const next = current.nextElementSibling;
+                if (next) {
+                    current.parentNode.insertBefore(next, current);
+                    updateSerials();
+                }
+            });
+        }
+    },
     error: function (file, errorMessage) {
         alert("Upload failed: " + errorMessage);
     }
 });
 
+// Preload existing files with correct mime types and previews
 @foreach($product->images as $index => $image)
 {
+    let ext = "{{ strtolower(pathinfo($image->file_path, PATHINFO_EXTENSION)) }}";
+    let mimeType = 'image/jpeg';
+    const videoExtensions = ['mp4', 'mov', 'avi', 'webm'];
+    if (videoExtensions.includes(ext)) {
+        const mimeMap = {
+            mp4: 'video/mp4',
+            mov: 'video/quicktime',
+            avi: 'video/x-msvideo',
+            webm: 'video/webm'
+        };
+        mimeType = mimeMap[ext] || 'video/mp4';
+    }
     let file{{ $index }} = {
         name: "{{ basename($image->file_path) }}",
-        size: 123456,
-        type: "image/jpeg",
+        size: 123456, // You can set real size if available
+        type: mimeType,
         accepted: true,
         status: Dropzone.SUCCESS,
         existing: true,
         filePath: "{{ $image->file_path }}"
     };
     editDropzone.emit("addedfile", file{{ $index }});
-    editDropzone.emit("thumbnail", file{{ $index }}, "{{ env('SOURCE_PANEL_IMAGE_URL') . $image->file_path }}");
+    if (mimeType.startsWith('video')) {
+        // For videos, no thumbnail in Dropzone, just emit complete to show preview element
+        // Optionally, you can add your own video preview here if Dropzone doesn't show it
+    } else {
+        editDropzone.emit("thumbnail", file{{ $index }}, "{{ rtrim(env('SOURCE_PANEL_IMAGE_URL'), '/') . '/' . $image->file_path }}");
+    }
     editDropzone.emit("complete", file{{ $index }});
     file{{ $index }}.previewElement.classList.add('dz-success', 'dz-complete');
     editDropzone.files.push(file{{ $index }});
@@ -257,11 +296,12 @@ editDropzone.on("removedfile", function(file) {
             }
         });
 
-        // Remove image from reorder box
+        // Remove image/video from reorder box
         document.querySelectorAll('#imageOrderBox .image-box').forEach(box => {
             if (
                 box.getAttribute('data-id') === file.image_id?.toString() ||
-                box.querySelector('img')?.getAttribute('src')?.includes(file.filePath)
+                box.querySelector('img')?.getAttribute('src')?.includes(file.filePath) ||
+                box.querySelector('video source')?.getAttribute('src')?.includes(file.filePath)
             ) {
                 box.remove();
             }
@@ -335,7 +375,19 @@ document.querySelectorAll('.move-right').forEach(btn => {
         }
     });
 });
+
+function getMimeType(filePath) {
+    const ext = filePath.split('.').pop().toLowerCase();
+    switch (ext) {
+        case 'mp4': return 'video/mp4';
+        case 'mov': return 'video/quicktime';
+        case 'webm': return 'video/webm';
+        case 'avi': return 'video/x-msvideo';
+        default: return 'video/mp4';
+    }
+}
 </script>
+
 
 
 @endsection

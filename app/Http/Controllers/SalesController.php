@@ -20,7 +20,7 @@ class SalesController extends Controller
                 });
             })
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->get();
         //print_r($sales); exit;
         $domains = Domain::all();
 

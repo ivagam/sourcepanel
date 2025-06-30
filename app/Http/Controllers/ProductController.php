@@ -34,7 +34,7 @@ class ProductController extends Controller
         $products = Product::leftJoin('category', 'products.category_id', '=', 'category.category_id')
                     ->select('products.*', 'category.category_name')
                     ->orderBy('products.product_id', 'desc')
-                    ->paginate(10);
+                    ->get();
 
         return view('product.productList', compact('products'));
     }

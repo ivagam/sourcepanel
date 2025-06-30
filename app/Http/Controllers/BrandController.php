@@ -14,7 +14,7 @@ class BrandController extends Controller
 {
     public function index()
     {
-        $brandFiles = Brand::with('domain')->orderBy('created_at', 'desc')->paginate(10);
+        $brandFiles = Brand::with('domain')->orderBy('created_at', 'desc')->get();
         $domains = Domain::all();
         return view('brand.index', compact('brandFiles', 'domains'));
     }

@@ -120,11 +120,7 @@
                                     @endforelse
                                 </tbody>
                             </table>
-
-                            {{-- Pagination --}}
-                            <div class="mt-3">
-                                {{ $bannerFiles->links() }}
-                            </div>
+                           
                         </div>
                     </div>
                 </div>

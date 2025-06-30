@@ -120,10 +120,6 @@
                                 </tbody>
                             </table>
 
-                            {{-- Pagination --}}
-                            <div class="mt-3">
-                                {{ $brandFiles->links() }}
-                            </div>
                         </div>
                     </div>
                 </div>

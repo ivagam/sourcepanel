@@ -3,6 +3,9 @@
     $title = 'Product Grid';
     $subTitle = 'Product Grid';
     $script = '<script>
+
+        let table = new DataTable("#dataTable");
+
         $(".remove-item-btn").on("click", function() {
             $(this).closest("tr").addClass("d-none")
         });
@@ -17,49 +20,20 @@
     </div>
 @endif
 
-<div class="card h-100 p-0 radius-12">
-    <div class="card-header border-bottom bg-base py-16 px-24 d-flex align-items-center flex-wrap gap-3 justify-content-between">
-        <div class="d-flex align-items-center flex-wrap gap-3">
-            <span class="text-md fw-medium text-secondary-light mb-0">Show</span>
-            <select class="form-select form-select-sm w-auto ps-12 py-6 radius-12 h-40-px">
-                <option>1</option>
-                <option>2</option>
-                <option>3</option>
-                <option>4</option>
-                <option>5</option>
-            </select>
-            <form class="navbar-search">
-                <input type="text" class="bg-base h-40-px w-auto" name="search" placeholder="Search">
-                <iconify-icon icon="ion:search-outline" class="icon"></iconify-icon>
-            </form>
-            <select class="form-select form-select-sm w-auto ps-12 py-6 radius-12 h-40-px">
-                <option>Status</option>
-                <option>Active</option>
-                <option>Inactive</option>
-            </select>
+    <div class="card basic-data-table">    
+        <div class="card-header">
+            <h5 class="card-title mb-0">Media List</h5>
         </div>
-        <a href="{{ route('addProduct') }}" class="btn btn-primary text-sm btn-sm px-12 py-12 radius-8 d-flex align-items-center gap-2">
-            <iconify-icon icon="ic:baseline-plus" class="icon text-xl line-height-1"></iconify-icon>
-            Add Product
-        </a>
-    </div>
-    <div class="card-body p-24">
-        <div class="table-responsive scroll-sm">
-            <table class="table bordered-table sm-table mb-0">
+        <div class="card-body">
+            
+            <table class="table bordered-table sm-table mb-0" id="dataTable" data-page-length='10'>
                 <thead>
                     <tr>
-                        <th>
-                            <div class="d-flex align-items-center gap-10">
-                                <div class="form-check style-check d-flex align-items-center">
-                                    <input class="form-check-input radius-4 border input-form-dark" type="checkbox" id="selectAll">
-                                </div>
-                                S.L
-                            </div>
-                        </th>
-                        <th>Product Name</th>
-                        <th>Category</th>
-                        <th>Product Price</th>
-                        <th>Description</th>
+                        <th class="text-center">S.L</th>
+                        <th class="text-center">Product Name</th>
+                        <th class="text-center">Category</th>
+                        <th class="text-center">Product Price</th>
+                        <th class="text-center">Description</th>
                         <th class="text-center">Action</th>
                     </tr>
                 </thead>
@@ -67,12 +41,9 @@
                     @forelse ($products as $key => $product)
                         <tr>
                             <td>
-                                <div class="d-flex align-items-center gap-10">
-                                    <div class="form-check style-check d-flex align-items-center">
-                                        <input class="form-check-input radius-4 border border-neutral-400" type="checkbox">
+                                    <div class="d-flex align-items-center gap-10">                                    
+                                        {{ $key + 1 }}
                                     </div>
-                                    {{ $products->firstItem() + $key }}
-                                </div>
                             </td>
                             <td>{{ $product->product_name }}</td>
                             <td>{{ $product->category_name }}</td>
@@ -101,14 +72,10 @@
                         </tr>
                     @endforelse
                 </tbody>
-            </table>
-            <div class="mt-3">
-                {{ $products->links() }}
-            </div>
-        </div>
+            </table>                                  
 
+        </div>
     </div>
-</div>
 
 @endsection
 

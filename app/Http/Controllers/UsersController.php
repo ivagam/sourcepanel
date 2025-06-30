@@ -15,7 +15,7 @@ class UsersController extends Controller
     
     public function usersList()
 {
-    $users = User::paginate(10);
+    $users = User::get();
 
     return view('users.usersList', compact('users'));
 }

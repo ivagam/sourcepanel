@@ -20,7 +20,7 @@ class MediaController extends Controller
 
     public function mediaList()
     {
-        $mediaFiles = Media::with('category')->orderBy('created_at', 'desc')->paginate(10);
+        $mediaFiles = Media::with('category')->orderBy('created_at', 'desc')->get();
         return view('media.mediaList', compact('mediaFiles'));
     }
 

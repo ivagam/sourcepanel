@@ -9,7 +9,7 @@ class DomainController extends Controller
 {
     public function index()
     {
-        $domains = Domain::orderBy('created_at', 'desc')->paginate(10);
+        $domains = Domain::orderBy('created_at', 'desc')->get();
         return view('domain.index', compact('domains'));
     }
 
@@ -30,7 +30,7 @@ class DomainController extends Controller
     public function edit($id)
     {
         $editdomain = Domain::findOrFail($id);
-        $domains = Domain::orderBy('created_at', 'desc')->paginate(10);
+        $domains = Domain::orderBy('created_at', 'desc')->get();
         return view('domain.index', compact('editdomain', 'domains'));
     }
 

@@ -29,6 +29,16 @@
                 @enderror
             </div>
 
+            <!-- Alice Name -->
+            <div class="mb-3">
+                <label class="form-label">Alice Name</label>
+                <input type="text" name="alice_name" class="form-control @error('alice_name') is-invalid @enderror"
+                    placeholder="Enter Alice Name" value="{{ old('alice_name', $editcategory->alice_name) }}">
+                @error('alice_name')
+                    <div class="text-danger">{{ $message }}</div>
+                @enderror
+            </div>
+
             <!-- Sub Category -->
             <div class="mb-3">
                 <label class="form-label">Sub Category</label>
@@ -42,16 +52,6 @@
                     @endforeach
                 </select>
                 @error('subcategory_id')
-                    <div class="text-danger">{{ $message }}</div>
-                @enderror
-            </div>
-
-            <!-- Alice Name -->
-            <div class="mb-3">
-                <label class="form-label">Alice Name</label>
-                <input type="text" name="alice_name" class="form-control @error('alice_name') is-invalid @enderror"
-                    placeholder="Enter Alice Name" value="{{ old('alice_name', $editcategory->alice_name) }}">
-                @error('alice_name')
                     <div class="text-danger">{{ $message }}</div>
                 @enderror
             </div>

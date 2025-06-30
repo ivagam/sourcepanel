@@ -16,7 +16,7 @@ class CustomerController extends Controller
                 return $query->whereRaw("FIND_IN_SET(?, domains)", [$selectedDomain]);
             })
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->get();
 
         $domains = Domain::all();
 

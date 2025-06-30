@@ -27,6 +27,12 @@
                 @enderror
             </div>
 
+             <div class="mb-3">
+                <label class="form-label">Alice Name </label>
+                <input type="text" name="alice_name" class="form-control "
+                    placeholder="Enter Alice Name" value="{{ old('alice_name') }}">               
+            </div>
+
             <div class="mb-3">
                 <label class="form-label">Sub Category</label>
                 <select name="subcategory_id" class="form-select">
@@ -37,12 +43,6 @@
                         </option>
                     @endforeach
                 </select>                
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Alice Name </label>
-                <input type="text" name="alice_name" class="form-control "
-                    placeholder="Enter Alice Name" value="{{ old('alice_name') }}">               
             </div>
 
             <div class="mb-3">

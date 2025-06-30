@@ -14,7 +14,7 @@ class BannerController extends Controller
 {
     public function index()
     {
-        $bannerFiles = Banner::with('domain')->orderBy('created_at', 'desc')->paginate(10);
+        $bannerFiles = Banner::with('domain')->orderBy('created_at', 'desc')->get();
         $domains = Domain::all();
         return view('banner.index', compact('bannerFiles', 'domains'));
     }

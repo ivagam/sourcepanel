@@ -109,7 +109,11 @@
                         <tbody>
                             @forelse($categorys as $key => $category)
                                 <tr>
-                                    <td style="text-align: left;">{{ $categorys->firstItem() + $key }}</td>
+                                     <td>
+                                        <div class="d-flex align-items-center gap-10">                                    
+                                            {{ $key + 1 }}
+                                        </div>
+                                    </td>
                                     <td>{{ $category->category_name }}</td>
                                     <td>
                                         @if($category->subcategory_id == $category->category_id)
@@ -141,9 +145,7 @@
                             @endforelse
                         </tbody>
                     </table>
-                    <div class="mt-3">
-                        {{ $categorys->links() }}
-                    </div>
+                  
                 </div>
                 </div>
                 </div>

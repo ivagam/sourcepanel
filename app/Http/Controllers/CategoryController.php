@@ -11,7 +11,7 @@ class CategoryController extends Controller
     // Show only the category list
     public function index()
     {
-        $categorys = Category::with('subcategory')->orderBy('created_at', 'desc')->paginate(10);
+        $categorys = Category::with('subcategory')->orderBy('created_at', 'desc')->get();
         return view('category.categoryList', compact('categorys'));
     }
 

@@ -21,17 +21,23 @@
             <table class="table bordered-table mb-0" id="dataTable" data-page-length='10'>                
                 <thead>
                     <tr>
-                        <th>S.L</th>
-                        <th>Category Name</th>
-                        <th>Sub Category Name</th>
-                        <th>Action</th>
+                        <th class="text-start">S.L</th>
+                        <th class="text-start">Category Name</th>
+                        <th class="text-start">Alice Name</th>
+                        <th class="text-start">Sub Category Name</th>
+                        <th class="text-start">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($categorys as $key => $category)
                         <tr>
-                            <td>{{ $categorys->firstItem() + $key }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-10">                                    
+                                    {{ $key + 1 }}
+                                </div>
+                            </td>
                             <td>{{ $category->category_name }}</td>
+                            <td>{{ $category->alice_name }}</td>
                             <td>{{ $category->subcategory ? $category->subcategory->category_name : '-' }}</td>
                             <td class="text-center">
                                 <div class="d-flex align-items-center gap-10">
@@ -54,10 +60,7 @@
                         <tr><td colspan="4" class="text-center">No categories found.</td></tr>
                     @endforelse
                 </tbody>
-            </table>
-            <div class="mt-3">
-                {{ $categorys->links() }}
-            </div>
+            </table>            
         </div>
 </div>
 @endsection
@@ -65,3 +68,4 @@
 <script>
     setTimeout(() => $(".alert").fadeOut("slow"), 3000);
 </script>
+

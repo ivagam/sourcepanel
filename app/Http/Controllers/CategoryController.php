@@ -8,22 +8,19 @@ use App\Models\Domain;
 
 class CategoryController extends Controller
 {
-    // Show only the category list
     public function index()
-    {
+    {        
         $categorys = Category::with('subcategory')->orderBy('created_at', 'desc')->get();
         return view('category.categoryList', compact('categorys'));
     }
 
-    // Show Add Category form
     public function create()
     {
-        $categorys = Category::orderBy('category_name')->get();
+        $mainCategories = Category::whereNull('subcategory_id')->get();        
         $domains = Domain::orderBy('domain_name')->get();
-        return view('category.addCategory', compact('categorys', 'domains'));
+        return view('category.addCategory', compact('domains', 'mainCategories'));
     }
 
-    // Store a new category
     public function store(Request $request)
     {
         $request->validate([
@@ -36,21 +33,30 @@ class CategoryController extends Controller
             'alice_name' => $request->alice_name,
             'domains' => implode(',', $request->domains),
             'created_by' => session('user_id'),
+            'category_ids' => $request->category_ids,
         ]);
 
         return redirect()->route('categoryList')->with('success', 'Category added successfully.');
     }
 
-    // Show Edit Category form
-    public function edit($id)
+   public function edit($id)
     {
         $editcategory = Category::findOrFail($id);
         $categorys = Category::orderBy('category_name')->get();
         $domains = Domain::orderBy('domain_name')->get();
-        return view('category.editCategory', compact('editcategory', 'categorys', 'domains'));
+        $mainCategories = Category::whereNull('subcategory_id')->get();
+
+        $mainCategoryId = null;
+        $chain = [];
+
+        if(!empty($editcategory->category_ids)) {
+            $chain = explode(',', $editcategory->category_ids);
+            $mainCategoryId = $chain[0] ?? null;
+        }
+
+        return view('category.editCategory', compact('editcategory', 'categorys', 'domains', 'mainCategories', 'mainCategoryId'));
     }
 
-    // Update the category
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -63,15 +69,21 @@ class CategoryController extends Controller
             'alice_name'     => $request->alice_name,
             'domains' => implode(',', $request->domains),
             'created_by' => session('user_id'),
+            'category_ids' => $request->category_ids,
         ]);
 
         return redirect()->route('categoryList')->with('success', 'Category updated successfully.');
     }
 
-    // Delete the category
     public function destroy($id)
     {
         Category::where('category_id', $id)->delete();
         return redirect()->route('categoryList')->with('success', 'Category deleted successfully.');
+    }
+
+    public function getSubcategories($id)
+    {
+        $subcategories = Category::where('subcategory_id', $id)->get();
+        return response()->json($subcategories);
     }
 }

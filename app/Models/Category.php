@@ -17,7 +17,7 @@ class Category extends Model
     protected $keyType = 'int';
     
     protected $fillable = [
-        'category_name', 'subcategory_id', 'alice_name', 'domains', 'created_by'
+        'category_name', 'subcategory_id', 'alice_name', 'domains', 'created_by', 'category_ids'
     ];
 
     public function subcategory()
@@ -38,6 +38,11 @@ class Category extends Model
     public function parent()
     {
         return $this->belongsTo(Category::class, 'subcategory_id', 'category_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(Category::class, 'subcategory_id');
     }
 
     public function getFullPathAttribute()

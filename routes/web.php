@@ -67,6 +67,8 @@ Route::prefix('category')->middleware('auth')->group(function () {
         Route::get('/edit/{id}', 'edit')->name('editcategory');
         Route::put('/update/{id}', 'update')->name('updatecategory');
         Route::delete('/delete/{id}', 'destroy')->name('deletecategory');
+        Route::get('/get-subcategories/{id}', 'getSubcategories');
+
     });
 });
 

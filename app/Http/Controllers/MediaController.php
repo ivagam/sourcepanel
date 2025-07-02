@@ -46,13 +46,12 @@ class MediaController extends Controller
             $file = $request->file('media_file');
             $filename = time() . '_' . $file->getClientOriginalName();
             $file->move(public_path('uploads'), $filename);
-
-            $filePath = 'uploads/' . $filename;
+            
             $extension = strtolower($file->getClientOriginalExtension());
 
         Media::create([
             'category_id' => $request->category_id,
-            'file_path' => $filePath,
+            'file_path' => $filename,
             'file_type' => $extension,
             'created_by' => session('user_id'),
             'category_ids' => implode(',', $categoryIds),

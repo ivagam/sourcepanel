@@ -37,22 +37,7 @@
                 </ul>
             </li>
             
-            <li class="dropdown">
-                <a  href="javascript:void(0)">
-                    <iconify-icon icon="heroicons:film" class="menu-icon"></iconify-icon>
-                    <span>Media</span>
-                </a>
-                <ul class="sidebar-submenu">
-                    <li>
-                        <a  href="{{ route('mediaList') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Meida List</a>
-                    </li>
-                    <li>
-                        <a  href="{{ route('addMedia') }}"><i class="ri-circle-fill circle-icon text-warning-main w-auto"></i> Add Media</a>
-                    </li>
-                    
-                </ul>
-            </li>
-
+            
             <li class="dropdown">
                 <a  href="javascript:void(0)">
                     <iconify-icon icon="heroicons:cube" class="menu-icon"></iconify-icon>

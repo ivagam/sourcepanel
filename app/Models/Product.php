@@ -25,6 +25,7 @@ class Product extends Model
         'product_url',
         'meta_keywords',
         'meta_description',
+        'category_ids'
     ];
 
     public function category()

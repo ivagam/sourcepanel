@@ -50,29 +50,29 @@
                                         <td>{{ $mediaItem->category ? $mediaItem->category->category_name : '-' }}</td>
                                         <td>
                                             @php
-                                            $ext = strtolower(pathinfo($mediaItem->file_path, PATHINFO_EXTENSION));
-                                            $fullPath = asset('public/' . $mediaItem->file_path); // Fix here
-                                        @endphp
+                                                $ext = strtolower(pathinfo($mediaItem->file_path, PATHINFO_EXTENSION));
+                                                $sourceUrl = env('SOURCE_PANEL_IMAGE_URL') . ltrim($mediaItem->file_path, '/');
+                                            @endphp
 
                                             @if(in_array($ext, ['jpg', 'jpeg', 'png']))
-                                                <a href="{{ $fullPath }}" target="_blank">
-                                                    <img src="{{ $fullPath }}" alt="{{ basename($mediaItem->file_path) }}" style="max-width: 100px; height: auto;">
+                                                <a href="{{ $sourceUrl }}" target="_blank">
+                                                    <img src="{{ $sourceUrl }}" class="img-thumbnail" style="width: 120px; height: 120px;">
                                                 </a>
                                             @elseif($ext === 'pdf')
-                                                <a href="{{ $fullPath }}" target="_blank">
+                                                <a href="{{ $sourceUrl }}" target="_blank">
                                                     <img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" alt="PDF" style="width: 40px;">
-                                                    <br>
-                                                    View PDF
+                                                    <br>View PDF
                                                 </a>
                                             @elseif($ext === 'mp4')
                                                 <video width="120" controls>
-                                                    <source src="{{ $fullPath }}" type="video/mp4">
+                                                    <source src="{{ $sourceUrl }}" type="video/mp4">
                                                     Your browser does not support the video tag.
                                                 </video>
                                             @else
-                                                <a href="{{ $fullPath }}" target="_blank">Download File</a>
+                                                <a href="{{ $sourceUrl }}" target="_blank">Download File</a>
                                             @endif
                                         </td>
+
                                         <td>{{ $mediaItem->file_type }}</td>
                                         <td class="text-center">
                                             <form action="{{ route('deletemedia', $mediaItem->media_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this media?');">

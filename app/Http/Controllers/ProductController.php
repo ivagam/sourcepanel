@@ -18,6 +18,7 @@ class ProductController extends Controller
         $totalProducts = DB::table('products')->count();
         $product = new Product();
         $product->product_name        = 'xyz ' .$totalProducts;
+        $product->category_ids = '';
         $product->category_id         = 0;
         $product->product_url         = Str::slug($product->product_name);
         $product->created_by          = session('user_id');
@@ -87,50 +88,61 @@ class ProductController extends Controller
         $categories = Category::all();
         $domains = Domain::all();
         $media = Media::all();
+        $mainCategories = Category::whereNull('subcategory_id')->get();
 
         $selectedImages = Image::where('product_id', $id)->get();
 
-        return view('product.editProduct', compact('product', 'categories', 'domains', 'media', 'selectedImages'));
+        return view('product.editProduct', compact('product', 'categories', 'mainCategories', 'domains', 'media', 'selectedImages'));
     }
 
 
     public function updateProduct(Request $request, $id)
-    {
-        $product = Product::findOrFail($id);
+{
+    $product = Product::findOrFail($id);
 
-        $product->product_name = $request->product_name ?? $product->product_name;
-        $product->product_price = $request->product_price ?? $product->product_price;
-        $product->category_id = $request->category ?? $product->category_id;
-        $product->description = $request->description;
-        $product->meta_keywords = $request->meta_keywords;
-        $product->meta_description = $request->meta_description;
-        $product->domains = is_array($request->domains) ? implode(',', $request->domains) : $product->domains;
-        $product->product_url = $request->product_name ? Str::slug($request->product_name) : $product->product_url;
-        $product->created_by = session('user_id');
-        $product->save();
+    $product->product_name = $request->product_name ?? $product->product_name;
+    $product->product_price = $request->product_price ?? $product->product_price;
+    $product->category_id = $request->category_id ?? $product->category_id;
 
-        $existingImages = $request->input('existing_images', []);
-
-        Image::where('product_id', $product->product_id)
-            ->whereNotIn('file_path', $existingImages)
-            ->delete();
-
-        foreach ($existingImages as $path) {
-            if (!Image::where('product_id', $product->product_id)->where('file_path', $path)->exists()) {
-                Image::create([
-                    'product_id' => $product->product_id,
-                    'file_path' => $path,
-                    'created_by' => session('user_id'),
-                ]);
-            }
-        }
-
-        if ($request->expectsJson()) {
-            return response()->json(['success' => true, 'message' => 'Product updated successfully!']);
-        }
-
-        return redirect()->route('productList')->with('success', 'Product updated successfully!');
+    // Convert array to string if needed
+    if (is_array($request->category_ids)) {
+        $product->category_ids = implode(',', $request->category_ids);
+    } else {
+        // if it's already a string, just assign or fallback to old value
+        $product->category_ids = $request->category_ids ?? $product->category_ids ?? '';
     }
+
+    $product->description = $request->description ?? $product->description;
+    $product->meta_keywords = $request->meta_keywords ?? $product->meta_keywords;
+    $product->meta_description = $request->meta_description ?? $product->meta_description;
+    $product->domains = is_array($request->domains) ? implode(',', $request->domains) : $product->domains;
+    $product->product_url = $request->product_name ? Str::slug($request->product_name) : $product->product_url;
+    $product->created_by = session('user_id');
+    $product->save();
+
+    $existingImages = $request->input('existing_images', []);
+
+    Image::where('product_id', $product->product_id)
+        ->whereNotIn('file_path', $existingImages)
+        ->delete();
+
+    foreach ($existingImages as $path) {
+        if (!Image::where('product_id', $product->product_id)->where('file_path', $path)->exists()) {
+            Image::create([
+                'product_id' => $product->product_id,
+                'file_path' => $path,
+                'created_by' => session('user_id'),
+            ]);
+        }
+    }
+
+    if ($request->expectsJson()) {
+        return response()->json(['success' => true, 'message' => 'Product updated successfully!']);
+    }
+
+    return redirect()->route('productList')->with('success', 'Product updated successfully!');
+}
+
 
 
     public function deleteProduct($product_id)

@@ -11,6 +11,12 @@
 @endif
 
 <style>
+
+    .sortable-ghost {
+    opacity: 0.4;
+    background: #d0ebff;
+}
+
     .image-box {
         border: 2px solid transparent;
         border-radius: 5px;
@@ -66,51 +72,27 @@
                             <input type="number" name="product_price" step="0.01" class="form-control" value="{{ old('product_price', $product->product_price) }}" >                            
                         </div>
 
+                        
                         <div class="col-md-6">
                             <label class="form-label">Product Category <span class="text-danger">*</span></label>
-                            <select name="category" id="categorySelect" class="form-control select2" >
-                                <option value="0">Others</option>
-                                @foreach ($categories as $category)
-                                    <option value="{{ $category->category_id }}" {{ old('category', $product->category_id ?? '') == $category->category_id ? 'selected' : '' }}>
-                                        {{ $category->full_path ?? $category->category_name }}
+                            <select class="form-select" id="mainCategorySelect">
+                                <option value="">-- Select Main Category --</option>
+                                @foreach($mainCategories as $category)
+                                    <option value="{{ $category->category_id }}"
+                                        {{ old('main_category_id', explode(',', $product->category_ids ?? '')[0] ?? '') == $category->category_id ? 'selected' : '' }}>
+                                        {{ $category->category_name }}
                                     </option>
                                 @endforeach
                             </select>
                         </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label">Domains</label>
-                            <select name="domains[]" class="form-control select2" multiple>
-                                @php
-                                    $selectedDomains = old('domains', explode(',', $product->domains));
-                                @endphp
-                                @foreach ($domains as $domain)
-                                    <option value="{{ $domain->domain_id }}" {{ in_array($domain->domain_id, $selectedDomains) ? 'selected' : '' }}>
-                                        {{ $domain->domain_name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                        <div class="col-md-6" id="dynamic-subcategories"></div>
 
-                        <div class="col-md-12">
-                            <label class="form-label">Product Description</label>
-                            <textarea name="description" class="form-control texteditor">{{ old('description', $product->description) }}</textarea>
-                            
-                        </div>
+                        <input type="hidden" name="category_id" id="final_category_id" value="{{ old('category_id', $product->category_id) }}">
+                        <input type="hidden" name="category_ids" id="category_ids" value="{{ old('category_ids', $product->category_ids) }}">
+                        
 
-                        <div class="col-md-6">
-                            <label class="form-label">Meta Keywords</label>
-                            <textarea name="meta_keywords" class="form-control">{{ old('meta_keywords', $product->meta_keywords) }}</textarea>
-                            
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Meta Description</label>
-                            <textarea name="meta_description" class="form-control">{{ old('meta_description', $product->meta_description) }}</textarea>
-                            
-                        </div>
-
-                        <div class="mb-3">
+                         <div class="mb-3">
                             <label class="form-label">Uploads Files<span class="text-danger">*</span></label>
                             <div class="dropzone" id="dropzoneEdit"></div>
                         </div>
@@ -136,13 +118,41 @@
                                     @else
                                         <img src="{{ env('SOURCE_PANEL_IMAGE_URL') . $image->file_path }}" class="img-thumbnail" style="width: 120px; height: 120px;">
                                     @endif
-
-                                    <div class="d-flex justify-content-between mt-1">
-                                        <button type="button" class="btn btn-sm btn-secondary move-left" title="Move Left">←</button>
-                                        <button type="button" class="btn btn-sm btn-secondary move-right" title="Move Right">→</button>
-                                    </div>
+                                   
                                 </div>
                             @endforeach
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label">Product Description</label>
+                            <textarea name="description" class="form-control texteditor">{{ old('description', $product->description) }}</textarea>
+                            
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Meta Keywords</label>
+                            <textarea name="meta_keywords" class="form-control">{{ old('meta_keywords', $product->meta_keywords) }}</textarea>
+                            
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Meta Description</label>
+                            <textarea name="meta_description" class="form-control">{{ old('meta_description', $product->meta_description) }}</textarea>
+                            
+                        </div>
+
+                       <div class="col-md-6">
+                            <label class="form-label">Domains</label>
+                            <select name="domains[]" class="form-control select2" multiple>
+                                @php
+                                    $selectedDomains = old('domains', explode(',', $product->domains));
+                                @endphp
+                                @foreach ($domains as $domain)
+                                    <option value="{{ $domain->domain_id }}" {{ in_array($domain->domain_id, $selectedDomains) ? 'selected' : '' }}>
+                                        {{ $domain->domain_name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="col-md-12">
@@ -158,12 +168,113 @@
 <!-- Dropzone JS -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.2/dropzone.min.css" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.2/min/dropzone.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
 
 @php
     $lastSerial = $product->images->max('serial_no') ?? 0;
 @endphp
 
 <script>
+
+    const BASE_URL = "{{ env('SOURCE_PANEL') }}";
+
+function loadSubcategories(parentId, level = 1, selectedId = null) {
+    return $.ajax({
+        url: `${BASE_URL}category/get-subcategories/${parentId}`,
+        type: 'GET',
+    }).done(function (response) {
+        $(`#dynamic-subcategories .subcat-level`).filter(function () {
+            return parseInt($(this).data('level')) >= level;
+        }).remove();
+
+        $('#final_category_id').val(parentId);
+
+        if (response.length > 0) {
+            let options = '<option value="">-- Select Sub Category --</option>';
+            response.forEach(cat => {
+                options += `<option value="${cat.category_id}" ${selectedId == cat.category_id ? 'selected' : ''}>${cat.category_name}</option>`;
+            });
+
+            let dropdown = `
+                <div class="mb-3 subcat-level" data-level="${level}">
+                    <label class="form-label">Sub Category (Level ${level})</label>
+                    <select class="form-select" onchange="loadSubcategories(this.value, ${level + 1})">
+                        ${options}
+                    </select>
+                </div>
+            `;
+            $('#dynamic-subcategories').append(dropdown);
+        }
+    }).fail(function () {
+        alert('Failed to load subcategories.');
+    });
+}
+
+async function loadCategoryChain(chain) {
+    if (!chain.length) return;
+
+    $('#mainCategorySelect').val(chain[0]);
+    for (let i = 1; i < chain.length; i++) {
+        await loadSubcategories(chain[i - 1], i, chain[i]);
+    }
+    $('#final_category_id').val(chain[chain.length - 1]);
+}
+
+$(document).ready(function () {
+    let categoryIds = $('#category_ids').val();
+    let chain = categoryIds ? categoryIds.split(',') : [];
+
+    $('#dynamic-subcategories').html('');
+    $('#final_category_id').val('');
+
+    loadCategoryChain(chain);
+
+    $('#mainCategorySelect').on('change', function () {
+        const selectedId = $(this).val();
+        $('#dynamic-subcategories').html('');
+        $('#final_category_id').val('');
+        $('#category_ids').val(selectedId || '');
+
+        if (selectedId) {
+            loadSubcategories(selectedId, 1);
+        }
+    });
+
+    $('form').on('submit', function () {
+    let selectedIds = [];
+    let allSelected = true;
+
+    const mainCat = $('#mainCategorySelect').val();
+    if (mainCat) selectedIds.push(mainCat);
+    else {
+        alert('Please select the main category.');
+        return false;
+    }
+
+    $('#dynamic-subcategories select').each(function () {
+        const val = $(this).val();
+        if (!val) {
+            allSelected = false;
+            $(this).addClass('is-invalid');
+        } else {
+            $(this).removeClass('is-invalid');
+            selectedIds.push(val);
+        }
+    });
+
+    if (!allSelected) {
+        alert('Please select all subcategories.');
+        return false;
+    }
+
+    $('#category_ids').val(selectedIds.join(','));
+    $('#final_category_id').val(selectedIds[selectedIds.length - 1]);
+});
+});
+
+
 Dropzone.autoDiscover = false;
 
 let uploadIndex = {{ $lastSerial + 1 }};
@@ -201,7 +312,6 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
             checkmark.innerHTML = '✔️';
             file.previewElement.appendChild(checkmark);
 
-            // Add new image or video preview box for ordering
             const container = document.createElement('div');
             container.className = "position-relative image-box";
             container.setAttribute("data-id", response.image_id || 'new-' + Date.now());
@@ -215,33 +325,9 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
                    </video>`
                 : `<img src="` + baseUrl + `/` + response.file_path + `" class="img-thumbnail" style="width: 120px; height: 120px;">`;
 
-            container.innerHTML = `
-                ${previewHTML}
-                <div class="d-flex justify-content-between mt-1">
-                    <button type="button" class="btn btn-sm btn-secondary move-left" title="Move Left">←</button>
-                    <button type="button" class="btn btn-sm btn-secondary move-right" title="Move Right">→</button>
-                </div>
-            `;
+            container.innerHTML = `${previewHTML}`;
 
             document.getElementById("imageOrderBox").appendChild(container);
-
-            container.querySelector('.move-left').addEventListener('click', function () {
-                const current = this.closest('.image-box');
-                const prev = current.previousElementSibling;
-                if (prev) {
-                    current.parentNode.insertBefore(current, prev);
-                    updateSerials();
-                }
-            });
-
-            container.querySelector('.move-right').addEventListener('click', function () {
-                const current = this.closest('.image-box');
-                const next = current.nextElementSibling;
-                if (next) {
-                    current.parentNode.insertBefore(next, current);
-                    updateSerials();
-                }
-            });
         }
     },
     error: function (file, errorMessage) {
@@ -249,7 +335,6 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
     }
 });
 
-// Preload existing files with correct mime types and previews
 @foreach($product->images as $index => $image)
 {
     let ext = "{{ strtolower(pathinfo($image->file_path, PATHINFO_EXTENSION)) }}";
@@ -266,7 +351,7 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
     }
     let file{{ $index }} = {
         name: "{{ basename($image->file_path) }}",
-        size: 123456, // You can set real size if available
+        size: 123456,
         type: mimeType,
         accepted: true,
         status: Dropzone.SUCCESS,
@@ -275,8 +360,6 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
     };
     editDropzone.emit("addedfile", file{{ $index }});
     if (mimeType.startsWith('video')) {
-        // For videos, no thumbnail in Dropzone, just emit complete to show preview element
-        // Optionally, you can add your own video preview here if Dropzone doesn't show it
     } else {
         editDropzone.emit("thumbnail", file{{ $index }}, "{{ rtrim(env('SOURCE_PANEL_IMAGE_URL'), '/') . '/' . $image->file_path }}");
     }
@@ -288,7 +371,6 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
 
 editDropzone.on("removedfile", function(file) {
     if (file.existing && file.filePath) {
-        // Remove hidden input
         const inputs = document.querySelectorAll('input[name="existing_images[]"]');
         inputs.forEach(input => {
             if (input.value === file.filePath) {
@@ -296,7 +378,6 @@ editDropzone.on("removedfile", function(file) {
             }
         });
 
-        // Remove image/video from reorder box
         document.querySelectorAll('#imageOrderBox .image-box').forEach(box => {
             if (
                 box.getAttribute('data-id') === file.image_id?.toString() ||
@@ -309,7 +390,6 @@ editDropzone.on("removedfile", function(file) {
 
         updateSerials();
         
-        // Send delete request to server
         fetch("{{ route('deleteImage') }}", {
             method: 'POST',
             headers: {
@@ -354,27 +434,6 @@ function updateSerials() {
     });
 }
 
-document.querySelectorAll('.move-left').forEach(btn => {
-    btn.addEventListener('click', function () {
-        const current = this.closest('.image-box');
-        const prev = current.previousElementSibling;
-        if (prev) {
-            current.parentNode.insertBefore(current, prev);
-            updateSerials();
-        }
-    });
-});
-
-document.querySelectorAll('.move-right').forEach(btn => {
-    btn.addEventListener('click', function () {
-        const current = this.closest('.image-box');
-        const next = current.nextElementSibling;
-        if (next) {
-            current.parentNode.insertBefore(next, current);
-            updateSerials();
-        }
-    });
-});
 
 function getMimeType(filePath) {
     const ext = filePath.split('.').pop().toLowerCase();
@@ -386,8 +445,14 @@ function getMimeType(filePath) {
         default: return 'video/mp4';
     }
 }
+
+Sortable.create(document.getElementById('imageOrderBox'), {
+    animation: 150,
+    ghostClass: 'sortable-ghost',
+    onEnd: function () {
+        updateSerials();
+    }
+});
 </script>
-
-
 
 @endsection

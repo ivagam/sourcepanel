@@ -12,16 +12,29 @@
 
 <style>
 
-    .sortable-ghost {
-    opacity: 0.4;
-    background: #d0ebff;
-}
-
-    .image-box {
+     .image-box {
+        transition: border 0.2s ease;
         border: 2px solid transparent;
         border-radius: 5px;
         cursor: pointer;
     }
+
+    .image-box.dragging {
+        border: 2px solid green;
+        border-radius: 5px;
+    }
+
+    .image-box.highlighted {
+        border: 2px solid green;
+        border-radius: 5px;
+        box-shadow: 0 0 8px rgba(0, 128, 0, 0.5);
+    }
+
+    .sortable-ghost {
+    opacity: 0.4;
+    background: #d0ebff;
+    }
+   
     .image-box.selected {
         border: 2px solid #0d6efd;
     }
@@ -104,7 +117,7 @@
 
                         <div id="imageOrderBox" class="d-flex flex-wrap mt-3 gap-2">
                             @foreach($product->images->sortBy('serial_no') as $image)
-                                <div class="position-relative image-box" data-id="{{ $image->image_id }}">
+                                <div class="position-relative image-box" data-id="{{ $image->image_id }}" draggable="true" ondragstart="handleDragStart(this)" ondragend="handleDragEnd(this)">
                                     @php
                                         $ext = strtolower(pathinfo($image->file_path, PATHINFO_EXTENSION));
                                         $videoExtensions = ['mp4', 'mov', 'avi', 'webm'];
@@ -453,6 +466,18 @@ Sortable.create(document.getElementById('imageOrderBox'), {
         updateSerials();
     }
 });
+
+let lastDragged = null;
+
+    function handleDragStart(element) {
+        element.classList.add('dragging');
+    }
+
+    function handleDragEnd(element) {
+        element.classList.remove('dragging');
+        element.classList.add('highlighted');
+    }
+
 </script>
 
 @endsection

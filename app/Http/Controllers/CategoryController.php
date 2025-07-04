@@ -27,6 +27,8 @@ class CategoryController extends Controller
             'category_name' => 'required|string|max:255',
         ]);
 
+        $domains = $request->domains;
+
         if (is_array($domains)) {
             $domains = implode(',', $domains);
         } elseif (is_string($domains)) {
@@ -70,6 +72,8 @@ class CategoryController extends Controller
         $request->validate([
             'category_name' => 'required|string|max:255',
         ]);
+
+        $domains = $request->domains;
 
         if (is_array($domains)) {
             $domains = implode(',', $domains);

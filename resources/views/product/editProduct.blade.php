@@ -300,7 +300,7 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
         'X-CSRF-TOKEN': '{{ csrf_token() }}'
     },
     acceptedFiles: ".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.webm",
-    maxFilesize: 20,
+    maxFilesize: 1024,
     addRemoveLinks: true,
     dictDefaultMessage: "Drag files or click to upload",
     init: function () {

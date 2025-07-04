@@ -27,11 +27,19 @@ class CategoryController extends Controller
             'category_name' => 'required|string|max:255',
         ]);
 
+        if (is_array($domains)) {
+            $domains = implode(',', $domains);
+        } elseif (is_string($domains)) {
+            $domains = trim($domains);
+        } else {
+            $domains = null;
+        }
+
         Category::create([
             'category_name' => $request->category_name,
             'subcategory_id' => $request->subcategory_id,
             'alice_name' => $request->alice_name,
-            'domains' => implode(',', $request->domains),
+            'domains' => $domains,
             'created_by' => session('user_id'),
             'category_ids' => $request->category_ids,
         ]);
@@ -63,11 +71,19 @@ class CategoryController extends Controller
             'category_name' => 'required|string|max:255',
         ]);
 
+        if (is_array($domains)) {
+            $domains = implode(',', $domains);
+        } elseif (is_string($domains)) {
+            $domains = trim($domains);
+        } else {
+            $domains = null;
+        }
+
         Category::where('category_id', $id)->update([
             'category_name' => $request->category_name,
             'subcategory_id' => $request->subcategory_id,
             'alice_name'     => $request->alice_name,
-            'domains' => implode(',', $request->domains),
+            'domains' => $domains,
             'created_by' => session('user_id'),
             'category_ids' => $request->category_ids,
         ]);

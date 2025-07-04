@@ -152,34 +152,22 @@ $(document).ready(function () {
         let selectedIds = [];
 
         const mainCat = $('#mainCategorySelect').val();
-        if (!mainCat) {
-            alert('Please select the main category.');
-            e.preventDefault();
-            return false;
+        if (mainCat) {
+            selectedIds.push(mainCat);
         }
-        selectedIds.push(mainCat);
 
-        let allSelected = true;
         $('#dynamic-subcategories select').each(function() {
             const val = $(this).val();
-            if (!val) {
-                allSelected = false;
-                $(this).addClass('is-invalid');
-            } else {
+            if (val) {
                 $(this).removeClass('is-invalid');
                 selectedIds.push(val);
+            } else {
+                $(this).removeClass('is-invalid');
             }
         });
 
-        if (!allSelected) {
-            alert('Please select all subcategories.');
-            e.preventDefault();
-            return false;
-        }
-
         $('#category_ids').val(selectedIds.join(','));
-        $('#final_subcategory_id').val(selectedIds[selectedIds.length - 1]);
+        $('#final_subcategory_id').val(selectedIds[selectedIds.length - 1] || '');
     });
-
 });
 </script>

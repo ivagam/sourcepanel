@@ -117,36 +117,26 @@
         });
 
        $('form').on('submit', function(e) {
-        let selectedIds = [];
+            let selectedIds = [];
 
-        const mainCat = $('#mainCategorySelect').val();
-        if (!mainCat) {
-            alert('Please select the main category.');
-            e.preventDefault();
-            return false;
-        }
-        selectedIds.push(mainCat);
-
-        let allSelected = true;
-        $('#dynamic-subcategories select').each(function() {
-            const val = $(this).val();
-            if (!val) {
-                allSelected = false;
-                $(this).addClass('is-invalid');  // optional: highlight invalid select
-            } else {
-                $(this).removeClass('is-invalid');
-                selectedIds.push(val);
+            const mainCat = $('#mainCategorySelect').val();
+            if (mainCat) {
+                selectedIds.push(mainCat);
             }
+
+            $('#dynamic-subcategories select').each(function() {
+                const val = $(this).val();
+                if (val) {
+                    $(this).removeClass('is-invalid');
+                    selectedIds.push(val);
+                } else {
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            $('#category_ids').val(selectedIds.join(','));
+            $('#final_subcategory_id').val(selectedIds[selectedIds.length - 1] || '');
         });
 
-        if (!allSelected) {
-            alert('Please select all subcategories.');
-            e.preventDefault();
-            return false;
-        }
-
-        $('#category_ids').val(selectedIds.join(','));
-        $('#final_subcategory_id').val(selectedIds[selectedIds.length - 1]);
-    });
     });
 </script>

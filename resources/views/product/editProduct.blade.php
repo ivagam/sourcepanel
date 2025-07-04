@@ -257,33 +257,24 @@ $(document).ready(function () {
 
     $('form').on('submit', function () {
     let selectedIds = [];
-    let allSelected = true;
 
     const mainCat = $('#mainCategorySelect').val();
-    if (mainCat) selectedIds.push(mainCat);
-    else {
-        alert('Please select the main category.');
-        return false;
+    if (mainCat) {
+        selectedIds.push(mainCat);
     }
 
     $('#dynamic-subcategories select').each(function () {
         const val = $(this).val();
-        if (!val) {
-            allSelected = false;
-            $(this).addClass('is-invalid');
+        if (val) {
+            selectedIds.push(val);
+            $(this).removeClass('is-invalid');
         } else {
             $(this).removeClass('is-invalid');
-            selectedIds.push(val);
         }
     });
 
-    if (!allSelected) {
-        alert('Please select all subcategories.');
-        return false;
-    }
-
     $('#category_ids').val(selectedIds.join(','));
-    $('#final_category_id').val(selectedIds[selectedIds.length - 1]);
+    $('#final_category_id').val(selectedIds[selectedIds.length - 1] || '');
 });
 });
 
@@ -301,6 +292,7 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
     },
     acceptedFiles: ".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.webm",
     maxFilesize: 1024,
+    timeout: 300000,
     addRemoveLinks: true,
     dictDefaultMessage: "Drag files or click to upload",
     init: function () {

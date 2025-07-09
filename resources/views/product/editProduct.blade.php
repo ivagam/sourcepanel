@@ -106,6 +106,17 @@
                             @endforeach
                         </div>
 
+                        <div class="col-md-6">
+                            <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                            <input type="text" name="product_name" class="form-control @error('product_name') is-invalid @enderror" value="{{ old('product_name', $product->product_name) }}">
+                            @error('product_name')<div class="text-danger">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Product Price <span class="text-danger">*</span></label>
+                            <input type="number" name="product_price" step="0.01" class="form-control" value="{{ old('product_price', $product->product_price) }}" >                            
+                        </div> 
+
                         <div class="col-md-4">
                             <label class="form-label">Category 1</label>
                             <select class="form-select" id="mainCategorySelect">
@@ -120,18 +131,6 @@
                         </div>
 
                         <div class="mb-3 col-md-8" id="dynamic-subcategories"></div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Product Name <span class="text-danger">*</span></label>
-                            <input type="text" name="product_name" class="form-control @error('product_name') is-invalid @enderror" value="{{ old('product_name', $product->product_name) }}">
-                            @error('product_name')<div class="text-danger">{{ $message }}</div>@enderror
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Product Price <span class="text-danger">*</span></label>
-                            <input type="number" name="product_price" step="0.01" class="form-control" value="{{ old('product_price', $product->product_price) }}" >                            
-                        </div>                       
-                        
 
                         <div class="col-md-12">
                             <label class="form-label">Product Description</label>

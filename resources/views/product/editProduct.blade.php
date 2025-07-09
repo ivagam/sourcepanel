@@ -76,7 +76,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Uploads Files<span class="text-danger">*</span></label>
+                            <label class="form-label">Uploads Files</label>
                             <div class="dropzone" id="dropzoneEdit"></div>
                         </div>
 
@@ -113,7 +113,7 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Product Price <span class="text-danger">*</span></label>
+                            <label class="form-label">Product Price</label>
                             <input type="number" name="product_price" step="0.01" class="form-control" value="{{ old('product_price', $product->product_price) }}" >                            
                         </div> 
 
@@ -208,7 +208,7 @@ function loadSubcategories(parentId, level = 2, selectedId = null) {
             });
 
             let dropdown = `
-                <div class="col-md-6" data-level="${level}">
+                <div class="col-md-6 subcat-level" data-level="${level}">
                     <label class="form-label">Category ${labelNumber}</label>
                     <select class="form-select" onchange="loadSubcategories(this.value, ${level + 1})">
                         ${options}

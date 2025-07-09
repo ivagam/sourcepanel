@@ -92,7 +92,7 @@ function loadSubcategories(parentId, level = 2) {
 
             if (response.length > 0) {
                 let dropdown = `
-                    <div class="col-md-6" data-level="${level}">
+                    <div class="col-md-6 subcat-level" data-level="${level}">
                         <label class="form-label">Category ${level}</label>
                         <select class="form-select" onchange="loadSubcategories(this.value, ${level + 1})">
                             <option value="">-- Select Category --</option>

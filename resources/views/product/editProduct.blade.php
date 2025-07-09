@@ -1,8 +1,4 @@
 @extends('layout.layout')
-@php
-    $title = 'Edit Product';
-    $subTitle = 'Edit Product';
-@endphp
 
 @section('content')
 
@@ -66,46 +62,20 @@
     <div class="card-body p-24">
         <div class="col-lg-12">
             <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Edit Product</h5>
-                </div>
+               
                 <div class="card-body">
                     <form id="productEditForm" class="row gy-3 needs-validation" method="POST" action="{{ route('updateProduct', $product->product_id) }}" novalidate enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
-
-                        <div class="col-md-6">
-                            <label class="form-label">Product Name <span class="text-danger">*</span></label>
-                            <input type="text" name="product_name" class="form-control @error('product_name') is-invalid @enderror" value="{{ old('product_name', $product->product_name) }}">
-                            @error('product_name')<div class="text-danger">{{ $message }}</div>@enderror
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Product Price <span class="text-danger">*</span></label>
-                            <input type="number" name="product_price" step="0.01" class="form-control" value="{{ old('product_price', $product->product_price) }}" >                            
-                        </div>
-
                         
-                        <div class="col-md-6">
-                            <label class="form-label">Product Category <span class="text-danger">*</span></label>
-                            <select class="form-select" id="mainCategorySelect">
-                                <option value="">-- Select Main Category --</option>
-                                @foreach($mainCategories as $category)
-                                    <option value="{{ $category->category_id }}"
-                                        {{ old('main_category_id', explode(',', $product->category_ids ?? '')[0] ?? '') == $category->category_id ? 'selected' : '' }}>
-                                        {{ $category->category_name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-6" id="dynamic-subcategories"></div>
-
                         <input type="hidden" name="category_id" id="final_category_id" value="{{ old('category_id', $product->category_id) }}">
                         <input type="hidden" name="category_ids" id="category_ids" value="{{ old('category_ids', $product->category_ids) }}">
                         
+                        <div class="d-flex justify-content-end">
+                            <button class="btn btn-primary" type="submit">Update</button>
+                        </div>
 
-                         <div class="mb-3">
+                        <div class="mb-3">
                             <label class="form-label">Uploads Files<span class="text-danger">*</span></label>
                             <div class="dropzone" id="dropzoneEdit"></div>
                         </div>
@@ -135,6 +105,33 @@
                                 </div>
                             @endforeach
                         </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Category 1</label>
+                            <select class="form-select" id="mainCategorySelect">
+                                <option value="">-- Select Main Category --</option>
+                                @foreach($mainCategories as $category)
+                                    <option value="{{ $category->category_id }}"
+                                        {{ old('main_category_id', explode(',', $product->category_ids ?? '')[0] ?? '') == $category->category_id ? 'selected' : '' }}>
+                                        {{ $category->category_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="mb-3 col-md-8" id="dynamic-subcategories"></div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                            <input type="text" name="product_name" class="form-control @error('product_name') is-invalid @enderror" value="{{ old('product_name', $product->product_name) }}">
+                            @error('product_name')<div class="text-danger">{{ $message }}</div>@enderror
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Product Price <span class="text-danger">*</span></label>
+                            <input type="number" name="product_price" step="0.01" class="form-control" value="{{ old('product_price', $product->product_price) }}" >                            
+                        </div>                       
+                        
 
                         <div class="col-md-12">
                             <label class="form-label">Product Description</label>
@@ -193,7 +190,7 @@
 
     const BASE_URL = "{{ env('SOURCE_PANEL') }}";
 
-function loadSubcategories(parentId, level = 1, selectedId = null) {
+function loadSubcategories(parentId, level = 2, selectedId = null) {
     return $.ajax({
         url: `${BASE_URL}category/get-subcategories/${parentId}`,
         type: 'GET',
@@ -205,20 +202,25 @@ function loadSubcategories(parentId, level = 1, selectedId = null) {
         $('#final_category_id').val(parentId);
 
         if (response.length > 0) {
-            let options = '<option value="">-- Select Sub Category --</option>';
+            let labelNumber = level + 1;
+            let options = '<option value="">-- Select Category --</option>';
             response.forEach(cat => {
                 options += `<option value="${cat.category_id}" ${selectedId == cat.category_id ? 'selected' : ''}>${cat.category_name}</option>`;
             });
 
             let dropdown = `
-                <div class="mb-3 subcat-level" data-level="${level}">
-                    <label class="form-label">Sub Category (Level ${level})</label>
+                <div class="col-md-6" data-level="${level}">
+                    <label class="form-label">Category ${labelNumber}</label>
                     <select class="form-select" onchange="loadSubcategories(this.value, ${level + 1})">
                         ${options}
                     </select>
                 </div>
             `;
-            $('#dynamic-subcategories').append(dropdown);
+            if ($('#dynamic-subcategories .row').length === 0) {
+                    $('#dynamic-subcategories').html('<div class="row"></div>');
+                }
+
+            $('#dynamic-subcategories .row').append(dropdown);
         }
     }).fail(function () {
         alert('Failed to load subcategories.');

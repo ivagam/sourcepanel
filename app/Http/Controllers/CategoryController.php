@@ -14,11 +14,12 @@ class CategoryController extends Controller
         return view('category.categoryList', compact('categorys'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $mainCategories = Category::whereNull('subcategory_id')->get();        
         $domains = Domain::orderBy('domain_name')->get();
-        return view('category.addCategory', compact('domains', 'mainCategories'));
+        $defaultMainCategory = $request->input('main_category', '');
+        return view('category.addCategory', compact('domains', 'mainCategories', 'defaultMainCategory'));
     }
 
     public function store(Request $request)

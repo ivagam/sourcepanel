@@ -21,6 +21,25 @@
 
             <!-- Category Name -->
               <div class="row">
+
+              <div class="mb-3 col-md-4">
+                <label class="form-label">Category 1</label>
+                <select class="form-select" id="mainCategorySelect">
+                    <option value="">-- Select Main Category --</option>
+                    @foreach($mainCategories as $category)
+                        <option value="{{ $category->category_id }}"
+                            {{ old('main_category_id', $mainCategoryId) == $category->category_id ? 'selected' : '' }}>
+                            {{ $category->category_name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="mb-3 col-md-8" id="dynamic-subcategories"></div>
+
+           <input type="hidden" name="subcategory_id" id="final_subcategory_id" value="{{ old('subcategory_id', $editcategory->subcategory_id) }}">
+           <input type="hidden" name="category_ids" id="category_ids" value="{{ old('category_ids', $editcategory->category_ids) }}">
+
             <div class="mb-3 col-md-6">
                 <label class="form-label">Category Name <span class="text-danger">*</span></label>
                 <input type="text" name="category_name" class="form-control @error('category_name') is-invalid @enderror"
@@ -37,26 +56,6 @@
                     placeholder="Enter Alice Name" value="{{ old('alice_name', $editcategory->alice_name) }}">
             </div>
         </div>
-
-            <!-- Main Category select (top level) -->
-            <div class="mb-3">
-                <label class="form-label">Main Category</label>
-                <select class="form-select" id="mainCategorySelect">
-                    <option value="">-- Select Main Category --</option>
-                    @foreach($mainCategories as $category)
-                        <option value="{{ $category->category_id }}"
-                            {{ old('main_category_id', $mainCategoryId) == $category->category_id ? 'selected' : '' }}>
-                            {{ $category->category_name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <!-- Container for dynamic subcategory selects -->
-            <div class="mb-3" id="dynamic-subcategories"></div>
-
-           <input type="hidden" name="subcategory_id" id="final_subcategory_id" value="{{ old('subcategory_id', $editcategory->subcategory_id) }}">
-           <input type="hidden" name="category_ids" id="category_ids" value="{{ old('category_ids', $editcategory->category_ids) }}">
 
             <!-- Domains -->
             <div class="mb-3">
@@ -86,7 +85,7 @@
 
     setTimeout(() => $(".alert").fadeOut("slow"), 3000);
 
-    function loadSubcategories(parentId, level = 1, selectedId = null) {
+    function loadSubcategories(parentId, level = 2, selectedId = null) {
     return $.ajax({
         url: `${BASE_URL}category/get-subcategories/${parentId}`,
         type: 'GET',
@@ -98,20 +97,25 @@
         $('#final_subcategory_id').val(parentId);
 
         if (response.length > 0) {
-            let options = '<option value="">-- Select Sub Category --</option>';
+            let labelNumber = level + 1;
+            let options = '<option value="">-- Select Category --</option>';
             response.forEach(cat => {
                 options += `<option value="${cat.category_id}" ${selectedId == cat.category_id ? 'selected' : ''}>${cat.category_name}</option>`;
             });
 
             let dropdown = `
-                <div class="mb-3 subcat-level" data-level="${level}">
-                    <label class="form-label">Sub Category (Level ${level})</label>
+                <div class="col-md-6" data-level="${level}">
+                    <label class="form-label">Category ${labelNumber}</label>
                     <select class="form-select" onchange="loadSubcategories(this.value, ${level + 1})">
                         ${options}
                     </select>
                 </div>
             `;
-            $('#dynamic-subcategories').append(dropdown);
+            if ($('#dynamic-subcategories .row').length === 0) {
+                    $('#dynamic-subcategories').html('<div class="row"></div>');
+                }
+
+                $('#dynamic-subcategories .row').append(dropdown);
         }
     }).fail(function() {
         alert('Failed to load subcategories.');

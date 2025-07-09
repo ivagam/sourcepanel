@@ -21,39 +21,48 @@
                 </a>
             </li>
 
-            <li class="dropdown">
-                <a  href="javascript:void(0)">
-                    <iconify-icon icon="heroicons:film" class="menu-icon"></iconify-icon>
-                    <span>Category</span>
+            <li>
+                  <a href="{{ route('categoryList') }}">
+                        <iconify-icon icon="mdi:format-list-bulleted" class="menu-icon"></iconify-icon>
+                    <span>Category List</span>
                 </a>
-                <ul class="sidebar-submenu">
-                    <li>
-                        <a  href="{{ route('categoryList') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Category List</a>
-                    </li>
-                    <li>
-                        <a  href="{{ route('addcategory') }}"><i class="ri-circle-fill circle-icon text-warning-main w-auto"></i> Add Category</a>
-                    </li>
-                    
-                </ul>
-            </li>
-            
-            
-            <li class="dropdown">
-                <a  href="javascript:void(0)">
-                    <iconify-icon icon="heroicons:cube" class="menu-icon"></iconify-icon>
-                    <span>Product</span>
-                </a>
-                <ul class="sidebar-submenu">
-                    <li>
-                        <a  href="{{ route('productList') }}"><i class="ri-circle-fill circle-icon text-primary-600 w-auto"></i> Product List</a>
-                    </li>
-                    <li>
-                        <a  href="{{ route('addProduct') }}"><i class="ri-circle-fill circle-icon text-warning-main w-auto"></i> Add Product</a>
-                    </li>
-                    
-                </ul>
             </li>
 
+            <li>
+                  <a href="{{ route('addcategory') }}">
+                        <iconify-icon icon="mdi:plus-box" class="menu-icon"></iconify-icon>
+                    <span>Add Category</span>
+                </a>
+            </li>
+
+            <li>
+                  <a href="{{ route('productList') }}">
+                        <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
+                    <span>Product List</span>
+                </a>
+            </li>
+
+            <li>
+                  <a href="{{ route('addProduct') }}">
+                     <iconify-icon icon="mdi:plus-circle-outline" class="menu-icon"></iconify-icon>
+                    <span>Add Product</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ route('addcategory', ['main_category' => 1]) }}">
+                    <iconify-icon icon="mdi:plus-circle-outline" class="menu-icon"></iconify-icon>
+                    <span>Watches</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ route('addcategory', ['main_category' => 113]) }}">
+                    <iconify-icon icon="mdi:plus-circle-outline" class="menu-icon"></iconify-icon>
+                    <span>Others Brands</span>
+                </a>
+            </li>
+            
             <li>
                   <a href="{{ route('customerIndex') }}">
                     <iconify-icon icon="heroicons:users" class="menu-icon"></iconify-icon>

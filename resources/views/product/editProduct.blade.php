@@ -146,8 +146,7 @@
 
                         <div class="col-md-6">
                             <label class="form-label">Meta Description</label>
-                            <textarea name="meta_description" class="form-control">{{ old('meta_description', $product->meta_description) }}</textarea>
-                            
+                            <textarea name="meta_description" class="form-control">{{ old('meta_description', $product->meta_description) }}</textarea>                            
                         </div>
 
                        <div class="col-md-6">

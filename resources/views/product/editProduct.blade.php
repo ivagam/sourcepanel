@@ -91,20 +91,20 @@
                                     @php
                                         $ext = strtolower(pathinfo($image->file_path, PATHINFO_EXTENSION));
                                         $videoExtensions = ['mp4', 'mov', 'avi', 'webm'];
+                                        $mediaUrl = env('SOURCE_PANEL_IMAGE_URL') . $image->file_path;
                                     @endphp
 
                                     @if(in_array($ext, $videoExtensions))
-                                        <video width="120" height="120" controls>
-                                            <source src="{{ env('SOURCE_PANEL_IMAGE_URL') . $image->file_path }}" type="video/{{ $ext }}">
-                                            Your browser does not support the video tag.
+                                        <video width="120" height="120" onclick="showFullMedia('{{ $mediaUrl }}', 'video', '{{ $ext }}')" style="cursor: pointer;">
+                                            <source src="{{ $mediaUrl }}" type="video/{{ $ext }}">
                                         </video>
                                     @else
-                                        <img src="{{ env('SOURCE_PANEL_IMAGE_URL') . $image->file_path }}" class="img-thumbnail" style="width: 120px; height: 120px;">
+                                        <img src="{{ $mediaUrl }}" class="img-thumbnail" style="width: 120px; height: 120px; cursor: pointer;" onclick="showFullMedia('{{ $mediaUrl }}', 'image')">
                                     @endif
-                                   
                                 </div>
                             @endforeach
                         </div>
+
 
                         <div class="col-md-6">
                             <label class="form-label">Product Name <span class="text-danger">*</span></label>
@@ -172,6 +172,21 @@
         </div>
     </div>
 </div>
+
+<!-- Full View Modal -->
+<div class="modal fade" id="mediaPreviewModal" tabindex="-1" aria-labelledby="mediaPreviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">  <!-- xl for wider view -->
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center" id="mediaPreviewContent" style="max-height: 80vh; overflow: auto;">
+        <!-- Dynamic content goes here -->
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <!-- Dropzone JS -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.2/dropzone.min.css" rel="stylesheet" />
@@ -323,17 +338,20 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
 
             let isVideo = response.file_path.match(/\.(mp4|mov|avi|webm)$/i);
             let baseUrl = "{{ rtrim(env('SOURCE_PANEL_IMAGE_URL'), '/') }}";
-            let previewHTML = isVideo
-                ? `<video width="120" height="120" controls>
-                    <source src="` + baseUrl + `/` + response.file_path + `" type="` + getMimeType(response.file_path) + `">
-                   Your browser does not support the video tag.
-                   </video>`
-                : `<img src="` + baseUrl + `/` + response.file_path + `" class="img-thumbnail" style="width: 120px; height: 120px;">`;
+            let mediaUrl = baseUrl + '/' + response.file_path;
+             let previewHTML;
+                if (isVideo) {
+                    previewHTML = `<video width="120" height="120" style="cursor: pointer;" onclick="showFullMedia('${mediaUrl}', 'video', '${response.file_path.split('.').pop()}')">
+                                        <source src="${mediaUrl}" type="${getMimeType(response.file_path)}">
+                                        Your browser does not support the video tag.
+                                </video>`;
+                } else {
+                    previewHTML = `<img src="${mediaUrl}" class="img-thumbnail" style="width: 120px; height: 120px; cursor: pointer;" onclick="showFullMedia('${mediaUrl}', 'image')">`;
+                }
 
-            container.innerHTML = `${previewHTML}`;
-
-            document.getElementById("imageOrderBox").appendChild(container);
-        }
+                container.innerHTML = previewHTML;
+                document.getElementById("imageOrderBox").appendChild(container);
+            }
     },
     error: function (file, errorMessage) {
         alert("Upload failed: " + errorMessage);
@@ -469,6 +487,25 @@ let lastDragged = null;
         element.classList.remove('dragging');
         element.classList.add('highlighted');
     }
+
+function showFullMedia(url, type, ext = '') {
+    let content = '';
+
+    if (type === 'image') {
+        content = `<img src="${url}" class="img-fluid rounded" style="max-height: 75vh;">`;
+    } else if (type === 'video') {
+        content = `
+            <video controls autoplay style="max-width: 100%; max-height: 75vh; border-radius: 8px;">
+                <source src="${url}" type="video/${ext}">
+                Your browser does not support the video tag.
+            </video>
+        `;
+    }
+
+    document.getElementById('mediaPreviewContent').innerHTML = content;
+    const myModal = new bootstrap.Modal(document.getElementById('mediaPreviewModal'));
+    myModal.show();
+}
 
 </script>
 

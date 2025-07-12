@@ -86,22 +86,20 @@
                         @endforeach
 
                         <div id="imageOrderBox" class="d-flex flex-wrap mt-3 gap-2">
-                            @foreach($product->images->sortBy('serial_no') as $image)
-                                <div class="position-relative image-box" data-id="{{ $image->image_id }}" draggable="true" ondragstart="handleDragStart(this)" ondragend="handleDragEnd(this)">
-                                    @php
-                                        $ext = strtolower(pathinfo($image->file_path, PATHINFO_EXTENSION));
-                                        $videoExtensions = ['mp4', 'mov', 'avi', 'webm'];
-                                        $mediaUrl = env('SOURCE_PANEL_IMAGE_URL') . $image->file_path;
-                                    @endphp
+                           @foreach($product->images->sortBy('serial_no')->values() as $index => $image)
+                                @php
+                                    $ext = strtolower(pathinfo($image->file_path, PATHINFO_EXTENSION));
+                                    $mediaUrl = env('SOURCE_PANEL_IMAGE_URL') . $image->file_path;
+                                    $isVideo = in_array($ext, ['mp4', 'mov', 'avi', 'webm']);
+                                @endphp
 
-                                    @if(in_array($ext, $videoExtensions))
-                                        <video width="120" height="120" onclick="showFullMedia('{{ $mediaUrl }}', 'video', '{{ $ext }}')" style="cursor: pointer;">
-                                            <source src="{{ $mediaUrl }}" type="video/{{ $ext }}">
-                                        </video>
-                                    @else
-                                        <img src="{{ $mediaUrl }}" class="img-thumbnail" style="width: 120px; height: 120px; cursor: pointer;" onclick="showFullMedia('{{ $mediaUrl }}', 'image')">
-                                    @endif
-                                </div>
+                                @if($isVideo)
+                                    <video width="120" height="120" onclick="showFullMedia({{ $index }})" style="cursor: pointer;">
+                                        <source src="{{ $mediaUrl }}" type="video/{{ $ext }}">
+                                    </video>
+                                @else
+                                    <img src="{{ $mediaUrl }}" class="img-thumbnail" style="width: 120px; height: 120px; cursor: pointer;" onclick="showFullMedia({{ $index }})">
+                                @endif
                             @endforeach
                         </div>
 
@@ -175,15 +173,38 @@
     </div>
 </div>
 
-<!-- Full View Modal -->
-<div class="modal fade" id="mediaPreviewModal" tabindex="-1" aria-labelledby="mediaPreviewModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-xl">  <!-- xl for wider view -->
-    <div class="modal-content">
+@php
+    $mediaItems = $product->images->sortBy('serial_no')->values()->map(function($img) {
+        $ext = strtolower(pathinfo($img->file_path, PATHINFO_EXTENSION));
+        return [
+            'type' => in_array($ext, ['mp4', 'mov', 'avi', 'webm']) ? 'video' : 'image',
+            'url' => env('SOURCE_PANEL_IMAGE_URL') . $img->file_path,
+            'ext' => $ext
+        ];
+    });
+@endphp
+
+<!-- Modal -->
+<div class="modal fade" id="mediaPreviewModal" tabindex="-1" aria-labelledby="mediaPreviewLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content bg-dark text-white">
       <div class="modal-header border-0">
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body text-center" id="mediaPreviewContent" style="max-height: 80vh; overflow: auto;">
-        <!-- Dynamic content goes here -->
+      <div class="modal-body p-0">
+        <div id="mediaCarousel" class="carousel slide" data-bs-ride="false">
+          <div class="carousel-inner" id="mediaCarouselInner"></div>
+
+          <!-- Controls -->
+          <button class="carousel-control-prev" type="button" data-bs-target="#mediaCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#mediaCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -225,9 +246,9 @@ $(document).ready(function () {
             loadWatchSubcategories(mainCategory, chain);
         } else if (mainCategory == '113') {
             if (chain.length) {
-                loadCategoryChain(chain);  // Existing chain ➔ restore chain
+                loadCategoryChain(chain);
             } else {
-                loadSubcategories('113', 1);  // No chain ➔ load first dropdown immediately ✅
+                loadSubcategories('113', 1);
             }
         }
     }
@@ -539,21 +560,31 @@ let lastDragged = null;
         element.classList.add('highlighted');
     }
 
-function showFullMedia(url, type, ext = '') {
-    let content = '';
+const items = @json($mediaItems);
 
-    if (type === 'image') {
-        content = `<img src="${url}" class="img-fluid rounded" style="max-height: 75vh;">`;
-    } else if (type === 'video') {
-        content = `
-            <video controls autoplay style="max-width: 100%; max-height: 75vh; border-radius: 8px;">
-                <source src="${url}" type="video/${ext}">
-                Your browser does not support the video tag.
-            </video>
-        `;
-    }
+function showFullMedia(startIndex = 0) {
+    const inner = document.getElementById('mediaCarouselInner');
+    inner.innerHTML = '';
 
-    document.getElementById('mediaPreviewContent').innerHTML = content;
+    items.forEach((item, index) => {
+        const isActive = index === startIndex ? 'active' : '';
+        const content = item.type === 'video'
+            ? `<video controls style="max-height:75vh; max-width:100%; border-radius:8px;" autoplay>
+                  <source src="${item.url}" type="video/${item.ext}">
+                  Your browser does not support the video tag.
+              </video>`
+            : `<img src="${item.url}" class="d-block w-100" style="max-height: 75vh; object-fit: contain;">`;
+
+        inner.innerHTML += `<div class="carousel-item ${isActive} text-center">${content}</div>`;
+    });
+
+    const carousel = new bootstrap.Carousel(document.getElementById('mediaCarousel'), {
+      interval: false,
+      ride: false,
+      wrap: true
+    });
+    carousel.to(startIndex);
+
     const myModal = new bootstrap.Modal(document.getElementById('mediaPreviewModal'));
     myModal.show();
 }

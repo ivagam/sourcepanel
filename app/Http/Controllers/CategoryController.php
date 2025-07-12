@@ -10,7 +10,7 @@ class CategoryController extends Controller
 {
     public function index()
     {        
-        $categorys = Category::with('subcategory')->orderBy('created_at', 'desc')->get();
+        $categorys = Category::with('subcategory')->orderBy('created_at', 'desc')->get();        
         return view('category.categoryList', compact('categorys'));
     }
 
@@ -63,7 +63,7 @@ class CategoryController extends Controller
         if(!empty($editcategory->category_ids)) {
             $chain = explode(',', $editcategory->category_ids);
             $mainCategoryId = $chain[0] ?? null;
-        }
+        }         
 
         return view('category.editCategory', compact('editcategory', 'categorys', 'domains', 'mainCategories', 'mainCategoryId'));
     }
@@ -107,4 +107,14 @@ class CategoryController extends Controller
         $subcategories = Category::where('subcategory_id', $id)->get();
         return response()->json($subcategories);
     }
+
+    public function getWatchSubcategories($parentId)
+    {
+        $subcategories = Category::where('subcategory_id', $parentId) // FIXED: Correct field
+            ->with('children') // You already have 'children' relationship using 'subcategory_id'
+            ->get();
+
+        return response()->json($subcategories);
+    }
+
 }

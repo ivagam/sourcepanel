@@ -13,13 +13,15 @@ use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
-    public function addProduct()
+    public function addProduct(Request $request)
     {
+        $mainCategory = $request->query('main_category')?$request->query('main_category'):'0';
+
         $totalProducts = DB::table('products')->count();
         $product = new Product();
         $product->product_name        = 'xyz ' .$totalProducts;
-        $product->category_ids = '';
-        $product->category_id         = 0;
+        $product->category_ids        = $mainCategory;
+        $product->category_id         = $mainCategory;
         $product->product_url         = Str::slug($product->product_name);
         $product->created_by          = session('user_id');
         $product->save();

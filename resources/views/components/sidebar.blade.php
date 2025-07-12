@@ -50,14 +50,14 @@
             </li>
 
             <li>
-                <a href="{{ route('addcategory', ['main_category' => 1]) }}">
+                <a href="{{ route('addProduct', ['main_category' => 1]) }}">
                     <iconify-icon icon="mdi:plus-circle-outline" class="menu-icon"></iconify-icon>
                     <span>Watches</span>
                 </a>
             </li>
 
             <li>
-                <a href="{{ route('addcategory', ['main_category' => 113]) }}">
+                <a href="{{ route('addProduct', ['main_category' => 113]) }}">
                     <iconify-icon icon="mdi:plus-circle-outline" class="menu-icon"></iconify-icon>
                     <span>Others Brands</span>
                 </a>

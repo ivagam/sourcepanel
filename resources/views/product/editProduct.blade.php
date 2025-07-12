@@ -130,6 +130,8 @@
                             </select>
                         </div>
 
+                        <div id="watch-subcategories" class="row" style="display: none;"></div>
+
                         <div class="mb-3 col-md-8" id="dynamic-subcategories"></div>
 
                         <div class="col-md-12">
@@ -203,6 +205,99 @@
 
     const BASE_URL = "{{ env('SOURCE_PANEL') }}";
 
+$(document).ready(function () {
+    const categoryIds = $('#category_ids').val();
+    const chain = categoryIds ? categoryIds.split(',') : [];
+    const mainCategoryFromUrl = '{{ $mainCategory ?? '' }}';
+
+    let mainCategory = '';
+
+    if (chain.length) {
+        mainCategory = chain[0];
+    } else if (mainCategoryFromUrl) {
+        mainCategory = mainCategoryFromUrl;
+    }
+
+    if (mainCategory) {
+        $('#mainCategorySelect').val(mainCategory);
+
+        if (mainCategory == '1') {
+            loadWatchSubcategories(mainCategory, chain);
+        } else if (mainCategory == '113') {
+            if (chain.length) {
+                loadCategoryChain(chain);  // Existing chain ➔ restore chain
+            } else {
+                loadSubcategories('113', 1);  // No chain ➔ load first dropdown immediately ✅
+            }
+        }
+    }
+
+    $('#mainCategorySelect').on('change', function () {
+        const selectedId = $(this).val();
+        $('#dynamic-subcategories').html('');
+        $('#watch-subcategories').html('').hide();
+        $('#final_category_id').val('');
+        $('#category_ids').val(selectedId || '');
+
+        if (selectedId == '1') {
+            loadWatchSubcategories(selectedId, []);
+        } else if (selectedId) {
+            loadSubcategories(selectedId, 1);
+        }
+    });
+
+    $('form').on('submit', function () {
+        let selectedIds = [];
+        const mainCat = $('#mainCategorySelect').val();
+        if (mainCat) selectedIds.push(mainCat);
+
+        if (mainCat == '1') {
+            $('#watch-subcategories select').each(function () {
+                const val = $(this).val();
+                if (val) selectedIds.push(val);
+            });
+        } else {
+            $('#dynamic-subcategories select').each(function () {
+                const val = $(this).val();
+                if (val) selectedIds.push(val);
+            });
+        }
+
+        $('#category_ids').val(selectedIds.join(','));
+        $('#final_category_id').val(selectedIds[selectedIds.length - 1] || '');
+    });
+});
+
+
+function loadWatchSubcategories(parentId, chain = []) {
+    $.ajax({
+        url: `${BASE_URL}category/get-watch-subcategories/${parentId}`,
+        type: 'GET',
+    }).done(function (response) {
+        if (response.length > 0) {
+            let html = '<div class="row">';
+            response.forEach((group, index) => {
+                const selectedVal = chain[index + 1] || '';
+                html += `
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">${group.category_name}</label>
+                        <select class="form-select">
+                            <option value="">-- Select ${group.category_name} --</option>
+                            ${group.children.map(child => `
+                                <option value="${child.category_id}" ${selectedVal == child.category_id ? 'selected' : ''}>${child.category_name}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            $('#watch-subcategories').html(html).show();
+        }
+    }).fail(function () {
+        alert('Failed to load subcategories.');
+    });
+}
+
 function loadSubcategories(parentId, level = 2, selectedId = null) {
     return $.ajax({
         url: `${BASE_URL}category/get-subcategories/${parentId}`,
@@ -229,9 +324,10 @@ function loadSubcategories(parentId, level = 2, selectedId = null) {
                     </select>
                 </div>
             `;
+
             if ($('#dynamic-subcategories .row').length === 0) {
-                    $('#dynamic-subcategories').html('<div class="row"></div>');
-                }
+                $('#dynamic-subcategories').html('<div class="row"></div>');
+            }
 
             $('#dynamic-subcategories .row').append(dropdown);
         }
@@ -242,57 +338,12 @@ function loadSubcategories(parentId, level = 2, selectedId = null) {
 
 async function loadCategoryChain(chain) {
     if (!chain.length) return;
-
     $('#mainCategorySelect').val(chain[0]);
     for (let i = 1; i < chain.length; i++) {
         await loadSubcategories(chain[i - 1], i, chain[i]);
     }
     $('#final_category_id').val(chain[chain.length - 1]);
 }
-
-$(document).ready(function () {
-    let categoryIds = $('#category_ids').val();
-    let chain = categoryIds ? categoryIds.split(',') : [];
-
-    $('#dynamic-subcategories').html('');
-    $('#final_category_id').val('');
-
-    loadCategoryChain(chain);
-
-    $('#mainCategorySelect').on('change', function () {
-        const selectedId = $(this).val();
-        $('#dynamic-subcategories').html('');
-        $('#final_category_id').val('');
-        $('#category_ids').val(selectedId || '');
-
-        if (selectedId) {
-            loadSubcategories(selectedId, 1);
-        }
-    });
-
-    $('form').on('submit', function () {
-    let selectedIds = [];
-
-    const mainCat = $('#mainCategorySelect').val();
-    if (mainCat) {
-        selectedIds.push(mainCat);
-    }
-
-    $('#dynamic-subcategories select').each(function () {
-        const val = $(this).val();
-        if (val) {
-            selectedIds.push(val);
-            $(this).removeClass('is-invalid');
-        } else {
-            $(this).removeClass('is-invalid');
-        }
-    });
-
-    $('#category_ids').val(selectedIds.join(','));
-    $('#final_category_id').val(selectedIds[selectedIds.length - 1] || '');
-});
-});
-
 
 Dropzone.autoDiscover = false;
 

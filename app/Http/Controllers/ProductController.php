@@ -20,7 +20,7 @@ class ProductController extends Controller
         $totalProducts = DB::table('products')->count();
         $product = new Product();
         $product->product_name        = 'xyz ' .$totalProducts;
-        $product->category_ids        = $mainCategory;
+        $product->category_ids        = $mainCategory . ',';
         $product->category_id         = $mainCategory;
         $product->product_url         = Str::slug($product->product_name);
         $product->created_by          = session('user_id');
@@ -106,11 +106,17 @@ class ProductController extends Controller
     $product->product_price = $request->product_price ?? $product->product_price;
     $product->category_id = $request->category_id ?? $product->category_id;
 
-    // Convert array to string if needed
+    if ($request->category_id != 1) {
+        $product->color = $request->color ?? $product->color;
+        $product->size = $request->size ?? $product->size;
+    } else {
+        $product->color = null;
+        $product->size = null;
+    }
+
     if (is_array($request->category_ids)) {
         $product->category_ids = implode(',', $request->category_ids);
     } else {
-        // if it's already a string, just assign or fallback to old value
         $product->category_ids = $request->category_ids ?? $product->category_ids ?? '';
     }
 

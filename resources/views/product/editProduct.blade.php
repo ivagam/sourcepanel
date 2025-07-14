@@ -132,6 +132,43 @@
 
                         <div class="mb-3 col-md-8" id="dynamic-subcategories"></div>
 
+
+                        <div class="row" id="colorSizeInputs" style="display: none;">
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Color</label>
+        <div class="input-group">
+            <!-- Color Picker -->
+            <input 
+                type="color" 
+                id="colorPicker" 
+                class="form-control form-control-color" 
+                value="{{ old('color', $product->color ?? '#000000') }}"
+            >
+
+            <!-- Hex Manual Input -->
+            <input 
+                type="text" 
+                id="colorInput" 
+                name="color" 
+                class="form-control" 
+                placeholder="#000000" 
+                value="{{ old('color', $product->color ?? '') }}"
+            >
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label class="form-label">Size</label>
+        <input 
+            type="text" 
+            name="size" 
+            class="form-control" 
+            placeholder="Enter size" 
+            value="{{ old('size', $product->size ?? '') }}"
+        >
+    </div>
+</div>
+
                         <div class="col-md-12">
                             <label class="form-label">Product Description</label>
                             <textarea name="description" class="form-control texteditor">{{ old('description', $product->description) }}</textarea>
@@ -230,37 +267,24 @@ $(document).ready(function () {
     const categoryIds = $('#category_ids').val();
     const chain = categoryIds ? categoryIds.split(',') : [];
     const mainCategoryFromUrl = '{{ $mainCategory ?? '' }}';
+    const mainCategory = chain.length ? chain[0] : mainCategoryFromUrl;
 
-    let mainCategory = '';
-
-    if (chain.length) {
-        mainCategory = chain[0];
-    } else if (mainCategoryFromUrl) {
-        mainCategory = mainCategoryFromUrl;
-    }
-
-    if (mainCategory) {
-        $('#mainCategorySelect').val(mainCategory);
-
-        if (mainCategory == '1') {
-            loadWatchSubcategories(mainCategory, chain);
-        } else if (mainCategory == '113') {
-            if (chain.length) {
-                loadCategoryChain(chain);
-            } else {
-                loadSubcategories('113', 1);
-            }
+    if (mainCategory == '1') {
+        loadWatchSubcategories(mainCategory, chain);
+    } else if (mainCategory == '113') {
+        if (chain.length) {
+            loadCategoryChain(chain);
+        } else {
+            loadSubcategories('113', 1);
         }
     }
 
     $('#mainCategorySelect').on('change', function () {
         const selectedId = $(this).val();
-        $('#dynamic-subcategories').html('');
-        $('#watch-subcategories').html('').hide();
-        $('#final_category_id').val('');
+        resetSubcategories();
         $('#category_ids').val(selectedId || '');
 
-        if (selectedId == '1') {
+        if (selectedId === '1') {
             loadWatchSubcategories(selectedId, []);
         } else if (selectedId) {
             loadSubcategories(selectedId, 1);
@@ -268,53 +292,54 @@ $(document).ready(function () {
     });
 
     $('form').on('submit', function () {
-        let selectedIds = [];
+        const selectedIds = [];
         const mainCat = $('#mainCategorySelect').val();
-        if (mainCat) selectedIds.push(mainCat);
 
-        if (mainCat == '1') {
-            $('#watch-subcategories select').each(function () {
-                const val = $(this).val();
-                if (val) selectedIds.push(val);
-            });
-        } else {
-            $('#dynamic-subcategories select').each(function () {
+        if (mainCat) {
+            selectedIds.push(mainCat);
+            const wrapper = mainCat === '1' ? '#watch-subcategories' : '#dynamic-subcategories';
+            $(`${wrapper} select`).each(function () {
                 const val = $(this).val();
                 if (val) selectedIds.push(val);
             });
         }
 
         $('#category_ids').val(selectedIds.join(','));
-        $('#final_category_id').val(selectedIds[selectedIds.length - 1] || '');
+        $('#final_category_id').val(selectedIds.at(-1) || '');
     });
 });
 
+function resetSubcategories() {
+    $('#dynamic-subcategories').html('');
+    $('#watch-subcategories').html('').hide();
+    $('#final_category_id').val('');
+}
 
 function loadWatchSubcategories(parentId, chain = []) {
     $.ajax({
         url: `${BASE_URL}category/get-watch-subcategories/${parentId}`,
         type: 'GET',
     }).done(function (response) {
-        if (response.length > 0) {
-            let html = '<div class="row">';
-            response.forEach((group, index) => {
-                const selectedVal = chain[index + 1] || '';
-                html += `
-                    <div class="col-md-3 mb-3">
-                        <label class="form-label">${group.category_name}</label>
-                        <select class="form-select">
-                            <option value="">-- Select ${group.category_name} --</option>
-                            ${group.children.map(child => `
-                                <option value="${child.category_id}" ${selectedVal == child.category_id ? 'selected' : ''}>${child.category_name}</option>
-                            `).join('')}
-                        </select>
-                    </div>
-                `;
-            });
-            html += '</div>';
-            $('#watch-subcategories').html(html).show();
-        }
-    }).fail(function () {
+        if (!response.length) return;
+
+        let html = '<div class="row">';
+        response.forEach((group, index) => {
+            const selectedVal = chain[index + 1] || '';
+            html += `
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">${group.category_name}</label>
+                    <select class="form-select">
+                        <option value="">-- Select ${group.category_name} --</option>
+                        ${group.children.map(child =>
+                            `<option value="${child.category_id}" ${selectedVal == child.category_id ? 'selected' : ''}>${child.category_name}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+            `;
+        });
+        html += '</div>';
+        $('#watch-subcategories').html(html).show();
+    }).fail(() => {
         alert('Failed to load subcategories.');
     });
 }
@@ -330,41 +355,45 @@ function loadSubcategories(parentId, level = 2, selectedId = null) {
 
         $('#final_category_id').val(parentId);
 
-        if (response.length > 0) {
-            let labelNumber = level + 1;
-            let options = '<option value="">-- Select Category --</option>';
-            response.forEach(cat => {
-                options += `<option value="${cat.category_id}" ${selectedId == cat.category_id ? 'selected' : ''}>${cat.category_name}</option>`;
-            });
+        if (!response.length) return;
 
-            let dropdown = `
-                <div class="col-md-6 subcat-level" data-level="${level}">
-                    <label class="form-label">Category ${labelNumber}</label>
-                    <select class="form-select" onchange="loadSubcategories(this.value, ${level + 1})">
-                        ${options}
-                    </select>
-                </div>
-            `;
+        const labelNumber = level + 1;
+        const options = [
+            `<option value="">-- Select Category --</option>`,
+            ...response.map(cat => 
+                `<option value="${cat.category_id}" ${selectedId == cat.category_id ? 'selected' : ''}>${cat.category_name}</option>`
+            )
+        ].join('');
 
-            if ($('#dynamic-subcategories .row').length === 0) {
-                $('#dynamic-subcategories').html('<div class="row"></div>');
-            }
+        const dropdown = `
+            <div class="col-md-6 subcat-level" data-level="${level}">
+                <label class="form-label">Category ${labelNumber}</label>
+                <select class="form-select" onchange="loadSubcategories(this.value, ${level + 1})">
+                    ${options}
+                </select>
+            </div>
+        `;
 
-            $('#dynamic-subcategories .row').append(dropdown);
+        if (!$('#dynamic-subcategories .row').length) {
+            $('#dynamic-subcategories').html('<div class="row"></div>');
         }
-    }).fail(function () {
+
+        $('#dynamic-subcategories .row').append(dropdown);
+    }).fail(() => {
         alert('Failed to load subcategories.');
     });
 }
 
 async function loadCategoryChain(chain) {
     if (!chain.length) return;
+
     $('#mainCategorySelect').val(chain[0]);
     for (let i = 1; i < chain.length; i++) {
         await loadSubcategories(chain[i - 1], i, chain[i]);
     }
-    $('#final_category_id').val(chain[chain.length - 1]);
+    $('#final_category_id').val(chain.at(-1));
 }
+
 
 Dropzone.autoDiscover = false;
 
@@ -588,6 +617,36 @@ function showFullMedia(startIndex = 0) {
     const myModal = new bootstrap.Modal(document.getElementById('mediaPreviewModal'));
     myModal.show();
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    const mainCategorySelect = document.getElementById('mainCategorySelect');
+    const colorSizeInputs = document.getElementById('colorSizeInputs');
+    const colorPicker = document.getElementById('colorPicker');
+    const colorInput = document.getElementById('colorInput');
+
+    function toggleColorSizeInputs() {
+        const selectedValue = parseInt(mainCategorySelect.value);
+        if (!isNaN(selectedValue) && selectedValue !== 1) {
+            colorSizeInputs.style.display = 'flex';
+        } else {
+            colorSizeInputs.style.display = 'none';
+        }
+    }
+
+    colorPicker.addEventListener('input', function () {
+        colorInput.value = colorPicker.value;
+    });
+
+    colorInput.addEventListener('input', function () {
+        const val = colorInput.value.trim();
+        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+            colorPicker.value = val;
+        }
+    });
+
+    toggleColorSizeInputs();
+    mainCategorySelect.addEventListener('change', toggleColorSizeInputs);
+});
 
 </script>
 

@@ -28,15 +28,12 @@ class AuthenticationController extends Controller
                 return back()->with('error', 'Email not found in our records.');
             }
 
-            // Generate a new random password
             $newPassword = Str::random(8);
 
-            // Update password in admin table (hashed)
             DB::table('admins')->where('id', $admin->id)->update([
                 'password' => Hash::make($newPassword)
             ]);
 
-            // Send password to email
             Mail::raw("Your new password is: $newPassword", function ($message) use ($admin) {
                 $message->to($admin->email)
                         ->subject('Password Reset');
@@ -62,30 +59,28 @@ class AuthenticationController extends Controller
         
         $user = User::where('username', $request->username)->first();
 
-        if ($user) {
-            if (Hash::check($request->password, $user->password)) {
-                Auth::login($user);
-    
-                session([
-                    'user_id' => $user->id,
-                    'username' => $user->username,
-                    'firstname' => $user->firstname,
-                    'lastname' => $user->lastname,
-                    'role_id' => $user->role_id,
-                    'profile'   => $user->profile,
-                ]);
-    
-                return redirect()->route('index');
-            } else {
-                return back()->withErrors([
-                    'password' => 'The password you entered is incorrect.',
-                ]);
-            }
-        } else {
-            return back()->withErrors([
-                'username' => 'The username you entered does not exist.',
-            ]);
+        if ($user && Hash::check($request->password, $user->password)) {
+        
+        $remember = $request->has('remember');
+
+        Auth::login($user, $remember);
+
+        session([
+            'user_id' => $user->id,
+            'username' => $user->username,
+            'firstname' => $user->firstname,
+            'lastname' => $user->lastname,
+            'role_id' => $user->role_id,
+            'profile' => $user->profile,
+        ]);
+
+            return redirect()->route('index');
         }
+
+        return back()->withErrors([
+            'username' => $user ? null : 'The username you entered does not exist.',
+            'password' => $user ? 'The password you entered is incorrect.' : null,
+        ])->withInput();
     }
 
     public function signUp()
@@ -93,5 +88,14 @@ class AuthenticationController extends Controller
         return view('authentication/signUp');
     }
 
+    public function logout(Request $request)
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('signin');
+    }
     
 }

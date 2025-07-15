@@ -48,7 +48,7 @@
                         <div class="">
                             <div class="d-flex justify-content-between gap-2">
                                 <div class="form-check style-check d-flex align-items-center">
-                                    <input class="form-check-input border border-neutral-300" type="checkbox" value="" id="remeber">
+                                    <input class="form-check-input border border-neutral-300" type="checkbox" name="remember" id="remeber">
                                     <label class="form-check-label" for="remeber">Remember me</label>
                                 </div>
                                 <a href="{{ route('forgotPassword') }}" class="text-primary-600 fw-medium">Forgot Password?</a>

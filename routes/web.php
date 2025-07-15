@@ -21,6 +21,8 @@ use App\Http\Controllers\BrandController;
 
 Route::controller(AuthenticationController::class)->group(function () {
     Route::get('/', 'signin')->name('signin');
+    Route::post('/logout', 'logout')->name('logout');
+
 });
 
 
@@ -136,9 +138,3 @@ Route::prefix('brand')->middleware('auth')->group(function () {
         Route::delete('/destroy/{id}', 'destroy')->name('deletebrand');
     });
 });
-
-Route::post('/logout', function () {
-    Auth::logout();
-    Session::flush();
-    return redirect()->route('signin');
-})->name('logout');

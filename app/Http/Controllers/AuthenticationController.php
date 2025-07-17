@@ -63,7 +63,7 @@ class AuthenticationController extends Controller
         
         $remember = $request->has('remember');
 
-        Auth::login($user, $remember);
+        Auth::login($user);
 
         session([
             'user_id' => $user->id,

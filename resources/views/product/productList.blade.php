@@ -50,6 +50,11 @@
                                             <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
                                         </button>
                                     </a>
+
+                                    <a href="{{ route('duplicateProduct', $product->product_id) }}">
+                                        <button type="button" class="bg-primary-focus text-primary-600 bg-hover-primary-200 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle"><iconify-icon icon="carbon:copy" class="menu-icon"></iconify-icon></button>
+                                    </a>
+
                                     <form action="{{ route('deleteProduct', $product->product_id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this product?');">
                                         @csrf
                                         @method('DELETE')

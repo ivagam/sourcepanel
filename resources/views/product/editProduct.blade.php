@@ -64,7 +64,9 @@
             <div class="card">
                
                 <div class="card-body">
-                    <form id="productEditForm" class="row gy-3 needs-validation" method="POST" action="{{ route('updateProduct', $product->product_id) }}" novalidate enctype="multipart/form-data">
+                    <form id="productEditForm" class="row gy-3 needs-validation" method="POST"
+                        action="{{ route('updateProduct', ['id' => $product->product_id] + ($isDuplicate ? ['duplicate' => 1] : [])) }}"
+                        novalidate enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
                         
@@ -81,12 +83,12 @@
                         </div>
 
                         <!-- Store existing image file paths -->
-                        @foreach($product->images as $image)
+                        @foreach($selectedImages as $image)
                             <input type="hidden" name="existing_images[]" value="{{ $image->file_path }}">
                         @endforeach
 
                         <div id="imageOrderBox" class="d-flex flex-wrap mt-3 gap-2">
-                           @foreach($product->images->sortBy('serial_no')->values() as $index => $image)
+                           @foreach($selectedImages->sortBy('serial_no')->values() as $index => $image)
                                 @php
                                     $ext = strtolower(pathinfo($image->file_path, PATHINFO_EXTENSION));
                                     $mediaUrl = env('SOURCE_PANEL_IMAGE_URL') . $image->file_path;
@@ -459,7 +461,7 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
     }
 });
 
-@foreach($product->images as $index => $image)
+@foreach($selectedImages as $index => $image)
 {
     let ext = "{{ strtolower(pathinfo($image->file_path, PATHINFO_EXTENSION)) }}";
     let mimeType = 'image/jpeg';

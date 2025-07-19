@@ -94,13 +94,36 @@ class ProductController extends Controller
 
         $selectedImages = Image::where('product_id', $id)->get();
 
-        return view('product.editProduct', compact('product', 'categories', 'mainCategories', 'domains', 'media', 'selectedImages'));
+        $isDuplicate = request()->has('duplicate');
+
+        return view('product.editProduct', compact('product', 'categories', 'mainCategories', 'domains', 'media', 'selectedImages', 'isDuplicate'));
     }
 
 
+    public function duplicateProduct($id)
+    {
+        $original = Product::with('images')->findOrFail($id);
+        
+        $newProduct = $original->replicate();
+        $newProduct->product_url = Str::slug($original->product_name);
+        $newProduct->created_by = session('user_id');
+        $newProduct->save();
+
+        
+
+        return redirect()->route('editProduct', $newProduct->product_id)
+                        ->with('success', 'Product duplicated successfully!');
+    }
+
     public function updateProduct(Request $request, $id)
 {
-    $product = Product::findOrFail($id);
+    $isDuplicate = $request->query('duplicate') == 1;
+
+    if ($isDuplicate) {        
+        $product = new Product();
+    } else {
+        $product = Product::findOrFail($id);
+    }
 
     $product->product_name = $request->product_name ?? $product->product_name;
     $product->product_price = $request->product_price ?? $product->product_price;
@@ -204,9 +227,10 @@ class ProductController extends Controller
             return response()->json(['success' => false, 'message' => 'Upload failed: ' . $e->getMessage()], 500);
         }
 
-        // ✅ Store ONLY the filename (not "uploads/...")
+        $nextSerial = Image::where('product_id', $request->product_id)->max('serial_no') + 1;
+
         $image = Image::create([
-            'serial_no'   => $request->serial_no ?? 0,
+            'serial_no'   => $nextSerial,
             'product_id'  => $request->product_id,
             'file_path'   => $filename, // <-- only filename here
             'created_by'  => session('user_id'),

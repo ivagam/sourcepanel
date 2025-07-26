@@ -73,6 +73,20 @@
                         <input type="hidden" name="category_id" id="final_category_id" value="{{ old('category_id', $product->category_id) }}">
                         <input type="hidden" name="category_ids" id="category_ids" value="{{ old('category_ids', $product->category_ids) }}">
                         
+                        <div class="col-12">
+                            <div class="d-flex flex-wrap gap-4 align-items-center">
+                                <div class="form-check d-flex align-items-center gap-2">
+                                    <input class="form-check-input category-toggle" type="checkbox" value="1" id="checkboxWatches">
+                                    <label class="form-check-label mb-0" for="checkboxWatches">Watches</label>
+                                </div>
+
+                                <div class="form-check d-flex align-items-center gap-2">
+                                    <input class="form-check-input category-toggle" type="checkbox" value="113" id="checkboxOther1">
+                                    <label class="form-check-label mb-0" for="checkboxOther1">Other</label>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="d-flex justify-content-end">
                             <button class="btn btn-primary" type="submit">Update</button>
                         </div>
@@ -88,7 +102,7 @@
                         @endforeach
 
                         <div id="imageOrderBox" class="d-flex flex-wrap mt-3 gap-2">
-                           @foreach($selectedImages->sortBy('serial_no')->values() as $index => $image)
+                            @foreach($selectedImages->sortBy('serial_no')->values() as $index => $image)
                                 @php
                                     $ext = strtolower(pathinfo($image->file_path, PATHINFO_EXTENSION));
                                     $mediaUrl = env('SOURCE_PANEL_IMAGE_URL') . $image->file_path;
@@ -96,7 +110,7 @@
                                 @endphp
 
                                 @if($isVideo)
-                                    <video width="120" height="120" onclick="showFullMedia({{ $index }})" style="cursor: pointer;">
+                                    <video width="120" height="120" controls style="cursor: pointer;" onclick="event.stopPropagation(); showFullMedia({{ $index }})">
                                         <source src="{{ $mediaUrl }}" type="video/{{ $ext }}">
                                     </video>
                                 @else
@@ -115,11 +129,11 @@
                         <div class="col-md-6">
                             <label class="form-label">Product Price</label>
                             <input type="number" name="product_price" step="0.01" class="form-control" value="{{ old('product_price', $product->product_price) }}" >                            
-                        </div> 
-
-                        <div class="col-md-4">
-                            <label class="form-label">Category 1</label>
-                            <select class="form-select" id="mainCategorySelect">
+                        </div>
+                    
+                        <div class="col-md-4" style="display: none;">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" id="mainCategorySelect" disabled>
                                 <option value="">-- Select Main Category --</option>
                                 @foreach($mainCategories as $category)
                                     <option value="{{ $category->category_id }}"
@@ -132,49 +146,68 @@
 
                         <div id="watch-subcategories" class="row" style="display: none;"></div>
 
-                        <div class="mb-3 col-md-8" id="dynamic-subcategories"></div>
+                        <div class="row" id="dynamic-subcategories"></div>
 
 
                         <div class="row" id="colorSizeInputs" style="display: none;">
-    <div class="col-md-6 mb-3">
-        <label class="form-label">Color</label>
-        <div class="input-group">
-            <!-- Color Picker -->
-            <input 
-                type="color" 
-                id="colorPicker" 
-                class="form-control form-control-color" 
-                value="{{ old('color', $product->color ?? '#000000') }}"
-            >
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Color</label>
+                                <div class="input-group">
+                                    <!-- Color Picker -->
+                                    <input 
+                                        type="color" 
+                                        id="colorPicker" 
+                                        class="form-control form-control-color" 
+                                        value="{{ old('color', $product->color ?? '#000000') }}"
+                                    >
 
-            <!-- Hex Manual Input -->
-            <input 
-                type="text" 
-                id="colorInput" 
-                name="color" 
-                class="form-control" 
-                placeholder="#000000" 
-                value="{{ old('color', $product->color ?? '') }}"
-            >
-        </div>
-    </div>
+                                    <!-- Hex Manual Input -->
+                                    <input 
+                                        type="text" 
+                                        id="colorInput" 
+                                        name="color" 
+                                        class="form-control" 
+                                        placeholder="#000000" 
+                                        value="{{ old('color', $product->color ?? '') }}"
+                                    >
+                                </div>
+                            </div>
 
-    <div class="col-md-6 mb-3">
-        <label class="form-label">Size</label>
-        <input 
-            type="text" 
-            name="size" 
-            class="form-control" 
-            placeholder="Enter size" 
-            value="{{ old('size', $product->size ?? '') }}"
-        >
-    </div>
-</div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Size</label>
+                                <input 
+                                    type="text" 
+                                    name="size" 
+                                    class="form-control" 
+                                    placeholder="Enter size" 
+                                    value="{{ old('size', $product->size ?? '') }}"
+                                >
+                            </div>
+                        </div>
 
                         <div class="col-md-12">
                             <label class="form-label">Product Description</label>
                             <textarea name="description" class="form-control texteditor">{{ old('description', $product->description) }}</textarea>
                             
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">SKU</label>
+                            <input type="text" name="sku" class="form-control" value="{{ old('sku', $product->sku) }}" >
+                        </div> 
+                        
+                        <div class="col-md-6">
+                            <label class="form-label">Domains</label>
+                            <select name="domains[]" class="form-control select2" multiple>
+                                @php
+                                    $selectedDomains = old('domains', explode(',', $product->domains));
+                                @endphp
+                                @foreach ($domains as $domain)
+                                    <option value="{{ $domain->domain_id }}" {{ in_array($domain->domain_id, $selectedDomains) ? 'selected' : '' }}>
+                                        {{ $domain->domain_name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
 
                         <div class="col-md-6">
@@ -188,19 +221,7 @@
                             <textarea name="meta_description" class="form-control">{{ old('meta_description', $product->meta_description) }}</textarea>                            
                         </div>
 
-                       <div class="col-md-6">
-                            <label class="form-label">Domains</label>
-                            <select name="domains[]" class="form-control select2" multiple>
-                                @php
-                                    $selectedDomains = old('domains', explode(',', $product->domains));
-                                @endphp
-                                @foreach ($domains as $domain)
-                                    <option value="{{ $domain->domain_id }}" {{ in_array($domain->domain_id, $selectedDomains) ? 'selected' : '' }}>
-                                        {{ $domain->domain_name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                       
 
                         <div class="col-md-12">
                             <button class="btn btn-primary" type="submit">Update</button>
@@ -231,7 +252,7 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-0">
-        <div id="mediaCarousel" class="carousel slide" data-bs-ride="false">
+        <div id="mediaCarousel" class="carousel slide" data-bs-interval="false">
           <div class="carousel-inner" id="mediaCarouselInner"></div>
 
           <!-- Controls -->
@@ -312,13 +333,13 @@ $(document).ready(function () {
 });
 
 function resetSubcategories() {
-    $('#dynamic-subcategories').html('');
-    $('#watch-subcategories').html('').hide();
+    $('#watch-subcategories').html('').hide();           // clear + hide watch subcategories
+    $('#dynamic-subcategories').html('<div class="row"></div>').hide();  // clear + hide dynamic subcategories
     $('#final_category_id').val('');
 }
 
 function loadWatchSubcategories(parentId, chain = []) {
-    $.ajax({
+    return $.ajax({
         url: `${BASE_URL}category/get-watch-subcategories/${parentId}`,
         type: 'GET',
     }).done(function (response) {
@@ -336,13 +357,12 @@ function loadWatchSubcategories(parentId, chain = []) {
                             `<option value="${child.category_id}" ${selectedVal == child.category_id ? 'selected' : ''}>${child.category_name}</option>`
                         ).join('')}
                     </select>
-                </div>
-            `;
+                </div>`;
         });
         html += '</div>';
         $('#watch-subcategories').html(html).show();
     }).fail(() => {
-        alert('Failed to load subcategories.');
+        console.warn('Watch subcategories request aborted or failed.');
     });
 }
 
@@ -359,10 +379,10 @@ function loadSubcategories(parentId, level = 2, selectedId = null) {
 
         if (!response.length) return;
 
-        const labelNumber = level + 1;
+        const labelNumber = level;
         const options = [
             `<option value="">-- Select Category --</option>`,
-            ...response.map(cat => 
+            ...response.map(cat =>
                 `<option value="${cat.category_id}" ${selectedId == cat.category_id ? 'selected' : ''}>${cat.category_name}</option>`
             )
         ].join('');
@@ -381,8 +401,9 @@ function loadSubcategories(parentId, level = 2, selectedId = null) {
         }
 
         $('#dynamic-subcategories .row').append(dropdown);
+        $('#dynamic-subcategories').show();
     }).fail(() => {
-        alert('Failed to load subcategories.');
+        console.warn('Subcategories request aborted or failed.');
     });
 }
 
@@ -600,7 +621,7 @@ function showFullMedia(startIndex = 0) {
     items.forEach((item, index) => {
         const isActive = index === startIndex ? 'active' : '';
         const content = item.type === 'video'
-            ? `<video controls style="max-height:75vh; max-width:100%; border-radius:8px;" autoplay>
+            ? `<video controls autoplay muted playsinline style="max-height:75vh; max-width:100%; border-radius:8px;">
                   <source src="${item.url}" type="video/${item.ext}">
                   Your browser does not support the video tag.
               </video>`
@@ -609,15 +630,14 @@ function showFullMedia(startIndex = 0) {
         inner.innerHTML += `<div class="carousel-item ${isActive} text-center">${content}</div>`;
     });
 
-    const carousel = new bootstrap.Carousel(document.getElementById('mediaCarousel'), {
-      interval: false,
-      ride: false,
-      wrap: true
-    });
+    const carouselElement = document.getElementById('mediaCarousel');
+    let carousel = bootstrap.Carousel.getInstance(carouselElement);
+    if (!carousel) {
+        carousel = new bootstrap.Carousel(carouselElement, { interval: false, wrap: true });
+    }
     carousel.to(startIndex);
 
-    const myModal = new bootstrap.Modal(document.getElementById('mediaPreviewModal'));
-    myModal.show();
+    new bootstrap.Modal(document.getElementById('mediaPreviewModal')).show();
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -649,6 +669,42 @@ document.addEventListener('DOMContentLoaded', function () {
     toggleColorSizeInputs();
     mainCategorySelect.addEventListener('change', toggleColorSizeInputs);
 });
+
+let currentAjax = null;
+
+$(document).ready(function () {
+    const categoryIds = $('#category_ids').val();
+    const mainCatId = categoryIds ? categoryIds.split(',')[0] : null;
+
+    if (mainCatId === '1') {
+        $('#checkboxWatches').prop('checked', true);
+    } else if (mainCatId === '113') {
+        $('#checkboxOther1').prop('checked', true);
+    }
+
+    $('.category-toggle').on('change', function () {
+        if (this.checked) {
+            $('.category-toggle').not(this).prop('checked', false);
+
+            const selectedCategory = $(this).val();
+
+            if (currentAjax) currentAjax.abort();
+
+            resetSubcategories();
+
+            $('#mainCategorySelect').val(selectedCategory).trigger('change');
+            $('#category_ids').val(selectedCategory);
+            $('#final_category_id').val(selectedCategory);
+
+            if (selectedCategory === '1') {
+                currentAjax = loadWatchSubcategories(selectedCategory, []);
+            } else {
+                currentAjax = loadSubcategories(selectedCategory, 1);
+            }
+        }
+    });
+});
+
 
 </script>
 

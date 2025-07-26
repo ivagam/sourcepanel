@@ -18,27 +18,19 @@
                     <h5 class="card-title mb-0">Category List</h5>
                 </div>
                 <div class="card-body">
-            <table class="table bordered-table mb-0" id="dataTable" data-page-length='10'>                
+                <div class="table-responsive">
+            <table class="table bordered-table mb-0" id="dataTable" style="min-width: 1000px;" data-page-length='10'>                
                 <thead>
                     <tr>
-                        <th class="text-start">S.L</th>
-                        <th class="text-start">Category Name</th>
-                        <th class="text-start">Alice Name</th>
-                        <th class="text-start">Sub Category Name</th>
-                        <th class="text-start">Action</th>
+                        <th class="text-start" style="width: 10%;">Action</th>
+                        <th class="text-start" style="width: 30%;">Category Name</th>
+                        <th class="text-start" style="width: 30%;">Alice Name</th>
+                        <th class="text-start" style="width: 30%;">Sub Category Name</th>                        
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($categorys as $key => $category)
-                        <tr>
-                            <td>
-                                <div class="d-flex align-items-center gap-10">                                    
-                                    {{ $key + 1 }}
-                                </div>
-                            </td>
-                            <td>{{ $category->category_name }}</td>
-                            <td>{{ $category->alice_name }}</td>
-                            <td>{{ $category->subcategory ? $category->subcategory->category_name : '-' }}</td>
+                        <tr>                           
                             <td class="text-center">
                                 <div class="d-flex align-items-center gap-10">
                                     <a href="{{ route('editcategory', $category->category_id) }}">
@@ -55,12 +47,17 @@
                                     </form>                                          
                                 </div>
                             </td>
+                            <td>{{ $category->category_name }}</td>
+                            <td>{{ $category->alice_name }}</td>
+                            <td>{{ $category->subcategory ? $category->subcategory->category_name : '-' }}</td>
+                            
                         </tr>
                     @empty
                         <tr><td colspan="4" class="text-center">No categories found.</td></tr>
                     @endforelse
                 </tbody>
             </table>            
+        </div>
         </div>
 </div>
 @endsection

@@ -20,7 +20,7 @@
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table bordered-table mb-0" id="dataTable" style="min-width: 1000px;">
+            <table class="table bordered-table mb-0" id="dataTable" style="min-width: 1000px;" data-page-length='50'>
                 <thead>
                     <tr>
                         {{-- ✅ Keep original order --}}
@@ -84,10 +84,10 @@
                             </td>
 
                             {{-- ✅ Remaining Columns --}}
-                            <td class="align-middle">{{ $product->product_name }}</td>
+                            <td class="align-middle">{{ \Illuminate\Support\Str::title($product->product_name) }}</td>
                             <td class="align-middle">{{ $product->category_name }}</td>
                             <td class="align-middle">${{ number_format($product->product_price, 2) }}</td>
-                            <td class="align-middle">{{ $product->description }}</td>
+                            <td class="align-middle">{{ \Illuminate\Support\Str::limit($product->description, 60) }}</td>
                         </tr>
                     @empty
                         <tr>

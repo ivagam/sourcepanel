@@ -13,6 +13,7 @@ class Product extends Model
     protected $table = 'products';
     protected $primaryKey = 'product_id';
     public $incrementing = true;
+    public $timestamps = true;
     protected $keyType = 'int';
 
     protected $fillable = [
@@ -27,7 +28,8 @@ class Product extends Model
         'meta_description',
         'category_ids',
         'color',
-        'size'
+        'size',
+        'sku',
     ];
 
     public function category()

@@ -23,6 +23,7 @@ class ProductController extends Controller
         $product->category_ids        = $mainCategory . ',';
         $product->category_id         = $mainCategory;
         $product->product_url         = Str::slug($product->product_name);
+        $product->sku                 = 'SKU' . rand(100000, 999999);
         $product->created_by          = session('user_id');
         $product->save();
 
@@ -36,7 +37,7 @@ class ProductController extends Controller
     {
         $products = Product::leftJoin('category', 'products.category_id', '=', 'category.category_id')
                     ->select('products.*', 'category.category_name')
-                    ->orderBy('products.product_id', 'desc')
+                    ->orderBy('products.created_at', 'desc')
                     ->get();
 
         return view('product.productList', compact('products'));
@@ -104,12 +105,10 @@ class ProductController extends Controller
     {
         $original = Product::with('images')->findOrFail($id);
         
-        $newProduct = $original->replicate();
-        $newProduct->product_url = Str::slug($original->product_name);
+        $newProduct = $original->replicate();        
+        $newProduct->product_url = Str::slug($original->product_name) . '-' . rand(1000, 9999);
         $newProduct->created_by = session('user_id');
         $newProduct->save();
-
-        
 
         return redirect()->route('editProduct', $newProduct->product_id)
                         ->with('success', 'Product duplicated successfully!');
@@ -119,10 +118,22 @@ class ProductController extends Controller
 {
     $isDuplicate = $request->query('duplicate') == 1;
 
-    if ($isDuplicate) {        
+    if ($isDuplicate) {
         $product = new Product();
+        $product->created_at = now();
+        $product->updated_at = now();
+
+        do {
+            $sku = 'sku' . rand(100000, 999999);
+        } while (Product::where('sku', $sku)->exists());
+
+        $product->sku = $sku;
     } else {
         $product = Product::findOrFail($id);
+
+        if ($request->filled('sku')) {
+            $product->sku = $request->sku;
+        }
     }
 
     $product->product_name = $request->product_name ?? $product->product_name;
@@ -138,17 +149,31 @@ class ProductController extends Controller
     }
 
     if (is_array($request->category_ids)) {
-        $product->category_ids = implode(',', $request->category_ids);
+        $product->category_ids = implode(',', $request->category_ids) . ',';
     } else {
-        $product->category_ids = $request->category_ids ?? $product->category_ids ?? '';
+        $product->category_ids = ($request->category_ids ?? $product->category_ids ?? '') . ',';
     }
 
     $product->description = $request->description ?? $product->description;
     $product->meta_keywords = $request->meta_keywords ?? $product->meta_keywords;
     $product->meta_description = $request->meta_description ?? $product->meta_description;
     $product->domains = is_array($request->domains) ? implode(',', $request->domains) : $product->domains;
-    $product->product_url = $request->product_name ? Str::slug($request->product_name) : $product->product_url;
+    $product->product_url = $request->product_name
+        ? Str::slug($request->product_name) . '-' . rand(1000, 9999)
+        : $product->product_url;
+
     $product->created_by = session('user_id');
+    $product->created_at = now();
+    $product->updated_at = now();
+
+    if (empty($product->sku)) {
+        do {
+            $sku = 'sku' . rand(100000, 999999);
+        } while (Product::where('sku', $sku)->exists());
+
+        $product->sku = $sku;
+    }
+
     $product->save();
 
     $existingImages = $request->input('existing_images', []);
@@ -173,9 +198,6 @@ class ProductController extends Controller
 
     return redirect()->route('productList')->with('success', 'Product updated successfully!');
 }
-
-
-
     public function deleteProduct($product_id)
     {
         $product = Product::where('product_id', $product_id)->firstOrFail();

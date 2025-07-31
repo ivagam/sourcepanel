@@ -30,6 +30,7 @@ class Product extends Model
         'color',
         'size',
         'sku',
+        'is_updated',
     ];
 
     public function category()

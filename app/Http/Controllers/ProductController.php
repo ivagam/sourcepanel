@@ -33,14 +33,95 @@ class ProductController extends Controller
                      ->with('success', 'Product created successfully!');
     }
 
-    public function productList()
+    public function productList(Request $request)
     {
-        $products = Product::leftJoin('category', 'products.category_id', '=', 'category.category_id')
-                    ->select('products.*', 'category.category_name')
-                    ->orderBy('products.created_at', 'desc')
-                    ->get();
+
+       $search = strtolower($request->input('search'));
+
+        $query = Product::leftJoin('category', function ($join) {
+            $join->on(DB::raw("FIND_IN_SET(category.category_id, products.category_ids)"), '>', DB::raw('0'));
+        })
+        ->select('products.*', 'category.category_name');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw("MATCH(products.product_name, products.description) AGAINST(? IN BOOLEAN MODE)", [$search])
+                ->orWhereRaw("LOWER(category.category_name) LIKE ?", ['%' . $search . '%'])
+                ->orWhereRaw("LOWER(products.sku) LIKE ?", ['%' . $search . '%']);
+            });
+        }
+
+        $products = $query->orderBy('products.created_at', 'desc')->paginate(50);
+
 
         return view('product.productList', compact('products'));
+    }
+
+
+    public function productListA(Request $request)
+    {
+        $search = strtolower($request->input('search'));
+        $categoryFilter = $request->input('category_filter');
+
+        $query = Product::query()
+            ->select([
+                'products.*',
+                DB::raw("(SELECT GROUP_CONCAT(category_name SEPARATOR ', ') 
+                        FROM category 
+                        WHERE FIND_IN_SET(category.category_id, products.category_ids)
+                        ) as category_name")
+            ])
+            ->where('products.is_updated', 0);
+
+        if ($categoryFilter) {
+            $query->whereRaw("FIND_IN_SET(?, products.category_ids)", [$categoryFilter]);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw("MATCH(products.product_name, products.description) AGAINST(? IN BOOLEAN MODE)", [$search])
+                ->orWhereRaw("LOWER(products.product_name) LIKE ?", ['%' . $search . '%'])
+                ->orWhereRaw("LOWER(products.description) LIKE ?", ['%' . $search . '%'])
+                ->orWhereRaw("LOWER(products.sku) LIKE ?", ['%' . $search . '%']);
+            });
+        }
+
+        $products = $query->orderBy('products.created_at', 'desc')->paginate(50);
+
+        return view('product.productListA', compact('products'));
+    }
+
+    public function productListB(Request $request)
+    {
+        $search = strtolower($request->input('search'));
+        $categoryFilter = $request->input('category_filter');
+
+        $query = Product::query()
+            ->select([
+                'products.*',
+                DB::raw("(SELECT GROUP_CONCAT(category_name SEPARATOR ', ') 
+                        FROM category 
+                        WHERE FIND_IN_SET(category.category_id, products.category_ids)
+                        ) as category_name")
+            ])
+            ->where('products.is_updated', 1);
+
+        if ($categoryFilter) {
+            $query->whereRaw("FIND_IN_SET(?, products.category_ids)", [$categoryFilter]);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw("MATCH(products.product_name, products.description) AGAINST(? IN BOOLEAN MODE)", [$search])
+                ->orWhereRaw("LOWER(products.product_name) LIKE ?", ['%' . $search . '%'])
+                ->orWhereRaw("LOWER(products.description) LIKE ?", ['%' . $search . '%'])
+                ->orWhereRaw("LOWER(products.sku) LIKE ?", ['%' . $search . '%']);
+            });
+        }
+
+        $products = $query->orderBy('products.created_at', 'desc')->paginate(50);
+
+        return view('product.productListB', compact('products'));
     }
 
     public function store(Request $request)
@@ -165,6 +246,7 @@ class ProductController extends Controller
     $product->created_by = session('user_id');
     $product->created_at = now();
     $product->updated_at = now();
+    $product->is_updated = $request->has('is_updated') ? 1 : 0;
 
     if (empty($product->sku)) {
         do {

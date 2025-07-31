@@ -1,12 +1,13 @@
 @extends('layout.layout')
 
 @php
-    $title = 'Product Grid';
-    $subTitle = 'Product Grid';
+    $title = 'Product List A';
+    $subTitle = 'Product List A';
     $script = '';
 @endphp
 
 @section('content')
+    
 
 @if(session('success'))
     <div class="alert alert-success">
@@ -19,13 +20,23 @@
     {{-- First row: Search bar only --}}
     <div class="row align-items-center mt-3">
         <div class="col-md-7">
-            <form method="GET" action="{{ route('productList') }}">
+            <form method="GET" action="{{ route('productListA') }}">
                 <div class="d-flex gap-2">
+                    {{-- Dropdown Filter --}}
+                    <select name="category_filter" class="form-select">
+                        <option value="">All Categories</option>
+                        <option value="1" {{ request('category_filter') == '1' ? 'selected' : '' }}>Watches</option>
+                        <option value="113" {{ request('category_filter') == '113' ? 'selected' : '' }}>Others</option>
+                    </select>
+
+                    {{-- Text Search --}}
                     <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search">
+
                     <button class="btn btn-primary" type="submit">Search</button>
-                    <a href="{{ route('productList') }}" class="btn btn-secondary">Reset</a>
+                    <a href="{{ route('productListA') }}" class="btn btn-secondary">Reset</a>
                 </div>
             </form>
+
         </div>
     </div>
 

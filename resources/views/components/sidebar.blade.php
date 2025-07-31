@@ -36,9 +36,16 @@
             </li>
 
             <li>
-                  <a href="{{ route('productList') }}">
+                  <a href="{{ route('productListA') }}">
                         <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
-                    <span>Product List</span>
+                    <span>Product List A</span>
+                </a>
+            </li>
+
+             <li>
+                  <a href="{{ route('productListB') }}">
+                        <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
+                    <span>Product List B</span>
                 </a>
             </li>
             

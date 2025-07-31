@@ -109,15 +109,18 @@
                                     $isVideo = in_array($ext, ['mp4', 'mov', 'avi', 'webm']);
                                 @endphp
 
-                                @if($isVideo)
-                                    <video width="120" height="120" controls style="cursor: pointer;" onclick="event.stopPropagation(); showFullMedia({{ $index }})">
-                                        <source src="{{ $mediaUrl }}" type="video/{{ $ext }}">
-                                    </video>
-                                @else
-                                    <img src="{{ $mediaUrl }}" class="img-thumbnail" style="width: 120px; height: 120px; cursor: pointer;" onclick="showFullMedia({{ $index }})">
-                                @endif
+                                <div class="position-relative image-box" data-id="{{ $image->image_id }}">
+                                    @if($isVideo)
+                                        <video width="120" height="120" controls style="cursor: pointer;" onclick="event.stopPropagation(); showFullMedia({{ $index }})">
+                                            <source src="{{ $mediaUrl }}" type="video/{{ $ext }}">
+                                        </video>
+                                    @else
+                                        <img src="{{ $mediaUrl }}" class="img-thumbnail" style="width: 120px; height: 120px; cursor: pointer;" onclick="showFullMedia({{ $index }})">
+                                    @endif
+                                </div>
                             @endforeach
                         </div>
+
 
 
                         <div class="col-md-6">
@@ -189,7 +192,7 @@
                             <label class="form-label">Product Description</label>
                             <textarea name="description" class="form-control texteditor">{{ old('description', $product->description) }}</textarea>
                             
-                        </div>
+                        </div>                        
 
                         <div class="col-md-6">
                             <label class="form-label">SKU</label>
@@ -208,6 +211,15 @@
                                     </option>
                                 @endforeach
                             </select>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="d-flex flex-wrap gap-4 align-items-center">
+                                <div class="form-check d-flex align-items-center gap-2">
+                                    <input type="checkbox" name="is_updated" class="form-check-input" id="isUpdated" value="1" {{ old('is_updated', $product->is_updated) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="isUpdated">Mark as Completed</label>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="col-md-6">

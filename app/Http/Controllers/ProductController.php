@@ -33,31 +33,6 @@ class ProductController extends Controller
                      ->with('success', 'Product created successfully!');
     }
 
-    public function productList(Request $request)
-    {
-
-       $search = strtolower($request->input('search'));
-
-        $query = Product::leftJoin('category', function ($join) {
-            $join->on(DB::raw("FIND_IN_SET(category.category_id, products.category_ids)"), '>', DB::raw('0'));
-        })
-        ->select('products.*', 'category.category_name');
-
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->whereRaw("MATCH(products.product_name, products.description) AGAINST(? IN BOOLEAN MODE)", [$search])
-                ->orWhereRaw("LOWER(category.category_name) LIKE ?", ['%' . $search . '%'])
-                ->orWhereRaw("LOWER(products.sku) LIKE ?", ['%' . $search . '%']);
-            });
-        }
-
-        $products = $query->orderBy('products.created_at', 'desc')->paginate(50);
-
-
-        return view('product.productList', compact('products'));
-    }
-
-
     public function productListA(Request $request)
     {
         $search = strtolower($request->input('search'));
@@ -196,96 +171,101 @@ class ProductController extends Controller
     }
 
     public function updateProduct(Request $request, $id)
-{
-    $isDuplicate = $request->query('duplicate') == 1;
+    {
+        $isDuplicate = $request->query('duplicate') == 1;
 
-    if ($isDuplicate) {
-        $product = new Product();
+        if ($isDuplicate) {
+            $product = new Product();
+            $product->created_at = now();
+            $product->updated_at = now();
+
+            do {
+                $sku = 'sku' . rand(100000, 999999);
+            } while (Product::where('sku', $sku)->exists());
+
+            $product->sku = $sku;
+        } else {
+            $product = Product::findOrFail($id);
+
+            if ($request->filled('sku')) {
+                $product->sku = $request->sku;
+            }
+        }
+
+        $product->product_name = $request->product_name ?? $product->product_name;
+        $product->product_price = $request->product_price ?? $product->product_price;
+        $product->category_id = $request->category_id ?? $product->category_id;
+
+        if ($request->category_id != 1) {
+            $product->color = $request->color ?? $product->color;
+            $product->size = $request->size ?? $product->size;
+        } else {
+            $product->color = null;
+            $product->size = null;
+        }
+
+        if (is_array($request->category_ids)) {
+            $product->category_ids = implode(',', $request->category_ids) . ',';
+        } else {
+            $product->category_ids = ($request->category_ids ?? $product->category_ids ?? '') . ',';
+        }
+
+        $product->description = $request->description ?? $product->description;
+        $product->meta_keywords = $request->meta_keywords ?? $product->meta_keywords;
+        $product->meta_description = $request->meta_description ?? $product->meta_description;
+        $product->domains = is_array($request->domains) ? implode(',', $request->domains) : $product->domains;
+        $product->product_url = $request->product_name
+            ? Str::slug($request->product_name) . '-' . rand(1000, 9999)
+            : $product->product_url;
+
+        $product->created_by = session('user_id');
         $product->created_at = now();
         $product->updated_at = now();
+        $product->is_updated = $request->input('is_updated', 0);
 
-        do {
-            $sku = 'sku' . rand(100000, 999999);
-        } while (Product::where('sku', $sku)->exists());
+        if (empty($product->sku)) {
+            do {
+                $sku = 'sku' . rand(100000, 999999);
+            } while (Product::where('sku', $sku)->exists());
 
-        $product->sku = $sku;
-    } else {
-        $product = Product::findOrFail($id);
-
-        if ($request->filled('sku')) {
-            $product->sku = $request->sku;
+            $product->sku = $sku;
         }
-    }
 
-    $product->product_name = $request->product_name ?? $product->product_name;
-    $product->product_price = $request->product_price ?? $product->product_price;
-    $product->category_id = $request->category_id ?? $product->category_id;
+        $product->save();
 
-    if ($request->category_id != 1) {
-        $product->color = $request->color ?? $product->color;
-        $product->size = $request->size ?? $product->size;
-    } else {
-        $product->color = null;
-        $product->size = null;
-    }
+        $existingImages = $request->input('existing_images', []);
 
-    if (is_array($request->category_ids)) {
-        $product->category_ids = implode(',', $request->category_ids) . ',';
-    } else {
-        $product->category_ids = ($request->category_ids ?? $product->category_ids ?? '') . ',';
-    }
+        Image::where('product_id', $product->product_id)
+            ->whereNotIn('file_path', $existingImages)
+            ->delete();
 
-    $product->description = $request->description ?? $product->description;
-    $product->meta_keywords = $request->meta_keywords ?? $product->meta_keywords;
-    $product->meta_description = $request->meta_description ?? $product->meta_description;
-    $product->domains = is_array($request->domains) ? implode(',', $request->domains) : $product->domains;
-    $product->product_url = $request->product_name
-        ? Str::slug($request->product_name) . '-' . rand(1000, 9999)
-        : $product->product_url;
-
-    $product->created_by = session('user_id');
-    $product->created_at = now();
-    $product->updated_at = now();
-    $product->is_updated = $request->has('is_updated') ? 1 : 0;
-
-    if (empty($product->sku)) {
-        do {
-            $sku = 'sku' . rand(100000, 999999);
-        } while (Product::where('sku', $sku)->exists());
-
-        $product->sku = $sku;
-    }
-
-    $product->save();
-
-    $existingImages = $request->input('existing_images', []);
-
-    Image::where('product_id', $product->product_id)
-        ->whereNotIn('file_path', $existingImages)
-        ->delete();
-
-    foreach ($existingImages as $path) {
-        if (!Image::where('product_id', $product->product_id)->where('file_path', $path)->exists()) {
-            Image::create([
-                'product_id' => $product->product_id,
-                'file_path' => $path,
-                'created_by' => session('user_id'),
-            ]);
+        foreach ($existingImages as $path) {
+            if (!Image::where('product_id', $product->product_id)->where('file_path', $path)->exists()) {
+                Image::create([
+                    'product_id' => $product->product_id,
+                    'file_path' => $path,
+                    'created_by' => session('user_id'),
+                ]);
+            }
         }
-    }
 
-    if ($request->expectsJson()) {
-        return response()->json(['success' => true, 'message' => 'Product updated successfully!']);
-    }
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true, 'message' => 'Product updated successfully!']);
+        }
 
-    return redirect()->route('productList')->with('success', 'Product updated successfully!');
-}
+        return redirect()->route('productListA')->with('success', 'Product updated successfully!');
+    }
+    
     public function deleteProduct($product_id)
     {
         $product = Product::where('product_id', $product_id)->firstOrFail();
-            Image::where('product_id', $product_id)->delete();
+
+        $isUpdated = $product->is_updated;
+        Image::where('product_id', $product_id)->delete();
         $product->delete();
-        return redirect()->route('productList')->with('success', 'Product deleted successfully!');
+        $route = $isUpdated == 1 ? 'productListB' : 'productListA';
+
+        return redirect()->route($route)->with('success', 'Product deleted successfully!');
     }
     
     public function getByCategory($id)

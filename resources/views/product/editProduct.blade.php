@@ -87,8 +87,9 @@
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-end">
-                            <button class="btn btn-primary" type="submit">Update</button>
+                        <div class="d-flex gap-3 justify-content-end">
+                            <button type="submit" name="is_updated" value="0" class="btn btn-primary">Update</button>
+                            <button type="submit" name="is_updated" value="1" class="btn btn-success">Complete</button>
                         </div>
 
                         <div class="mb-3">
@@ -134,7 +135,7 @@
                             <input type="number" name="product_price" step="0.01" class="form-control" value="{{ old('product_price', $product->product_price) }}" >                            
                         </div>
                     
-                        <div class="col-md-4" style="display: none;">
+                        <div class="col-md-6" style="display: none;">
                             <label class="form-label">Category</label>
                             <select class="form-select" id="mainCategorySelect" disabled>
                                 <option value="">-- Select Main Category --</option>
@@ -147,13 +148,13 @@
                             </select>
                         </div>
 
-                        <div id="watch-subcategories" class="row" style="display: none;"></div>
+                        <div id="watch-subcategories" class="col-md-12" style="display: none;"></div>
 
-                        <div class="row" id="dynamic-subcategories"></div>
+                        <div class="col-md-12" id="dynamic-subcategories"></div>
 
 
-                        <div class="row" id="colorSizeInputs" style="display: none;">
-                            <div class="col-md-6 mb-3">
+                        <div class="row" id="colorSizeInputs" style="display: none; margin: 0; padding: 0;">
+                            <div class="col-md-6">
                                 <label class="form-label">Color</label>
                                 <div class="input-group">
                                     <!-- Color Picker -->
@@ -176,7 +177,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-6">
                                 <label class="form-label">Size</label>
                                 <input 
                                     type="text" 
@@ -213,15 +214,6 @@
                             </select>
                         </div>
 
-                        <div class="col-12">
-                            <div class="d-flex flex-wrap gap-4 align-items-center">
-                                <div class="form-check d-flex align-items-center gap-2">
-                                    <input type="checkbox" name="is_updated" class="form-check-input" id="isUpdated" value="1" {{ old('is_updated', $product->is_updated) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="isUpdated">Mark as Completed</label>
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="col-md-6">
                             <label class="form-label">Meta Keywords</label>
                             <textarea name="meta_keywords" class="form-control">{{ old('meta_keywords', $product->meta_keywords) }}</textarea>
@@ -233,11 +225,11 @@
                             <textarea name="meta_description" class="form-control">{{ old('meta_description', $product->meta_description) }}</textarea>                            
                         </div>
 
-                       
-
-                        <div class="col-md-12">
-                            <button class="btn btn-primary" type="submit">Update</button>
+                        <div class="col-md-12 d-flex gap-3">
+                            <button type="submit" name="is_updated" value="0" class="btn btn-primary">Update</button>
+                            <button type="submit" name="is_updated" value="1" class="btn btn-success">Complete</button>
                         </div>
+
                     </form>
                 </div>
             </div>

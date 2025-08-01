@@ -100,7 +100,6 @@ Route::prefix('sales')->middleware('auth')->group(function () {
 Route::prefix('product')->middleware('auth')->group(function () {
     Route::controller(ProductController::class)->group(function () {
         Route::get('/addProduct', 'addProduct')->name('addProduct');
-        Route::get('/productList', 'productList')->name('productList');
         Route::get('/productListA', 'productListA')->name('productListA');
         Route::get('/productListB', 'productListB')->name('productListB');
         Route::post('/store', 'store')->name('storeproduct');

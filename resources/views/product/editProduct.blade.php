@@ -122,8 +122,6 @@
                             @endforeach
                         </div>
 
-
-
                         <div class="col-md-6">
                             <label class="form-label">Product Name <span class="text-danger">*</span></label>
                             <input type="text" name="product_name" class="form-control @error('product_name') is-invalid @enderror" value="{{ old('product_name', $product->product_name) }}">
@@ -191,9 +189,23 @@
 
                         <div class="col-md-12">
                             <label class="form-label">Product Description</label>
-                            <textarea name="description" class="form-control texteditor">{{ old('description', $product->description) }}</textarea>
-                            
-                        </div>                        
+                            <textarea name="description" class="form-control texteditor">{{ old('description', $product->description) }}</textarea>                            
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Purchase value</label>
+                            <input type="number" name="purchase_value" id="purchase_value" class="form-control" value="{{ old('purchase_value', $product->purchase_value) }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Purchase code</label>
+                            <input type="text" name="purchase_code" id="purchase_code" class="form-control" value="{{ old('purchase_code', $product->purchase_code) }}">
+                        </div>
+
+                        <div class="col-md-12">
+                            <label class="form-label">Note</label>
+                            <textarea name="note" class="form-control texteditor">{{ old('note', $product->note) }}</textarea>
+                        </div>
 
                         <div class="col-md-6">
                             <label class="form-label">SKU</label>
@@ -507,7 +519,8 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
         accepted: true,
         status: Dropzone.SUCCESS,
         existing: true,
-        filePath: "{{ $image->file_path }}"
+        filePath: "{{ $image->file_path }}",
+        image_id: "{{ $image->image_id }}"
     };
     editDropzone.emit("addedfile", file{{ $index }});
     if (mimeType.startsWith('video')) {
@@ -547,7 +560,7 @@ editDropzone.on("removedfile", function(file) {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
-            body: JSON.stringify({ file_path: file.filePath })
+            body: JSON.stringify({ image_id: file.image_id })
         })
         .then(response => response.json())
         .then(data => {
@@ -709,6 +722,45 @@ $(document).ready(function () {
     });
 });
 
+document.getElementById('purchase_value').addEventListener('input', function () {
+        const value = this.value.trim();
+
+        if (!value || isNaN(value)) {
+            document.getElementById('purchase_code').value = '';
+            return;
+        }
+
+        const numberToLetter = {
+            '1': 'A', '2': 'B', '3': 'C', '4': 'D',
+            '5': 'E', '6': 'F', '7': 'G', '8': 'H', '9': 'I'
+        };
+
+        const getRandomLetter = () => {
+            const chars = 'abcdefghijklmnopqrstuvwxyz';
+            return chars.charAt(Math.floor(Math.random() * chars.length));
+        };
+
+        const getRandomLetters = (length) => {
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += getRandomLetter();
+            }
+            return result;
+        };
+
+        let converted = '';
+        for (let digit of value) {
+            if (digit === '0') {
+                converted += getRandomLetter(); // add one random lowercase for each 0
+            } else {
+                converted += numberToLetter[digit] || '';
+            }
+        }
+
+        // Build final code: 3 lowercase letters + converted value
+        const finalCode = getRandomLetters(3) + converted;
+        document.getElementById('purchase_code').value = finalCode;
+    });
 
 </script>
 

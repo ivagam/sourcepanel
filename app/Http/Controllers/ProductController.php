@@ -166,6 +166,12 @@ class ProductController extends Controller
         $newProduct->created_by = session('user_id');
         $newProduct->save();
 
+        foreach ($original->images as $image) {
+            $newImage = $image->replicate();
+            $newImage->product_id = $newProduct->product_id;
+            $newImage->save();
+        }
+
         return redirect()->route('editProduct', $newProduct->product_id)
                         ->with('success', 'Product duplicated successfully!');
     }
@@ -213,6 +219,9 @@ class ProductController extends Controller
         $product->description = $request->description ?? $product->description;
         $product->meta_keywords = $request->meta_keywords ?? $product->meta_keywords;
         $product->meta_description = $request->meta_description ?? $product->meta_description;
+        $product->purchase_value = $request->purchase_value ?? $product->purchase_value;
+        $product->purchase_code = $request->purchase_code ?? $product->purchase_code;
+        $product->note = $request->note ?? $product->note;
         $product->domains = is_array($request->domains) ? implode(',', $request->domains) : $product->domains;
         $product->product_url = $request->product_name
             ? Str::slug($request->product_name) . '-' . rand(1000, 9999)
@@ -263,9 +272,8 @@ class ProductController extends Controller
         $isUpdated = $product->is_updated;
         Image::where('product_id', $product_id)->delete();
         $product->delete();
-        $route = $isUpdated == 1 ? 'productListB' : 'productListA';
-
-        return redirect()->route($route)->with('success', 'Product deleted successfully!');
+        
+        return redirect()->route('productListA')->with('success', 'Product deleted successfully!');
     }
     
     public function getByCategory($id)
@@ -333,15 +341,17 @@ class ProductController extends Controller
 
 public function deleteImage(Request $request)
 {
-    $filePath = $request->file_path;
+    $imageId = $request->image_id;
 
-    $image = Image::where('file_path', $filePath)->first();
+    $image = Image::find($imageId);
     if ($image) {
+        $fullPath = public_path($image->file_path);
         $image->delete();
-        $fullPath = public_path($filePath);
+
         if (file_exists($fullPath)) {
-            unlink($fullPath);
+            @unlink($fullPath);
         }
+
         return response()->json(['success' => true]);
     }
 

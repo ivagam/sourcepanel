@@ -46,7 +46,8 @@ class ProductController extends Controller
                         WHERE FIND_IN_SET(category.category_id, products.category_ids)
                         ) as category_name")
             ])
-            ->where('products.is_updated', 0);
+            ->where('products.is_updated', 0)
+            ->where('products.is_product_c', '!=', 1);
 
         if ($categoryFilter) {
             $query->whereRaw("FIND_IN_SET(?, products.category_ids)", [$categoryFilter]);
@@ -79,7 +80,8 @@ class ProductController extends Controller
                         WHERE FIND_IN_SET(category.category_id, products.category_ids)
                         ) as category_name")
             ])
-            ->where('products.is_updated', 1);
+            ->where('products.is_updated', 1)
+            ->where('products.is_product_c', '!=', 1);
 
         if ($categoryFilter) {
             $query->whereRaw("FIND_IN_SET(?, products.category_ids)", [$categoryFilter]);
@@ -97,6 +99,40 @@ class ProductController extends Controller
         $products = $query->orderBy('products.created_at', 'desc')->paginate(50);
 
         return view('product.productListB', compact('products'));
+    }
+
+    public function productListC(Request $request)
+    {
+        $search = strtolower($request->input('search'));
+        $categoryFilter = $request->input('category_filter');
+
+        $query = Product::query()
+            ->select([
+                'products.*',
+                DB::raw("(SELECT GROUP_CONCAT(category_name SEPARATOR ', ') 
+                        FROM category 
+                        WHERE FIND_IN_SET(category.category_id, products.category_ids)
+                        ) as category_name")
+            ])
+            ->where('products.is_updated', 0)
+            ->where('products.is_product_c', '!=', 0);
+
+        if ($categoryFilter) {
+            $query->whereRaw("FIND_IN_SET(?, products.category_ids)", [$categoryFilter]);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw("MATCH(products.product_name, products.description) AGAINST(? IN BOOLEAN MODE)", [$search])
+                ->orWhereRaw("LOWER(products.product_name) LIKE ?", ['%' . $search . '%'])
+                ->orWhereRaw("LOWER(products.description) LIKE ?", ['%' . $search . '%'])
+                ->orWhereRaw("LOWER(products.sku) LIKE ?", ['%' . $search . '%']);
+            });
+        }
+
+        $products = $query->orderBy('products.created_at', 'desc')->paginate(50);
+
+        return view('product.productListA', compact('products'));
     }
 
     public function store(Request $request)
@@ -240,6 +276,12 @@ class ProductController extends Controller
             $product->sku = $sku;
         }
 
+        if ($request->input('is_updated') == 1) {
+            $product->is_product_c = 0;
+        } else {
+            $product->is_product_c = $request->has('is_product_c') ? 1 : 0;
+        }
+
         $product->save();
 
         $existingImages = $request->input('existing_images', []);
@@ -291,72 +333,70 @@ class ProductController extends Controller
     }
 
     public function uploadTempImage(Request $request)
-{
-    $request->validate([
-        'file' => 'required|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,webm|max:51200',
-        'product_id' => 'required|integer|exists:products,product_id',
-    ]);
-
-    if ($request->hasFile('file')) {
-        $file = $request->file('file');
-
-        // Create sanitized and unique file name
-        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $extension = strtolower($file->getClientOriginalExtension());
-        $sanitizedName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $originalName);
-        $filename = time() . '_' . uniqid() . '_' . $sanitizedName . '.' . $extension;
-
-        // Create uploads folder if it doesn't exist
-        $uploadPath = public_path('uploads');
-        if (!file_exists($uploadPath)) {
-            mkdir($uploadPath, 0777, true);
-        }
-
-        // Move file to uploads folder
-        try {
-            $file->move($uploadPath, $filename);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Upload failed: ' . $e->getMessage()], 500);
-        }
-
-        $nextSerial = Image::where('product_id', $request->product_id)->max('serial_no') + 1;
-
-        $image = Image::create([
-            'serial_no'   => $nextSerial,
-            'product_id'  => $request->product_id,
-            'file_path'   => $filename, // <-- only filename here
-            'created_by'  => session('user_id'),
+    {
+        $request->validate([
+            'file' => 'required|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,webm|max:51200',
+            'product_id' => 'required|integer|exists:products,product_id',
         ]);
 
-        return response()->json([
-            'success'   => true,
-            'file_path' => $image->file_path,
-            'image_id'  => $image->image_id,
-        ]);
-    }
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
 
-    return response()->json(['success' => false, 'message' => 'No file uploaded.'], 400);
-}
+            // Create sanitized and unique file name
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = strtolower($file->getClientOriginalExtension());
+            $sanitizedName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $originalName);
+            $filename = time() . '_' . uniqid() . '_' . $sanitizedName . '.' . $extension;
 
+            $uploadPath = public_path('uploads');
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0777, true);
+            }
 
-public function deleteImage(Request $request)
-{
-    $imageId = $request->image_id;
+            try {
+                $file->move($uploadPath, $filename);
+            } catch (\Exception $e) {
+                return response()->json(['success' => false, 'message' => 'Upload failed: ' . $e->getMessage()], 500);
+            }
 
-    $image = Image::find($imageId);
-    if ($image) {
-        $fullPath = public_path($image->file_path);
-        $image->delete();
+            $nextSerial = Image::where('product_id', $request->product_id)->max('serial_no') + 1;
 
-        if (file_exists($fullPath)) {
-            @unlink($fullPath);
+            $image = Image::create([
+                'serial_no'   => $nextSerial,
+                'product_id'  => $request->product_id,
+                'file_path'   => $filename, // <-- only filename here
+                'created_by'  => session('user_id'),
+            ]);
+
+            return response()->json([
+                'success'   => true,
+                'file_path' => $image->file_path,
+                'image_id'  => $image->image_id,
+            ]);
         }
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => false, 'message' => 'No file uploaded.'], 400);
     }
 
-    return response()->json(['success' => false, 'message' => 'Image not found.']);
-}
+
+    public function deleteImage(Request $request)
+    {
+        $imageId = $request->image_id;
+
+        $image = Image::find($imageId);
+        if ($image) {
+            $fullPath = public_path($image->file_path);
+            $image->delete();
+
+            if (file_exists($fullPath)) {
+                @unlink($fullPath);
+            }
+
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Image not found.']);
+    }
 
     public function updateImageOrder(Request $request)
         {

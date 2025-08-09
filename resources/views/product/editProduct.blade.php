@@ -73,24 +73,32 @@
                         <input type="hidden" name="category_id" id="final_category_id" value="{{ old('category_id', $product->category_id) }}">
                         <input type="hidden" name="category_ids" id="category_ids" value="{{ old('category_ids', $product->category_ids) }}">
                         
+                        <div class="d-flex gap-3 justify-content-start">
+                            <button type="submit" name="is_updated" value="0" class="btn btn-primary">Update</button>
+                            <button type="submit" name="is_updated" value="1" class="btn btn-success">Complete</button>
+                            <button type="submit" name="is_product_c" value="1" class="btn btn-warning">Is Product C</button>
+                        </div>
+
                         <div class="col-12">
                             <div class="d-flex flex-wrap gap-4 align-items-center">
-                                <div class="form-check d-flex align-items-center gap-2">
-                                    <input class="form-check-input category-toggle" type="checkbox" value="1" id="checkboxWatches">
-                                    <label class="form-check-label mb-0" for="checkboxWatches">Watches</label>
-                                </div>
 
-                                <div class="form-check d-flex align-items-center gap-2">
-                                    <input class="form-check-input category-toggle" type="checkbox" value="113" id="checkboxOther1">
-                                    <label class="form-check-label mb-0" for="checkboxOther1">Other</label>
+                                <!-- Group 1: Category Checkboxes (same column: e.g., category_id) -->
+                                <div class="d-flex gap-4">
+                                    <!-- Watches -->
+                                    <div class="form-check d-flex align-items-center gap-2">
+                                        <input class="form-check-input category-toggle" type="checkbox" name="category[]" value="1" id="checkboxWatches">
+                                        <label class="form-check-label mb-0" for="checkboxWatches">Watches</label>
+                                    </div>
+
+                                    <!-- Other -->
+                                    <div class="form-check d-flex align-items-center gap-2">
+                                        <input class="form-check-input category-toggle" type="checkbox" name="category[]" value="113" id="checkboxOther1">
+                                        <label class="form-check-label mb-0" for="checkboxOther1">Other</label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex gap-3 justify-content-end">
-                            <button type="submit" name="is_updated" value="0" class="btn btn-primary">Update</button>
-                            <button type="submit" name="is_updated" value="1" class="btn btn-success">Complete</button>
-                        </div>
 
                         <div class="mb-3">
                             <label class="form-label">Uploads Files</label>
@@ -129,9 +137,77 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Product Price</label>
-                            <input type="number" name="product_price" step="0.01" class="form-control" value="{{ old('product_price', $product->product_price) }}" >                            
+                            <label class="form-label">SKU</label>
+                            <input type="text" name="sku" class="form-control" value="{{ old('sku', $product->sku) }}" >
                         </div>
+
+                        <div class="row" style="margin: 0; padding: 0;">
+                            <div class="col-md-3" id="colorSizeBox" style="display: none;">
+                                <label class="form-label">Color & Size</label>
+                                <input 
+                                    type="text" 
+                                    name="size" 
+                                    class="form-control" 
+                                    placeholder="Enter size" 
+                                    value="{{ old('size', $product->size ?? '') }}"
+                                >
+                                <div class="d-flex gap-1">
+                                    <input 
+                                        type="color" 
+                                        id="colorPicker" 
+                                        class="form-control form-control-color form-control-sm" 
+                                        value="{{ old('color', $product->color ?? '#000000') }}"
+                                        style="width: 30%; min-width: 40px;"
+                                    >
+
+                                    <input 
+                                        type="text" 
+                                        id="colorInput" 
+                                        name="color" 
+                                        class="form-control form-control-sm" 
+                                        placeholder="#000000" 
+                                        value="{{ old('color', $product->color ?? '') }}"
+                                        style="width: 70%;"
+                                    >
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label">Purchase Value</label>
+                                <input 
+                                    type="number" 
+                                    name="purchase_value" 
+                                    id="purchase_value" 
+                                    class="form-control" 
+                                    value="{{ old('purchase_value', $product->purchase_value) }}"
+                                >
+                            </div>
+
+                            <!-- Purchase Code -->
+                            <div class="col-md-3">
+                                <label class="form-label">Purchase Code</label>
+                                <input 
+                                    type="text" 
+                                    name="purchase_code" 
+                                    id="purchase_code" 
+                                    class="form-control" 
+                                    value="{{ old('purchase_code', $product->purchase_code) }}"
+                                >
+                            </div>
+
+                            <!-- Product Price -->
+                            <div class="col-md-3">
+                                <label class="form-label">Product Price</label>
+                                <input 
+                                    type="number" 
+                                    name="product_price" 
+                                    step="0.01" 
+                                    class="form-control" 
+                                    value="{{ old('product_price', $product->product_price) }}"
+                                >
+                            </div>
+                        </div>
+
                     
                         <div class="col-md-6" style="display: none;">
                             <label class="form-label">Category</label>
@@ -151,67 +227,27 @@
                         <div class="col-md-12" id="dynamic-subcategories"></div>
 
 
-                        <div class="row" id="colorSizeInputs" style="display: none; margin: 0; padding: 0;">
-                            <div class="col-md-6">
-                                <label class="form-label">Color</label>
-                                <div class="input-group">
-                                    <!-- Color Picker -->
-                                    <input 
-                                        type="color" 
-                                        id="colorPicker" 
-                                        class="form-control form-control-color" 
-                                        value="{{ old('color', $product->color ?? '#000000') }}"
-                                    >
-
-                                    <!-- Hex Manual Input -->
-                                    <input 
-                                        type="text" 
-                                        id="colorInput" 
-                                        name="color" 
-                                        class="form-control" 
-                                        placeholder="#000000" 
-                                        value="{{ old('color', $product->color ?? '') }}"
-                                    >
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Size</label>
-                                <input 
-                                    type="text" 
-                                    name="size" 
-                                    class="form-control" 
-                                    placeholder="Enter size" 
-                                    value="{{ old('size', $product->size ?? '') }}"
-                                >
-                            </div>
-                        </div>
-
-                        <div class="col-md-12">
+                        <div class="col-md-6">
                             <label class="form-label">Product Description</label>
                             <textarea name="description" class="form-control texteditor">{{ old('description', $product->description) }}</textarea>                            
-                        </div>
+                        </div>                        
 
                         <div class="col-md-6">
-                            <label class="form-label">Purchase value</label>
-                            <input type="number" name="purchase_value" id="purchase_value" class="form-control" value="{{ old('purchase_value', $product->purchase_value) }}">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Purchase code</label>
-                            <input type="text" name="purchase_code" id="purchase_code" class="form-control" value="{{ old('purchase_code', $product->purchase_code) }}">
-                        </div>
-
-                        <div class="col-md-12">
                             <label class="form-label">Note</label>
                             <textarea name="note" class="form-control texteditor">{{ old('note', $product->note) }}</textarea>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">SKU</label>
-                            <input type="text" name="sku" class="form-control" value="{{ old('sku', $product->sku) }}" >
-                        </div> 
-                        
+                            <label class="form-label">Meta Keywords</label>
+                            <textarea name="meta_keywords" class="form-control">{{ old('meta_keywords', $product->meta_keywords) }}</textarea>
+                            
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Meta Description</label>
+                            <textarea name="meta_description" class="form-control">{{ old('meta_description', $product->meta_description) }}</textarea>                            
+                        </div>
+
                         <div class="col-md-6">
                             <label class="form-label">Domains</label>
                             <select name="domains[]" class="form-control select2" multiple>
@@ -226,20 +262,10 @@
                             </select>
                         </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label">Meta Keywords</label>
-                            <textarea name="meta_keywords" class="form-control">{{ old('meta_keywords', $product->meta_keywords) }}</textarea>
-                            
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Meta Description</label>
-                            <textarea name="meta_description" class="form-control">{{ old('meta_description', $product->meta_description) }}</textarea>                            
-                        </div>
-
                         <div class="col-md-12 d-flex gap-3">
                             <button type="submit" name="is_updated" value="0" class="btn btn-primary">Update</button>
                             <button type="submit" name="is_updated" value="1" class="btn btn-success">Complete</button>
+                            <button type="submit" name="is_product_c" value="1" class="btn btn-warning">Is Product C</button>
                         </div>
 
                     </form>
@@ -657,36 +683,6 @@ function showFullMedia(startIndex = 0) {
     new bootstrap.Modal(document.getElementById('mediaPreviewModal')).show();
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    const mainCategorySelect = document.getElementById('mainCategorySelect');
-    const colorSizeInputs = document.getElementById('colorSizeInputs');
-    const colorPicker = document.getElementById('colorPicker');
-    const colorInput = document.getElementById('colorInput');
-
-    function toggleColorSizeInputs() {
-        const selectedValue = parseInt(mainCategorySelect.value);
-        if (!isNaN(selectedValue) && selectedValue !== 1) {
-            colorSizeInputs.style.display = 'flex';
-        } else {
-            colorSizeInputs.style.display = 'none';
-        }
-    }
-
-    colorPicker.addEventListener('input', function () {
-        colorInput.value = colorPicker.value;
-    });
-
-    colorInput.addEventListener('input', function () {
-        const val = colorInput.value.trim();
-        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-            colorPicker.value = val;
-        }
-    });
-
-    toggleColorSizeInputs();
-    mainCategorySelect.addEventListener('change', toggleColorSizeInputs);
-});
-
 let currentAjax = null;
 
 $(document).ready(function () {
@@ -718,15 +714,90 @@ $(document).ready(function () {
             } else {
                 currentAjax = loadSubcategories(selectedCategory, 1);
             }
+            toggleColorSizeInputs();
         }
     });
 });
 
-document.getElementById('purchase_value').addEventListener('input', function () {
-        const value = this.value.trim();
+    function toggleColorSizeInputs() {
+        const selectedValue = document.getElementById('mainCategorySelect').value;
+        const colorSizeBox = document.getElementById('colorSizeBox');
 
-        if (!value || isNaN(value)) {
-            document.getElementById('purchase_code').value = '';
+        if (selectedValue === '113') {
+            colorSizeBox.style.display = 'block';
+        } else {
+            colorSizeBox.style.display = 'none';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('mainCategorySelect').addEventListener('change', toggleColorSizeInputs);
+        toggleColorSizeInputs();
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const mainCategorySelect = document.getElementById('mainCategorySelect');
+        const colorPicker = document.getElementById('colorPicker');
+        const colorInput = document.getElementById('colorInput');
+
+        colorPicker.addEventListener('input', function () {
+            colorInput.value = colorPicker.value;
+        });
+
+        colorInput.addEventListener('input', function () {
+            const val = colorInput.value.trim();
+            if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+                colorPicker.value = val;
+            }
+        });
+
+        toggleColorSizeInputs();
+        mainCategorySelect.addEventListener('change', toggleColorSizeInputs);
+    });
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const purchaseValueInput = document.getElementById('purchase_value');
+    const purchaseCodeInput = document.getElementById('purchase_code');
+    const productPriceInput = document.querySelector('input[name="product_price"]');
+    const categoryCheckboxes = document.querySelectorAll('.category-toggle');
+
+    function getSelectedCategory() {
+        for (const checkbox of categoryCheckboxes) {
+            if (checkbox.checked) {
+                return checkbox.value;
+            }
+        }
+        return null;
+    }
+
+    function clearInputs() {
+        purchaseValueInput.value = '';
+        purchaseCodeInput.value = '';
+        productPriceInput.value = '';
+    }
+
+    categoryCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            if (checkbox.checked) {
+                categoryCheckboxes.forEach(cb => {
+                    if (cb !== checkbox) cb.checked = false;
+                });
+                clearInputs();
+            } else {
+                clearInputs();
+            }
+        });
+    });
+
+    purchaseValueInput.addEventListener('input', () => {
+        const value = parseFloat(purchaseValueInput.value.trim());
+        const mainCategory = getSelectedCategory();
+
+        if (!value || isNaN(value) || !mainCategory) {
+            purchaseCodeInput.value = '';
+            productPriceInput.value = '';
             return;
         }
 
@@ -749,18 +820,44 @@ document.getElementById('purchase_value').addEventListener('input', function () 
         };
 
         let converted = '';
-        for (let digit of value) {
+        for (let digit of value.toString()) {
             if (digit === '0') {
-                converted += getRandomLetter(); // add one random lowercase for each 0
+                converted += getRandomLetter();
             } else {
                 converted += numberToLetter[digit] || '';
             }
         }
 
-        // Build final code: 3 lowercase letters + converted value
-        const finalCode = getRandomLetters(3) + converted;
-        document.getElementById('purchase_code').value = finalCode;
+        const finalCode = getRandomLetters(4) + converted;
+        purchaseCodeInput.value = finalCode;
+
+        let productPrice = 0;
+
+        if (mainCategory === '113') {
+            if (value <= 65) {
+                productPrice = value + 40;
+            } else if (value > 65 && value <= 199) {
+                productPrice = value * 1.6;
+            } else {
+                productPrice = value * 1.5;
+            }
+        } else if (mainCategory === '1') {
+            if (value <= 100) {
+                productPrice = value + 80;
+            } else if (value >= 101 && value <= 199) {
+                productPrice = value + 90;
+            } else if (value >= 200 && value <= 339) {
+                productPrice = value + 100;
+            } else {
+                productPrice = value * 1.3;
+            }
+        }
+
+        productPriceInput.value = Math.round(productPrice);
     });
+});
+
+
 
 </script>
 

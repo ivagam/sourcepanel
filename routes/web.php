@@ -102,6 +102,7 @@ Route::prefix('product')->middleware('auth')->group(function () {
         Route::get('/addProduct', 'addProduct')->name('addProduct');
         Route::get('/productListA', 'productListA')->name('productListA');
         Route::get('/productListB', 'productListB')->name('productListB');
+        Route::get('/productListC', 'productListC')->name('productListC');
         Route::post('/store', 'store')->name('storeproduct');
         Route::get('/editProduct/{id}', 'editProduct')->name('editProduct');
         Route::put('/updateProduct/{id}', 'updateProduct')->name('updateProduct');

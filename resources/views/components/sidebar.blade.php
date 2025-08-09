@@ -49,6 +49,13 @@
                 </a>
             </li>
             
+             <li>
+                  <a href="{{ route('productListC') }}">
+                        <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
+                    <span>Product List C</span>
+                </a>
+            </li>
+
             <li>
                 <a href="{{ route('addProduct', ['main_category' => 1]) }}">
                     <iconify-icon icon="mdi:plus-circle-outline" class="menu-icon"></iconify-icon>

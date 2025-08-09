@@ -55,11 +55,13 @@
                         {{-- ✅ Keep original order --}}
                         <th class="text-center text-nowrap" style="width: 10%;">Action</th>
                         <th class="text-center text-nowrap" style="width: 10%;">Image</th>
-                        <th class="text-center" style="width: 15%;">Product Name</th>
-                        <th class="text-center" style="width: 15%;">SKU</th>
-                        <th class="text-center" style="width: 15%;">Category</th>
-                        <th class="text-center" style="width: 15%;">Product Price</th>
-                        <th class="text-center" style="width: 20%;">Description</th>
+                        <th class="text-center" style="width: 10%;">Product Name</th>
+                        <th class="text-center" style="width: 10%;">SKU</th>
+                        <th class="text-center" style="width: 10%;">Category</th>
+                        <th class="text-center" style="width: 10%;">Product Price</th>
+                        <th class="text-center" style="width: 10%;">Purchase Value</th>
+                        <th class="text-center" style="width: 15%;">Description</th>
+                        <th class="text-center" style="width: 15%;">Note</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -119,7 +121,12 @@
                             <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ $product->sku }}</td>
                             <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ $product->category_name }}</td>
                             <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>${{ number_format($product->product_price, 2) }}</td>
+                            <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>
+                                ${{ number_format($product->purchase_value, 2) }}<br>
+                                <p class="text-muted">{{ $product->purchase_code }}</p>
+                            </td>
                             <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ \Illuminate\Support\Str::limit($product->description, 60) }}</td>
+                            <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ $product->note }}</td>
                         </tr>
                     @empty
                         <tr>

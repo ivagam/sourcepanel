@@ -34,6 +34,7 @@ class Product extends Model
         'size',
         'sku',
         'is_updated',
+        'is_product_c',
     ];
 
     public function category()

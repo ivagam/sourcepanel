@@ -137,7 +137,7 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">SKU</label>
+                            <label class="form-label">Product Value</label>
                             <input type="text" name="sku" class="form-control" value="{{ old('sku', $product->sku) }}" >
                         </div>
 
@@ -173,7 +173,7 @@
                             </div>
 
                             <div class="col-md-3">
-                                <label class="form-label">Purchase Value</label>
+                                <label class="form-label">Numbers</label>
                                 <input 
                                     type="number" 
                                     name="purchase_value" 
@@ -792,69 +792,88 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     purchaseValueInput.addEventListener('input', () => {
-        const value = parseFloat(purchaseValueInput.value.trim());
-        const mainCategory = getSelectedCategory();
+    const value = parseFloat(purchaseValueInput.value.trim());
+    const mainCategory = getSelectedCategory();
 
-        if (!value || isNaN(value) || !mainCategory) {
-            purchaseCodeInput.value = '';
-            productPriceInput.value = '';
-            return;
+    if (!value || isNaN(value) || !mainCategory) {
+        purchaseCodeInput.value = '';
+        productPriceInput.value = '';
+        return;
+    }
+
+    const numberToLetter = {
+        '1': 'A', '2': 'B', '3': 'C', '4': 'D',
+        '5': 'E', '6': 'F', '7': 'G', '8': 'H', '9': 'I'
+    };
+
+    const getRandomLetter = () => {
+        const chars = 'abcdefghijklmnopqrstuvwxyz';
+        return chars.charAt(Math.floor(Math.random() * chars.length));
+    };
+
+    const getRandomLetters = (length) => {
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += getRandomLetter();
         }
+        return result;
+    };
 
-        const numberToLetter = {
-            '1': 'A', '2': 'B', '3': 'C', '4': 'D',
-            '5': 'E', '6': 'F', '7': 'G', '8': 'H', '9': 'I'
-        };
-
-        const getRandomLetter = () => {
-            const chars = 'abcdefghijklmnopqrstuvwxyz';
-            return chars.charAt(Math.floor(Math.random() * chars.length));
-        };
-
-        const getRandomLetters = (length) => {
-            let result = '';
-            for (let i = 0; i < length; i++) {
-                result += getRandomLetter();
-            }
-            return result;
-        };
-
-        let converted = '';
-        for (let digit of value.toString()) {
-            if (digit === '0') {
-                converted += getRandomLetter();
-            } else {
-                converted += numberToLetter[digit] || '';
-            }
+    let converted = '';
+    for (let digit of value.toString()) {
+        if (digit === '0') {
+            converted += getRandomLetter();
+        } else {
+            converted += numberToLetter[digit] || '';
         }
+    }
 
-        const finalCode = getRandomLetters(4) + converted;
-        purchaseCodeInput.value = finalCode;
+    const finalCode = getRandomLetters(4) + converted;
+    purchaseCodeInput.value = finalCode;
 
-        let productPrice = 0;
+    let productPrice = 0;
 
-        if (mainCategory === '113') {
-            if (value <= 65) {
-                productPrice = value + 40;
-            } else if (value > 65 && value <= 199) {
-                productPrice = value * 1.6;
-            } else {
-                productPrice = value * 1.5;
-            }
-        } else if (mainCategory === '1') {
-            if (value <= 100) {
-                productPrice = value + 80;
-            } else if (value >= 101 && value <= 199) {
-                productPrice = value + 90;
-            } else if (value >= 200 && value <= 339) {
-                productPrice = value + 100;
-            } else {
-                productPrice = value * 1.3;
-            }
+    const dividedValue = value / 7;
+
+    if (mainCategory === '113') {
+        if (dividedValue <= 65) {
+            productPrice = dividedValue + 40;
+        } else if (dividedValue > 65 && dividedValue <= 199) {
+            productPrice = dividedValue * 1.6;
+        } else {
+            productPrice = dividedValue * 1.5;
         }
+    } else if (mainCategory === '1') {
+        if (dividedValue <= 100) {
+            productPrice = dividedValue + 80;
+        } else if (dividedValue >= 101 && dividedValue <= 199) {
+            productPrice = dividedValue + 90;
+        } else if (dividedValue >= 200 && dividedValue <= 339) {
+            productPrice = dividedValue + 100;
+        } else {
+            productPrice = dividedValue * 1.3;
+        }
+    }
 
-        productPriceInput.value = Math.round(productPrice);
-    });
+    function adjustLastDigit(num) {
+        let n = Math.round(num);
+        let lastDigit = n % 10;
+        const allowedDigits = [2, 4, 6, 8];
+        let closest = allowedDigits.reduce((prev, curr) => {
+            const prevDiff = Math.abs(lastDigit - prev);
+            const currDiff = Math.abs(lastDigit - curr);
+            if (currDiff < prevDiff) return curr;
+            if (currDiff === prevDiff) return Math.max(curr, prev);
+            return prev;
+        });
+        return n - lastDigit + closest;
+    }
+
+    productPrice = adjustLastDigit(productPrice);
+
+    productPriceInput.value = productPrice;
+});
+
 });
 
 

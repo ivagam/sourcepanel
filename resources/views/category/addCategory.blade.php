@@ -36,7 +36,7 @@
 
             <input type="hidden" name="subcategory_id" id="final_subcategory_id">
             <input type="hidden" name="category_ids" id="category_ids">
-
+            <input type="hidden" name="filter_keyword" id="filter_keyword" value="">
             
                 <div class="mb-3 col-md-6">
                     <label class="form-label">Category Name <span class="text-danger">*</span></label>
@@ -133,6 +133,7 @@ $(document).ready(function () {
 
     $('form').on('submit', function(e) {
         let selectedIds = [];
+        let lastSubcatText = '';
 
         const mainCat = $('#mainCategorySelect').val();
         if (mainCat) {
@@ -141,9 +142,12 @@ $(document).ready(function () {
 
         $('#dynamic-subcategories select').each(function() {
             const val = $(this).val();
+            const text = $(this).find('option:selected').text();
+
             if (val) {
                 $(this).removeClass('is-invalid');
                 selectedIds.push(val);
+                lastSubcatText = text;
             } else {
                 $(this).removeClass('is-invalid');
             }
@@ -151,6 +155,13 @@ $(document).ready(function () {
 
         $('#category_ids').val(selectedIds.join(','));
         $('#final_subcategory_id').val(selectedIds[selectedIds.length - 1] || '');
+
+        if(selectedIds.length === 3 && selectedIds[0] == 113){ 
+            const words = lastSubcatText.trim().split(' ');
+            $('#filter_keyword').val(words[words.length - 1].toLowerCase());
+        } else {
+            $('#filter_keyword').val('');
+        }
     });
 });
 </script>

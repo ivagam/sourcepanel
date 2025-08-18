@@ -45,6 +45,7 @@ Route::prefix('dashboard')->middleware('auth')->group(function () {
     Route::controller(DashboardController::class)->group(function () {
         Route::get('/index', 'index')->name('index');
         Route::get('/sales-data', 'salesData');
+        Route::get('/watermark', 'watermark');
     });
 });
 

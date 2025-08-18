@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\DB;
 use App\Helpers\StockHelper;
 use Carbon\Carbon;
 use App\Models\CustomerOrder;
+use Intervention\Image\Facades\Image;
+
+
 
 class DashboardController extends Controller
 {
@@ -93,6 +96,74 @@ public function salesData(Request $request)
     ]);
 }
 
+public function watermark(Request $request)
+{
+    $uploadPath = public_path('uploads');
+     // Full path to the original image
+     $filename = '1750748372_ab577fa3cb2059f6a1b0461d66d06f9.jpg';
+   $uploadPath = public_path('uploads');
+    $imagePath = $uploadPath . '/' . $filename;
+
+    if (!file_exists($imagePath)) {
+        return 'Image not found!';
+    }
+
+    // Load image
+    $info = getimagesize($imagePath);
+    $mime = $info['mime'];
+
+    switch ($mime) {
+        case 'image/jpeg':
+            $img = imagecreatefromjpeg($imagePath);
+            break;
+        case 'image/png':
+            $img = imagecreatefrompng($imagePath);
+            break;
+        case 'image/gif':
+            $img = imagecreatefromgif($imagePath);
+            break;
+        default:
+            return 'Unsupported image type';
+    }
+
+    // Text settings
+    $text = 'tesrte@gmail.com';
+    $fontSize = 40; // in points
+    $fontFile = public_path('font/arial.ttf'); // TTF font file
+    $white = imagecolorallocatealpha($img, 255, 255, 255, 50); // 50 = semi-transparent
+
+    // Get image width/height
+    $imgWidth = imagesx($img);
+    $imgHeight = imagesy($img);
+
+    // Calculate text box for centering
+    $bbox = imagettfbbox($fontSize, 0, $fontFile, $text);
+    $textWidth = $bbox[2] - $bbox[0];
+    $textHeight = $bbox[1] - $bbox[7];
+
+    $x = ($imgWidth / 2) - ($textWidth / 2);
+    $y = ($imgHeight / 2) + ($textHeight / 2);
+
+    // Add the text
+    imagettftext($img, $fontSize, 0, $x, $y, $white, $fontFile, $text);
+
+    // Save image (overwrite original)
+    switch ($mime) {
+        case 'image/jpeg':
+            imagejpeg($img, $imagePath, 90);
+            break;
+        case 'image/png':
+            imagepng($img, $imagePath);
+            break;
+        case 'image/gif':
+            imagegif($img, $imagePath);
+            break;
+    }
+
+    imagedestroy($img);
+
+    return "Watermark added successfully to $filename";
+}
     public function index2()
     {
         return view('dashboard/index2');

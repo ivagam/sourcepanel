@@ -25,11 +25,12 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'category_name' => 'required|string|max:255',
+            'category_name'  => 'required|string|max:255',
+            'filter_keyword' => 'nullable|string',
         ]);
 
-        $domains = $request->domains;
 
+        $domains = $request->domains;
         if (is_array($domains)) {
             $domains = implode(',', $domains);
         } elseif (is_string($domains)) {
@@ -38,16 +39,52 @@ class CategoryController extends Controller
             $domains = null;
         }
 
-        Category::create([
-            'category_name' => $request->category_name,
-            'subcategory_id' => $request->subcategory_id,
-            'alice_name' => $request->alice_name,
-            'domains' => $domains,
-            'created_by' => session('user_id'),
-            'category_ids' => $request->category_ids,
-        ]);
+        $keyword = strtolower($request->input('filter_keyword', ''));
 
-        return redirect()->route('categoryList')->with('success', 'Category added successfully.');
+        if (empty($keyword)) {
+            
+            Category::create([
+                'category_name'  => $request->category_name,
+                'subcategory_id' => $request->subcategory_id,
+                'alice_name'     => $request->alice_name,
+                'domains'        => $domains,
+                'created_by'     => session('user_id'),
+                'category_ids'   => $request->category_ids,
+            ]);
+
+            return redirect()->route('categoryList')->with('success', 'Category added successfully.');
+        }
+
+        $category2_list = Category::where('subcategory_id', 113)->get();
+        $created = [];
+
+        foreach ($category2_list as $cat2) {
+            $category3_list = Category::where('subcategory_id', $cat2->category_id)
+                ->whereRaw("LOWER(SUBSTRING_INDEX(category_name, ' ', -1)) = ?", [$keyword])
+                ->get();
+
+            foreach ($category3_list as $category3) {
+                $newCategory = Category::create([
+                    'category_name'  => $request->category_name,
+                    'subcategory_id' => $category3->category_id,
+                    'alice_name'     => $request->alice_name,
+                    'domains'        => $domains,
+                    'created_by'     => session('user_id'),
+                ]);
+
+                $newCategory->category_ids = implode(',', [
+                    113,
+                    $cat2->category_id,
+                    $category3->category_id,
+                    $newCategory->category_id
+                ]);
+
+                $newCategory->save();
+                $created[] = $newCategory;
+            }
+        }
+
+        return redirect()->route('categoryList')->with('success', 'Categories added successfully.');
     }
 
    public function edit($id)

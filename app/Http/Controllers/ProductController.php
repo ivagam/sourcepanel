@@ -25,6 +25,7 @@ class ProductController extends Controller
         $product->product_url         = Str::slug($product->product_name);
         $product->sku                 = 'SKU' . rand(100000, 999999);
         $product->created_by          = session('user_id');
+        $product->size                = 'S,L,M,XL,XXL';
         $product->save();
 
         $lastInsertedId = $product->product_id;

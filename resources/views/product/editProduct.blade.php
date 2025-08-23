@@ -1,5 +1,23 @@
 @extends('layout.layout')
-
+@php
+    $title='Terms & Conditions';
+    $subTitle = 'Terms & Conditions';
+    $script = '<script src="' . asset('assets/js/editor.highlighted.min.js') . '"></script>
+                <script src="' . asset('assets/js/editor.quill.js') . '"></script>
+                <script src="' . asset('assets/js/editor.katex.min.js') . '"></script>
+                <script>
+                // Editor Js Start
+                const quill = new Quill("#editor", {
+                    modules: {
+                        syntax: true,
+                        toolbar: "#toolbar-container",
+                    },
+                    placeholder: "Compose an epic...",
+                    theme: "snow",
+                });
+                // Editor Js End
+                </script>';
+@endphp
 @section('content')
 
 @if(session('success'))
@@ -229,8 +247,64 @@
 
                         <div class="col-md-6">
                             <label class="form-label">Product Description</label>
-                            <textarea name="description" class="form-control texteditor">{{ old('description', $product->description) }}</textarea>                            
-                        </div>                        
+                            <div class="card-body p-0">
+
+                                <!-- Toolbar -->
+                                <div id="toolbar-container">
+                                <span class="ql-formats">
+                    <select class="ql-font"></select>
+                    <select class="ql-size"></select>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-bold"></button>
+                    <button class="ql-italic"></button>
+                    <button class="ql-underline"></button>
+                    <button class="ql-strike"></button>
+                </span>
+                <span class="ql-formats">
+                    <select class="ql-color"></select>
+                    <select class="ql-background"></select>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-script" value="sub"></button>
+                    <button class="ql-script" value="super"></button>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-header" value="1"></button>
+                    <button class="ql-header" value="2"></button>
+                    <button class="ql-blockquote"></button>
+                    <button class="ql-code-block"></button>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-list" value="ordered"></button>
+                    <button class="ql-list" value="bullet"></button>
+                    <button class="ql-indent" value="-1"></button>
+                    <button class="ql-indent" value="+1"></button>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-direction" value="rtl"></button>
+                    <select class="ql-align"></select>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-link"></button>
+                    <button class="ql-image"></button>
+                    <button class="ql-video"></button>
+                    <button class="ql-formula"></button>
+                </span>
+                <span class="ql-formats">
+                    <button class="ql-clean"></button>
+                </span>
+                                </div>
+
+                                <!-- Quill editor -->
+                                <div id="editor">{!! old('description', $product->description) !!}</div>
+
+                                <!-- Hidden textarea that Laravel will receive -->
+                                <textarea name="description" id="description" style="display:none;">
+                                {!! old('description', $product->description) !!}
+                                </textarea>
+                            </div>
+                        </div>                      
 
                         <div class="col-md-6">
                             <label class="form-label">Note</label>
@@ -876,8 +950,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
+ document.addEventListener("DOMContentLoaded", function () {    
+    const quill = new Quill("#editor", {
+      modules: { toolbar: "#toolbar-container" },
+      theme: "snow"
+    });
 
+    const hiddenInput = document.querySelector("#description");
+    quill.root.innerHTML = hiddenInput.value;
 
+    quill.on("text-change", function () {
+      hiddenInput.value = quill.root.innerHTML;
+    });
+  });
 </script>
 
 @endsection

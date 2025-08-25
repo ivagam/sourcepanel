@@ -74,6 +74,19 @@
     pointer-events: none;
     z-index: 10;
 }
+
+#editor {
+    height: 150px;   /* set your desired height */
+    max-height: 200px;
+    overflow-y: auto; /* add scrollbar if content exceeds */
+    border: 1px solid #ddd;
+    padding: 10px;
+    background: #fff;
+}
+.ql-editor{
+    min-height:120px !important;
+    border:1px solid #000 !important;
+}
 </style>
 
 <div class="card h-100 p-0 radius-12">
@@ -249,62 +262,30 @@
                             <label class="form-label">Product Description</label>
                             <div class="card-body p-0">
 
-                                <!-- Toolbar -->
                                 <div id="toolbar-container">
-                                <span class="ql-formats">
-                    <select class="ql-font"></select>
-                    <select class="ql-size"></select>
-                </span>
-                <span class="ql-formats">
-                    <button class="ql-bold"></button>
-                    <button class="ql-italic"></button>
-                    <button class="ql-underline"></button>
-                    <button class="ql-strike"></button>
-                </span>
-                <span class="ql-formats">
-                    <select class="ql-color"></select>
-                    <select class="ql-background"></select>
-                </span>
-                <span class="ql-formats">
-                    <button class="ql-script" value="sub"></button>
-                    <button class="ql-script" value="super"></button>
-                </span>
-                <span class="ql-formats">
-                    <button class="ql-header" value="1"></button>
-                    <button class="ql-header" value="2"></button>
-                    <button class="ql-blockquote"></button>
-                    <button class="ql-code-block"></button>
-                </span>
-                <span class="ql-formats">
-                    <button class="ql-list" value="ordered"></button>
-                    <button class="ql-list" value="bullet"></button>
-                    <button class="ql-indent" value="-1"></button>
-                    <button class="ql-indent" value="+1"></button>
-                </span>
-                <span class="ql-formats">
-                    <button class="ql-direction" value="rtl"></button>
-                    <select class="ql-align"></select>
-                </span>
-                <span class="ql-formats">
-                    <button class="ql-link"></button>
-                    <button class="ql-image"></button>
-                    <button class="ql-video"></button>
-                    <button class="ql-formula"></button>
-                </span>
-                <span class="ql-formats">
-                    <button class="ql-clean"></button>
-                </span>
+                                    <span class="ql-formats">
+                                        <select class="ql-font"></select>
+                                        <select class="ql-size"></select>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-bold"></button>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-list" value="ordered"></button>
+                                        <button class="ql-list" value="bullet"></button>
+                                        <button class="ql-indent" value="-1"></button>
+                                        <button class="ql-indent" value="+1"></button>
+                                    </span>
                                 </div>
-
-                                <!-- Quill editor -->
+                                
                                 <div id="editor">{!! old('description', $product->description) !!}</div>
 
-                                <!-- Hidden textarea that Laravel will receive -->
-                                <textarea name="description" id="description" style="display:none;">
-                                {!! old('description', $product->description) !!}
+                                <!-- Hidden textarea (Laravel will receive this) -->
+                                <textarea name="description" id="description" style="display:none;height:200px">
+                                    {!! old('description', $product->description) !!}
                                 </textarea>
                             </div>
-                        </div>                      
+                        </div>                     
 
                         <div class="col-md-6">
                             <label class="form-label">Note</label>
@@ -950,19 +931,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
- document.addEventListener("DOMContentLoaded", function () {    
-    const quill = new Quill("#editor", {
-      modules: { toolbar: "#toolbar-container" },
-      theme: "snow"
-    });
-
-    const hiddenInput = document.querySelector("#description");
-    quill.root.innerHTML = hiddenInput.value;
-
-    quill.on("text-change", function () {
-      hiddenInput.value = quill.root.innerHTML;
-    });
+document.addEventListener("DOMContentLoaded", function () {    
+  var quill = new Quill("#editor", {
+    modules: { toolbar: "#toolbar-container" },
+    theme: "snow",
+    formats: ['font','size','bold','list','indent']
   });
+
+  const hiddenInput = document.querySelector("#description");
+  // Load old content
+  quill.root.innerHTML = hiddenInput.value;
+
+  // Sync changes back to hidden textarea
+  quill.on("text-change", function () {
+    hiddenInput.value = quill.root.innerHTML;
+  });
+});
 </script>
 
 @endsection

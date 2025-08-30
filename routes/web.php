@@ -17,6 +17,7 @@ use App\Http\Controllers\BannerController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\SeoController;
 
 
 Route::controller(AuthenticationController::class)->group(function () {
@@ -45,7 +46,7 @@ Route::prefix('dashboard')->middleware('auth')->group(function () {
     Route::controller(DashboardController::class)->group(function () {
         Route::get('/index', 'index')->name('index');
         Route::get('/sales-data', 'salesData');
-        Route::get('/watermark', 'watermark');
+        Route::get('/watermark', 'watermark');        
     });
 });
 
@@ -104,6 +105,7 @@ Route::prefix('product')->middleware('auth')->group(function () {
         Route::get('/productListA', 'productListA')->name('productListA');
         Route::get('/productListB', 'productListB')->name('productListB');
         Route::get('/productListC', 'productListC')->name('productListC');
+        Route::get('/search', 'search')->name('search');
         Route::post('/store', 'store')->name('storeproduct');
         Route::get('/editProduct/{id}', 'editProduct')->name('editProduct');
         Route::put('/updateProduct/{id}', 'updateProduct')->name('updateProduct');
@@ -112,9 +114,16 @@ Route::prefix('product')->middleware('auth')->group(function () {
         Route::post('/upload-temp-image', 'uploadTempImage')->name('uploadTempImage');
         Route::post('/delete-image', 'deleteImage')->name('deleteImage');
         Route::post('/product/update-image-order', 'updateImageOrder')->name('updateImageOrder');
-        Route::get('/duplicate/{id}', 'duplicateProduct')->name('duplicateProduct');
+        Route::get('/duplicate/{id}', 'duplicateProduct')->name('duplicateProduct');        
 
+    });
+});
 
+Route::prefix('seo')->middleware('auth')->group(function () {
+    Route::controller(SeoController::class)->group(function () {        
+        Route::get('/seo', 'seo')->name('seo');
+        Route::get('/seo/export', 'export')->name('seo.export');
+        Route::post('/seo/import', 'import')->name('seo.import');
     });
 });
 

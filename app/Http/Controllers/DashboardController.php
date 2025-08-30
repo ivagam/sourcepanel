@@ -97,61 +97,70 @@ class DashboardController extends Controller
     }
 
     public function watermark()
-    {
-        $folder = public_path('uploads');
-        $watermarkText = 'GBNL007@GMAIL.COM';
-        $fontFile = public_path('font/arial.ttf');
-        $fontSize = 40;
+{
+    $folder = public_path('uploads');
+    $watermarkText = 'GBNL007@GMAIL.COM';
+    $fontFile = public_path('font/arial.ttf');
+    $fontSize = 40;
 
-        $images = DB::table('product_images')
-            ->where('is_watermarked', 0)
-            ->limit(500)
-            ->get();
-        
-        $total = $images->count();
+    $images = DB::table('product_images')
+        ->where('is_watermarked', 0)
+        ->limit(500)
+        ->get();
+    
+    $total = $images->count();
 
-        echo "Total to process = " . $total . "<br>";
+    echo "Total to process = " . $total . "<br>";
 
-        foreach ($images as $imgModel) {
+    foreach ($images as $imgModel) {
+        $imagePath = $folder . '/' . $imgModel->file_path;
 
-            $imagePath = $folder . '/' . $imgModel->file_path;
-            if (!file_exists($imagePath)) {
-                DB::table('product_images')->where('image_id',$imgModel->image_id)->update(['is_watermarked'=>1]);
-                continue;
-            }
-
-            $info = @getimagesize($imagePath);
-            if ($info === false) {
-                continue;
-            }
-
-            $mime = $info['mime'];
-            switch ($mime) {
-                case 'image/jpeg': $img = imagecreatefromjpeg($imagePath); break;
-                case 'image/png':  $img = imagecreatefrompng($imagePath); break;
-                case 'image/gif':  $img = imagecreatefromgif($imagePath); break;
-                default: continue 2;
-            }
-
-            $color = imagecolorallocatealpha($img,255,255,255,50);
-            $w=imagesx($img); $h=imagesy($img);
-            $bbox = imagettfbbox($fontSize,0,$fontFile,$watermarkText);
-            $tw=$bbox[2]-$bbox[0]; $th=$bbox[1]-$bbox[7];
-            $x=($w/2)-($tw/2); $y=($h/2)+($th/2);
-            imagettftext($img,$fontSize,0,$x,$y,$color,$fontFile,$watermarkText);
-
-            switch ($mime) {
-                case 'image/jpeg': imagejpeg($img,$imagePath,90); break;
-                case 'image/png':  imagepng($img,$imagePath);     break;
-                case 'image/gif':  imagegif($img,$imagePath);     break;
-            }
-            imagedestroy($img);
-
-            DB::table('product_images')->where('image_id',$imgModel->image_id)->update(['is_watermarked'=>1]);
+        if (!file_exists($imagePath)) {
+            DB::table('product_images')
+                ->where('image_id', $imgModel->image_id)
+                ->update(['is_watermarked' => 1]);
+            continue;
         }
 
-        return "✅ Done $total images, run again to process next batch.";
+        $info = @\getimagesize($imagePath);
+        if ($info === false) {
+            continue;
+        }
+
+        $mime = $info['mime'];
+        switch ($mime) {
+            case 'image/jpeg': $img = \imagecreatefromjpeg($imagePath); break;
+            case 'image/png':  $img = \imagecreatefrompng($imagePath); break;
+            case 'image/gif':  $img = \imagecreatefromgif($imagePath); break;
+            default: continue 2;
+        }
+
+        $color = \imagecolorallocatealpha($img, 255, 255, 255, 50);
+        $w = \imagesx($img);
+        $h = \imagesy($img);
+
+        $bbox = \imagettfbbox($fontSize, 0, $fontFile, $watermarkText);
+        $tw = $bbox[2] - $bbox[0];
+        $th = $bbox[1] - $bbox[7];
+        $x = ($w / 2) - ($tw / 2);
+        $y = ($h / 2) + ($th / 2);
+
+        \imagettftext($img, $fontSize, 0, $x, $y, $color, $fontFile, $watermarkText);
+
+        switch ($mime) {
+            case 'image/jpeg': \imagejpeg($img, $imagePath, 90); break;
+            case 'image/png':  \imagepng($img, $imagePath); break;
+            case 'image/gif':  \imagegif($img, $imagePath); break;
+        }
+        \imagedestroy($img);
+
+        DB::table('product_images')
+            ->where('image_id', $imgModel->image_id)
+            ->update(['is_watermarked' => 1]);
     }
+
+    return "✅ Done $total images, run again to process next batch.";
+}
 
 
     public function index2()

@@ -9,10 +9,11 @@
                 <button type="button" class="sidebar-mobile-toggle">
                     <iconify-icon icon="heroicons:bars-3-solid" class="icon"></iconify-icon>
                 </button>
-                <form class="navbar-search">
-                    <input type="text" name="search" placeholder="Search">
-                    <iconify-icon icon="ion:search-outline" class="icon"></iconify-icon>
+                <form class="navbar-search d-flex" action="{{ route('search') }}" method="GET">                    
+                    <input type="text" name="search" class="form-control form-control-sm" placeholder="Search">
+                    <button class="btn btn-primary btn-sm ms-8 rounded-end" type="submit">Search</button>
                 </form>
+
             </div>
         </div>
         <div class="col-auto">

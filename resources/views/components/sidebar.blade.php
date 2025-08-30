@@ -57,6 +57,13 @@
             </li>
 
             <li>
+                  <a href="{{ route('seo') }}">
+                        <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
+                    <span>SEO</span>
+                </a>
+            </li>
+
+            <li>
                 <a href="{{ route('addProduct', ['main_category' => 1]) }}">
                     <iconify-icon icon="mdi:plus-circle-outline" class="menu-icon"></iconify-icon>
                     <span>Watches</span>
@@ -77,12 +84,12 @@
                 </a>
             </li>
 
-            <li>
+           <!--<li>
                   <a href="{{ route('salesIndex') }}">
                     <iconify-icon icon="heroicons:shopping-cart" class="menu-icon"></iconify-icon>
                     <span>Sales</span>
                 </a>
-            </li>             
+            </li>-->
             
             <li class="dropdown">
                 <a  href="javascript:void(0)">

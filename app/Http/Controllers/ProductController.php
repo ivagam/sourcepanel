@@ -409,4 +409,34 @@ class ProductController extends Controller
 
             return response()->json(['success' => true]);
         }
+
+        
+    public function search(Request $request)
+    {
+        $search = strtolower($request->input('search'));
+       
+        $query = Product::query()
+            ->select([
+                'products.*',
+                DB::raw("(SELECT GROUP_CONCAT(category_name SEPARATOR ', ') 
+                        FROM category 
+                        WHERE FIND_IN_SET(category.category_id, products.category_ids)
+                        ) as category_name")
+            ]);
+       
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw("LOWER(products.product_name) LIKE ?", ['%' . $search . '%'])
+                ->orWhereRaw("LOWER(products.description) LIKE ?", ['%' . $search . '%'])
+                ->orWhereRaw("LOWER(products.sku) LIKE ?", ['%' . $search . '%']);
+            });
+        }
+
+        $products = $query->orderBy('products.created_at', 'desc')->paginate(50);
+
+        return view('product.searchResults', compact('products'));        
+    }
+
+    
 }

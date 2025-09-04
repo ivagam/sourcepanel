@@ -130,8 +130,8 @@
                             </div>
                         </div>
 
-
-                        <div class="mb-3">
+                        <div class="mb-3">                           
+                             <p id="reverseImagesBtn1" style="text-align:right;padding:0px;margin:0px;cursor:pointer">Reverse Images</p>
                             <label class="form-label">Uploads Files</label>
                             <div class="dropzone" id="dropzoneEdit"></div>
                         </div>
@@ -140,8 +140,9 @@
                         @foreach($selectedImages as $image)
                             <input type="hidden" name="existing_images[]" value="{{ $image->file_path }}">
                         @endforeach
-
+                        <p id="reverseImagesBtn2" style="text-align:right;padding:0px;margin:0px;cursor:pointer">Reverse Images</p>
                         <div id="imageOrderBox" class="d-flex flex-wrap mt-3 gap-2">
+                           
                             @foreach($selectedImages->sortBy('serial_no')->values() as $index => $image)
                                 @php
                                     $ext = strtolower(pathinfo($image->file_path, PATHINFO_EXTENSION));
@@ -159,12 +160,6 @@
                                     @endif
                                 </div>
                             @endforeach
-                        </div>
-
-                        <div class="mt-3">
-                            <button type="button" class="btn btn-primary" id="reverseImagesBtn">
-                                Reverse Order
-                            </button>
                         </div>
 
                         <div class="col-md-6">
@@ -964,24 +959,36 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
+const container = document.getElementById('imageOrderBox');
+const reverseBtn1 = document.getElementById('reverseImagesBtn1');
+const reverseBtn2 = document.getElementById('reverseImagesBtn2');
 
-document.getElementById('reverseImagesBtn').addEventListener('click', function () {
-    const container = document.getElementById('imageOrderBox');
+function updateReverseButtonText() {
+    const count = container.querySelectorAll('.image-box img, .image-box video').length;
+    reverseBtn1.textContent = `Reverse Images (${count})`;
+    reverseBtn2.textContent = `Reverse Images (${count})`;
+}
+
+function reverseImages() {
     const boxes = Array.from(container.querySelectorAll('.image-box'));
-
     const imageBoxes = boxes.filter(box => box.querySelector('img'));
     const videoBoxes = boxes.filter(box => box.querySelector('video'));
 
     imageBoxes.reverse();
 
     container.innerHTML = '';
-
     imageBoxes.forEach(box => container.appendChild(box));
     videoBoxes.forEach(box => container.appendChild(box));
 
     updateSerials();
-});
+    updateReverseButtonText();
+}
 
+updateReverseButtonText();
+
+[reverseBtn1, reverseBtn2].forEach(btn => {
+    btn.addEventListener('click', reverseImages);
+});
 </script>
 
 @endsection

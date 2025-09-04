@@ -113,7 +113,7 @@ Route::prefix('product')->middleware('auth')->group(function () {
         Route::get('/by-category/{id}', 'getByCategory')->name('byCategory');
         Route::post('/upload-temp-image', 'uploadTempImage')->name('uploadTempImage');
         Route::post('/delete-image', 'deleteImage')->name('deleteImage');
-        Route::post('/product/update-image-order', 'updateImageOrder')->name('updateImageOrder');
+        Route::post('/update-image-order', 'updateImageOrder')->name('updateImageOrder');
         Route::get('/duplicate/{id}', 'duplicateProduct')->name('duplicateProduct');        
 
     });

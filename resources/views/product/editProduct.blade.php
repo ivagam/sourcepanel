@@ -161,6 +161,12 @@
                             @endforeach
                         </div>
 
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-primary" id="reverseImagesBtn">
+                                Reverse Order
+                            </button>
+                        </div>
+
                         <div class="col-md-6">
                             <label class="form-label">Product Name <span class="text-danger">*</span></label>
                             <input type="text" name="product_name" class="form-control @error('product_name') is-invalid @enderror" value="{{ old('product_name', $product->product_name) }}">
@@ -527,16 +533,17 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
         'X-CSRF-TOKEN': '{{ csrf_token() }}'
     },
     acceptedFiles: ".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.avi,.webm",
-    maxFilesize: 1024,
+    maxFilesize: 1024, // MB
     timeout: 300000,
     addRemoveLinks: true,
     dictDefaultMessage: "Drag files or click to upload",
+
     init: function () {
         this.on("sending", function (file, xhr, formData) {
-            formData.append("serial_no", uploadIndex++);
             formData.append("product_id", "{{ $product->product_id }}");
         });
     },
+
     success: function (file, response) {
         if (response.success) {
             let input = document.createElement('input');
@@ -547,12 +554,14 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
 
             file.existing = true;
             file.filePath = response.file_path;
+            file.imageId = response.image_id;
 
             let checkmark = document.createElement('div');
             checkmark.className = 'dz-success-icon';
             checkmark.innerHTML = '✔️';
             file.previewElement.appendChild(checkmark);
 
+            // preview container
             const container = document.createElement('div');
             container.className = "position-relative image-box";
             container.setAttribute("data-id", response.image_id || 'new-' + Date.now());
@@ -560,20 +569,27 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
             let isVideo = response.file_path.match(/\.(mp4|mov|avi|webm)$/i);
             let baseUrl = "{{ rtrim(env('SOURCE_PANEL_IMAGE_URL'), '/') }}";
             let mediaUrl = baseUrl + '/' + response.file_path;
-             let previewHTML;
-                if (isVideo) {
-                    previewHTML = `<video width="120" height="120" style="cursor: pointer;" onclick="showFullMedia('${mediaUrl}', 'video', '${response.file_path.split('.').pop()}')">
-                                        <source src="${mediaUrl}" type="${getMimeType(response.file_path)}">
-                                        Your browser does not support the video tag.
-                                </video>`;
-                } else {
-                    previewHTML = `<img src="${mediaUrl}" class="img-thumbnail" style="width: 120px; height: 120px; cursor: pointer;" onclick="showFullMedia('${mediaUrl}', 'image')">`;
-                }
 
-                container.innerHTML = previewHTML;
-                document.getElementById("imageOrderBox").appendChild(container);
+            let previewHTML;
+            if (isVideo) {
+                previewHTML = `
+                    <video width="120" height="120" style="cursor: pointer;"
+                        onclick="showFullMedia('${mediaUrl}', 'video', '${response.file_path.split('.').pop()}')">
+                        <source src="${mediaUrl}" type="${getMimeType(response.file_path)}">
+                        Your browser does not support the video tag.
+                    </video>`;
+            } else {
+                previewHTML = `
+                    <img src="${mediaUrl}" class="img-thumbnail"
+                        style="width: 120px; height: 120px; cursor: pointer;"
+                        onclick="showFullMedia('${mediaUrl}', 'image')">`;
             }
+
+            container.innerHTML = previewHTML;
+            document.getElementById("imageOrderBox").appendChild(container);
+        }
     },
+
     error: function (file, errorMessage) {
         alert("Upload failed: " + errorMessage);
     }
@@ -947,6 +963,25 @@ document.addEventListener("DOMContentLoaded", function () {
     hiddenInput.value = quill.root.innerHTML;
   });
 });
+
+
+document.getElementById('reverseImagesBtn').addEventListener('click', function () {
+    const container = document.getElementById('imageOrderBox');
+    const boxes = Array.from(container.querySelectorAll('.image-box'));
+
+    const imageBoxes = boxes.filter(box => box.querySelector('img'));
+    const videoBoxes = boxes.filter(box => box.querySelector('video'));
+
+    imageBoxes.reverse();
+
+    container.innerHTML = '';
+
+    imageBoxes.forEach(box => container.appendChild(box));
+    videoBoxes.forEach(box => container.appendChild(box));
+
+    updateSerials();
+});
+
 </script>
 
 @endsection

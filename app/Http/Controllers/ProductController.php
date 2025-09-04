@@ -26,6 +26,7 @@ class ProductController extends Controller
         $product->sku                 = 'SKU' . rand(100000, 999999);
         $product->created_by          = session('user_id');
         $product->size                = 'S,L,M,XL,XXL';
+        $product->seo                 = 0;
         $product->save();
 
         $lastInsertedId = $product->product_id;
@@ -342,10 +343,9 @@ class ProductController extends Controller
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
-
-            // Create sanitized and unique file name
-            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $extension = strtolower($file->getClientOriginalExtension());
+
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
             $sanitizedName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', $originalName);
             $filename = time() . '_' . uniqid() . '_' . $sanitizedName . '.' . $extension;
 
@@ -353,63 +353,88 @@ class ProductController extends Controller
             if (!file_exists($uploadPath)) {
                 mkdir($uploadPath, 0777, true);
             }
+            $file->move($uploadPath, $filename);
 
-            try {
-                $file->move($uploadPath, $filename);
-            } catch (\Exception $e) {
-                return response()->json(['success' => false, 'message' => 'Upload failed: ' . $e->getMessage()], 500);
-            }
+            $image = DB::transaction(function () use ($request, $filename, $extension) {
+                $isVideo = in_array($extension, ['mp4','mov','avi','webm']);
 
-            $nextSerial = Image::where('product_id', $request->product_id)->max('serial_no') + 1;
+                if ($isVideo) {
+                    $serialNo = (Image::where('product_id', $request->product_id)->max('serial_no') ?? 0) + 1000;
+                } else {
+                    $serialNo = (Image::where('product_id', $request->product_id)->max('serial_no') ?? 0) + 1;
+                }
 
-            $image = Image::create([
-                'serial_no'   => $nextSerial,
-                'product_id'  => $request->product_id,
-                'file_path'   => $filename, // <-- only filename here
-                'created_by'  => session('user_id'),
-            ]);
+                return Image::create([
+                    'serial_no'   => $serialNo,
+                    'product_id'  => $request->product_id,
+                    'file_path'   => $filename,
+                    'created_by'  => session('user_id'),
+                ]);
+            });
+
+            $this->normalizeSerials($request->product_id);
 
             return response()->json([
                 'success'   => true,
                 'file_path' => $image->file_path,
                 'image_id'  => $image->image_id,
+                'serial_no' => $image->serial_no,
             ]);
         }
 
         return response()->json(['success' => false, 'message' => 'No file uploaded.'], 400);
     }
 
+    private function normalizeSerials($productId)
+    {
+        $images = Image::where('product_id', $productId)
+            ->orderByRaw("CASE 
+                WHEN file_path REGEXP '\\.(mp4|mov|avi|webm)$' THEN 2 
+                ELSE 1 END")
+            ->orderBy('serial_no')
+            ->get();
+
+        foreach ($images as $index => $img) {
+            $img->serial_no = $index + 1;
+            $img->save();
+        }
+    }
 
     public function deleteImage(Request $request)
     {
         $imageId = $request->image_id;
-
         $image = Image::find($imageId);
-        if ($image) {
-            $fullPath = public_path($image->file_path);
-            $image->delete();
 
-            if (file_exists($fullPath)) {
-                @unlink($fullPath);
-            }
-
-            return response()->json(['success' => true]);
+        if (!$image) {
+            return response()->json(['success' => false, 'message' => 'File not found.']);
         }
 
-        return response()->json(['success' => false, 'message' => 'Image not found.']);
+        $fullPath = public_path($image->file_path);
+
+        if (file_exists($fullPath)) {
+            @unlink($fullPath);
+        } else {
+            $storagePath = storage_path('app/' . $image->file_path);
+            if (file_exists($storagePath)) {
+                @unlink($storagePath);
+            }
+        }
+
+        $image->delete();
+
+        return response()->json(['success' => true]);
     }
 
     public function updateImageOrder(Request $request)
-        {
-            $images = $request->images;
+    {
+        $images = $request->images;
 
-            foreach ($images as $img) {
-                \App\Models\Image::where('image_id', $img['id'])->update(['serial_no' => $img['serial_no']]);
-            }
-
-            return response()->json(['success' => true]);
+        foreach ($images as $img) {
+            \App\Models\Image::where('image_id', $img['id'])->update(['serial_no' => $img['serial_no']]);
         }
 
+        return response()->json(['success' => true]);
+    }
         
     public function search(Request $request)
     {

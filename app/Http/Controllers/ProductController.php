@@ -254,21 +254,23 @@ class ProductController extends Controller
             $product->category_ids = ($request->category_ids ?? $product->category_ids ?? '') . ',';
         }
 
+        $oldName = $product->product_name;
+
         $product->description = $request->description ?? $product->description;
         $product->meta_keywords = $request->meta_keywords ?? $product->meta_keywords;
         $product->meta_description = $request->meta_description ?? $product->meta_description;
         $product->purchase_value = $request->purchase_value ?? $product->purchase_value;
         $product->purchase_code = $request->purchase_code ?? $product->purchase_code;
         $product->note = $request->note ?? $product->note;
-        $product->domains = is_array($request->domains) ? implode(',', $request->domains) : $product->domains;
-        $product->product_url = $request->product_name
-            ? Str::slug($request->product_name) . '-' . rand(1000, 9999)
-            : $product->product_url;
-
+        $product->domains = is_array($request->domains) ? implode(',', $request->domains) : $product->domains;        
         $product->created_by = session('user_id');
         $product->created_at = now();
         $product->updated_at = now();
         $product->is_updated = $request->input('is_updated', 0);
+
+        if ($request->filled('product_name') && $request->product_name !== $oldName) {
+            $product->product_url = Str::slug($request->product_name) . '-' . rand(1000, 9999);
+        }
 
         if (empty($product->sku)) {
             do {
@@ -462,6 +464,26 @@ class ProductController extends Controller
 
         return view('product.searchResults', compact('products'));        
     }
+    
+    public function bulkUpdateSku(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return response()->json(['message' => 'No products selected.'], 400);
+        }
+
+        // Generate one SKU for all selected
+        $newSku = 'SKU' . rand(100000, 999999);
+
+        Product::whereIn('product_id', $ids)->update([
+            'sku' => $newSku
+        ]);
+
+        return response()->json([
+            'message' => 'Updated SKU to ' . $newSku . ' for ' . count($ids) . ' products.'
+        ]);
+    }
+
 
     
 }

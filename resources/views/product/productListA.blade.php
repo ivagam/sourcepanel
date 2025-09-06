@@ -7,52 +7,75 @@
 @endphp
 
 @section('content')
-    
 
 @if(session('success'))
     <div class="alert alert-success">
         {{ session('success') }}
     </div>
 @endif
+<style>
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #0d6efd;
+        border: 2px solid #bbb;
+        background-color: #f9f9f9;
+    }
 
+    #select-all.form-check-input {
+        accent-color: #198754;
+    }
+
+    .form-check-input:hover {
+        border-color: #666;
+    }
+</style>
 <div class="card basic-data-table">
-  <div class="card-header">
-    {{-- First row: Search bar only --}}
-    <div class="row align-items-center mt-3">
-        <div class="col-md-7">
-            <form method="GET" action="{{ route('productListA') }}">
-                <div class="d-flex gap-2">
-                    {{-- Dropdown Filter --}}
-                    <select name="category_filter" class="form-select">
-                        <option value="">All Categories</option>
-                        <option value="1" {{ request('category_filter') == '1' ? 'selected' : '' }}>Watches</option>
-                        <option value="113" {{ request('category_filter') == '113' ? 'selected' : '' }}>Others</option>
-                    </select>
+    <div class="card-header">
+        {{-- Search & Filter --}}
+        <div class="row align-items-center mt-3">
+            <div class="col-md-7">
+                <form method="GET" action="{{ route('productListA') }}">
+                    <div class="d-flex gap-2">
+                        {{-- Dropdown Filter --}}
+                        <select name="category_filter" class="form-select">
+                            <option value="">All Categories</option>
+                            <option value="1" {{ request('category_filter') == '1' ? 'selected' : '' }}>Watches</option>
+                            <option value="113" {{ request('category_filter') == '113' ? 'selected' : '' }}>Others</option>
+                        </select>
 
-                    {{-- Text Search --}}
-                    <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search">
+                        {{-- Text Search --}}
+                        <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search">
 
-                    <button class="btn btn-primary" type="submit">Search</button>
-                    <a href="{{ route('productListA') }}" class="btn btn-secondary">Reset</a>
-                </div>
-            </form>
+                        <button class="btn btn-primary" type="submit">Search</button>
+                        <a href="{{ route('productListA') }}" class="btn btn-secondary">Reset</a>
+                    </div>
+                </form>
+            </div>
+        </div>
 
+        <div class="row mt-3">
+            <div class="col-md-12 d-flex justify-content-end">
+                {{ $products->appends(request()->query())->links() }}
+            </div>
         </div>
     </div>
-
-    <div class="row mt-3">
-        <div class="col-md-12 d-flex justify-content-end">
-            {{ $products->appends(request()->query())->links() }}
-        </div>
-    </div>
-</div>
 
     <div class="card-body">
+        {{-- ✅ Bulk Action Bar --}}
+        <div id="bulk-action-bar" class="mb-3" style="display:none;">
+            <button id="bulk-update-sku" class="btn btn-warning">Update SKU for Selected</button>
+        </div>
+
         <div class="table-responsive">
             <table class="table bordered-table mb-0" style="min-width: 1000px;">
                 <thead>
                     <tr>
-                        {{-- ✅ Keep original order --}}
+                        {{-- ✅ Master Checkbox --}}
+                        <th class="text-center" style="width:5%;">
+                            <input type="checkbox" id="select-all" class="form-check-input">
+                        </th>
                         <th class="text-center text-nowrap" style="width: 10%;">Action</th>
                         <th class="text-center text-nowrap" style="width: 10%;">Image</th>
                         <th class="text-center" style="width: 10%;">Product Name</th>
@@ -74,7 +97,12 @@
                         @endphp
 
                         <tr>
-                            {{-- ✅ Action First --}}
+                            {{-- ✅ Row Checkbox --}}
+                            <td class="text-center align-middle">
+                                <input type="checkbox" class="row-checkbox form-check-input" value="{{ $product->product_id }}">
+                            </td>
+
+                            {{-- ✅ Action --}}
                             <td class="text-center align-middle">
                                 <div class="d-flex align-items-center gap-10 justify-content-center">
                                     <a href="{{ route('editProduct', $product->product_id) }}">
@@ -84,7 +112,9 @@
                                     </a>
 
                                     <a href="{{ route('duplicateProduct', $product->product_id) }}">
-                                        <button type="button" class="bg-primary-focus text-primary-600 bg-hover-primary-200 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle"><iconify-icon icon="carbon:copy" class="menu-icon"></iconify-icon></button>
+                                        <button type="button" class="bg-primary-focus text-primary-600 bg-hover-primary-200 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle">
+                                            <iconify-icon icon="carbon:copy" class="menu-icon"></iconify-icon>
+                                        </button>
                                     </a>
 
                                     <form action="{{ route('deleteProduct', $product->product_id) }}" method="POST">
@@ -97,25 +127,23 @@
                                 </div>
                             </td>
 
-                            {{-- ✅ Image or Video Second --}}
+                            {{-- ✅ Image / Video --}}
                             <td class="text-center align-middle">
                                 @if($media && $mediaUrl)
                                     @if(in_array($ext, $videoExtensions))
-                                        <video width="80" height="80" muted autoplay loop playsinline
-                                            style="object-fit: cover; border-radius: 5px; display: block;">
+                                        <video width="80" height="80" muted autoplay loop playsinline style="object-fit:cover;border-radius:5px;display:block;">
                                             <source src="{{ $mediaUrl }}" type="video/{{ $ext }}">
                                             Your browser does not support the video tag.
                                         </video>
                                     @else
-                                        <img src="{{ $mediaUrl }}" alt="{{ $product->product_name }}"
-                                            style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px;">
+                                        <img src="{{ $mediaUrl }}" alt="{{ $product->product_name }}" style="width:80px;height:80px;object-fit:cover;border-radius:5px;">
                                     @endif
                                 @else
                                     <span class="text-muted">No Image</span>
                                 @endif
                             </td>
 
-                            {{-- ✅ Remaining Columns --}}                            
+                            {{-- ✅ Remaining Columns --}}
                             <td class="align-middle">{{ \Illuminate\Support\Str::limit(\Illuminate\Support\Str::title($product->product_name), 60) }}</td>
                             <td class="align-middle">{{ $product->sku }}</td>
                             <td class="align-middle">{{ $product->category_name }}</td>
@@ -129,30 +157,30 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center">No product found.</td>
+                            <td colspan="11" class="text-center">No product found.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-            <div class="mt-3 text-end">
-                {{ $products->appends(request()->query())->links() }}
-            </div>
+
+        <div class="mt-3 text-end">
+            {{ $products->appends(request()->query())->links() }}
+        </div>
     </div>
 </div>
 
-
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-{{-- Auto-fade alert + AJAX delete --}}
 <script>
+    // Auto fade alert
     setTimeout(function () {
         $(".alert").fadeOut("slow");
     }, 3000);
 
+    // Delete single product
     $(document).on('click', '.remove-item-btn', function (event) {
         event.preventDefault();
-
         let form = $(this).closest('form');
         if (confirm('Are you sure you want to delete this product?')) {
             $.ajax({
@@ -164,6 +192,58 @@
                 },
                 error: function () {
                     alert('Failed to delete. Please try again.');
+                }
+            });
+        }
+    });
+
+    // Select all checkboxes
+    $('#select-all').on('change', function () {
+        $('.row-checkbox').prop('checked', $(this).prop('checked'));
+        toggleBulkBar();
+    });
+
+    // Toggle bulk action bar
+    $(document).on('change', '.row-checkbox', function () {
+        $('#select-all').prop('checked', $('.row-checkbox:checked').length === $('.row-checkbox').length);
+        toggleBulkBar();
+    });
+
+    function toggleBulkBar() {
+        if ($('.row-checkbox:checked').length > 0) {
+            $('#bulk-action-bar').show();
+        } else {
+            $('#bulk-action-bar').hide();
+        }
+    }
+
+    // Bulk Update SKU
+    $('#bulk-update-sku').on('click', function (e) {
+        e.preventDefault();
+
+        let selectedIds = $('.row-checkbox:checked').map(function () {
+            return $(this).val();
+        }).get();
+
+        if (selectedIds.length === 0) {
+            alert('Please select at least one product.');
+            return;
+        }
+
+        if (confirm('Update SKU for ' + selectedIds.length + ' products?')) {
+            $.ajax({
+                url: "{{ route('bulkUpdateSku') }}",
+                type: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    ids: selectedIds
+                },
+                success: function (response) {
+                    alert(response.message);
+                    location.reload();
+                },
+                error: function () {
+                    alert('Failed to update SKU.');
                 }
             });
         }

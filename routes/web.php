@@ -115,6 +115,7 @@ Route::prefix('product')->middleware('auth')->group(function () {
         Route::post('/delete-image', 'deleteImage')->name('deleteImage');
         Route::post('/update-image-order', 'updateImageOrder')->name('updateImageOrder');
         Route::get('/duplicate/{id}', 'duplicateProduct')->name('duplicateProduct');        
+        Route::post('/bulk-update-sku', 'bulkUpdateSku')->name('bulkUpdateSku');
 
     });
 });

@@ -7,123 +7,153 @@
 @endphp
 
 @section('content')
-    
 
 @if(session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
-    </div>
+    <div class="alert alert-success">{{ session('success') }}</div>
 @endif
 
+@if(session('error'))
+    <div class="alert alert-danger">{{ session('error') }}</div>
+@endif
+
+<style>
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: #0d6efd;
+        border: 2px solid #bbb;
+        background-color: #f9f9f9;
+    }
+    #select-all.form-check-input {
+        accent-color: #198754;
+    }
+    .form-check-input:hover {
+        border-color: #666;
+    }
+</style>
+
 <div class="card basic-data-table">
-  <div class="card-header">
-    
-    <div class="row mt-3">
-        <div class="col-md-12 d-flex justify-content-end">
+    <div class="card-header">
+        <div class="row mt-3">
+            <div class="col-md-12 d-flex justify-content-end">
+                {{ $products->appends(request()->query())->links() }}
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body">
+
+        {{-- Bulk Action Bar --}}
+        <div id="bulk-action-bar" class="mb-3" style="display:none;">
+            <button id="bulk-update-sku" class="btn btn-warning">Update SKU for Selected</button>
+        </div>
+
+        <div class="table-responsive">
+            <form id="bulkForm" method="POST" action="{{ route('bulkUpdateSku') }}">
+                @csrf
+                <table class="table bordered-table mb-0" style="min-width: 1000px;">
+                    <thead>
+                        <tr>
+                            <th class="text-center"><input type="checkbox" id="select-all" class="form-check-input"></th>
+                            <th class="text-center text-nowrap" style="width: 10%;">Action</th>
+                            <th class="text-center text-nowrap" style="width: 10%;">Image</th>
+                            <th class="text-center" style="width: 10%;">Product Name</th>
+                            <th class="text-center" style="width: 10%;">Product Value</th>
+                            <th class="text-center" style="width: 10%;">Category</th>
+                            <th class="text-center" style="width: 10%;">Product Price</th>
+                            <th class="text-center" style="width: 10%;">Numbers</th>
+                            <th class="text-center" style="width: 15%;">Description</th>
+                            <th class="text-center" style="width: 15%;">Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($products as $product)
+                            @php
+                                $media = $product->images->sortBy('serial_no')->first();
+                                $mediaUrl = $media ? env('SOURCE_PANEL_IMAGE_URL') . $media->file_path : null;
+                                $ext = $media ? strtolower(pathinfo($media->file_path, PATHINFO_EXTENSION)) : null;
+                                $videoExtensions = ['mp4', 'mov', 'avi', 'webm'];
+                            @endphp
+
+                            <tr>
+                                {{-- Row Checkbox --}}
+                                <td class="text-center align-middle">
+                                    <input type="checkbox" name="ids[]" value="{{ $product->product_id }}" class="row-checkbox form-check-input">
+                                </td>
+
+                                {{-- Action --}}
+                                <td class="text-center align-middle">
+                                    <div class="d-flex align-items-center gap-10 justify-content-center">
+                                        <a href="{{ route('editProduct', $product->product_id) }}">
+                                            <button type="button" class="bg-success-focus text-success-600 bg-hover-success-200 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle">
+                                                <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
+                                            </button>
+                                        </a>
+
+                                        <a href="{{ route('duplicateProduct', $product->product_id) }}">
+                                            <button type="button" class="bg-primary-focus text-primary-600 bg-hover-primary-200 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle">
+                                                <iconify-icon icon="carbon:copy" class="menu-icon"></iconify-icon>
+                                            </button>
+                                        </a>
+
+                                        <form action="{{ route('deleteProduct', $product->product_id) }}" method="POST" class="delete-form">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="remove-item-btn bg-danger-focus bg-hover-danger-200 text-danger-600 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle">
+                                                <iconify-icon icon="fluent:delete-24-regular" class="menu-icon"></iconify-icon>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+
+                                {{-- Image / Video --}}
+                                <td class="text-center align-middle">
+                                    @if($media && $mediaUrl)
+                                        @if(in_array($ext, $videoExtensions))
+                                            <video width="80" height="80" muted autoplay loop playsinline style="object-fit: cover; border-radius: 5px;">
+                                                <source src="{{ $mediaUrl }}" type="video/{{ $ext }}">
+                                                Your browser does not support the video tag.
+                                            </video>
+                                        @else
+                                            <img src="{{ $mediaUrl }}" alt="{{ $product->product_name }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px;">
+                                        @endif
+                                    @else
+                                        <span class="text-muted">No Image</span>
+                                    @endif
+                                </td>
+
+                                {{-- Remaining Columns --}}
+                                <td class="align-middle">{{ \Illuminate\Support\Str::limit(\Illuminate\Support\Str::title($product->product_name), 60) }}</td>
+                                <td class="align-middle">{{ $product->sku }}</td>
+                                <td class="align-middle">{{ $product->category_name }}</td>
+                                <td class="align-middle">${{ number_format($product->product_price, 2) }}</td>
+                                <td class="align-middle">
+                                    ${{ number_format($product->purchase_value, 2) }}<br>
+                                    <p class="text-muted">{{ $product->purchase_code }}</p>
+                                </td>
+                                <td class="align-middle">{{ \Illuminate\Support\Str::limit($product->description, 60) }}</td>
+                                <td class="align-middle">{{ $product->note }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="10" class="text-center">No product found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </form>
+        </div>
+
+        <div class="mt-3 text-end">
             {{ $products->appends(request()->query())->links() }}
         </div>
     </div>
 </div>
 
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table bordered-table mb-0" style="min-width: 1000px;">
-                <thead>
-                    <tr>
-                        {{-- ✅ Keep original order --}}
-                        <th class="text-center text-nowrap" style="width: 10%;">Action</th>
-                        <th class="text-center text-nowrap" style="width: 10%;">Image</th>
-                        <th class="text-center" style="width: 10%;">Product Name</th>
-                        <th class="text-center" style="width: 10%;">Product Value</th>
-                        <th class="text-center" style="width: 10%;">Category</th>
-                        <th class="text-center" style="width: 10%;">Product Price</th>
-                        <th class="text-center" style="width: 10%;">Numbers</th>
-                        <th class="text-center" style="width: 15%;">Description</th>
-                        <th class="text-center" style="width: 15%;">Note</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($products as $product)
-                        @php
-                            $media = $product->images->sortBy('serial_no')->first();
-                            $mediaUrl = $media ? env('SOURCE_PANEL_IMAGE_URL') . $media->file_path : null;
-                            $ext = $media ? strtolower(pathinfo($media->file_path, PATHINFO_EXTENSION)) : null;
-                            $videoExtensions = ['mp4', 'mov', 'avi', 'webm'];
-                        @endphp
-
-                        <tr>
-                            {{-- ✅ Action First --}}
-                            <td class="text-center align-middle">
-                                <div class="d-flex align-items-center gap-10 justify-content-center">
-                                    <a href="{{ route('editProduct', $product->product_id) }}">
-                                        <button type="button" class="bg-success-focus text-success-600 bg-hover-success-200 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle">
-                                            <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>
-                                        </button>
-                                    </a>
-
-                                    <a href="{{ route('duplicateProduct', $product->product_id) }}">
-                                        <button type="button" class="bg-primary-focus text-primary-600 bg-hover-primary-200 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle"><iconify-icon icon="carbon:copy" class="menu-icon"></iconify-icon></button>
-                                    </a>
-
-                                    <form action="{{ route('deleteProduct', $product->product_id) }}" method="POST">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="remove-item-btn bg-danger-focus bg-hover-danger-200 text-danger-600 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle">
-                                            <iconify-icon icon="fluent:delete-24-regular" class="menu-icon"></iconify-icon>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-
-                            {{-- ✅ Image or Video Second --}}
-                            <td class="text-center align-middle">
-                                @if($media && $mediaUrl)
-                                    @if(in_array($ext, $videoExtensions))
-                                        <video width="80" height="80" muted autoplay loop playsinline
-                                            style="object-fit: cover; border-radius: 5px; display: block;">
-                                            <source src="{{ $mediaUrl }}" type="video/{{ $ext }}">
-                                            Your browser does not support the video tag.
-                                        </video>
-                                    @else
-                                        <img src="{{ $mediaUrl }}" alt="{{ $product->product_name }}"
-                                            style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px;">
-                                    @endif
-                                @else
-                                    <span class="text-muted">No Image</span>
-                                @endif
-                            </td>
-
-                            {{-- ✅ Remaining Columns --}}                            
-                            <td class="align-middle">{{ \Illuminate\Support\Str::limit(\Illuminate\Support\Str::title($product->product_name), 60) }}</td>
-                            <td class="align-middle">{{ $product->sku }}</td>
-                            <td class="align-middle">{{ $product->category_name }}</td>
-                            <td class="align-middle">${{ number_format($product->product_price, 2) }}</td>
-                            <td class="align-middle">
-                                ${{ number_format($product->purchase_value, 2) }}<br>
-                                <p class="text-muted">{{ $product->purchase_code }}</p>
-                            </td>
-                            <td class="align-middle">{{ \Illuminate\Support\Str::limit($product->description, 60) }}</td>
-                            <td class="align-middle">{{ $product->note }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="text-center">No product found.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-            <div class="mt-3 text-end">
-                {{ $products->appends(request()->query())->links() }}
-            </div>
-    </div>
-</div>
-
-
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-{{-- Auto-fade alert + AJAX delete --}}
 <script>
+    // Auto fade alert
     setTimeout(function () {
         $(".alert").fadeOut("slow");
     }, 3000);
@@ -143,6 +173,39 @@
                 error: function () {
                     alert('Failed to delete. Please try again.');
                 }
+            });
+        }
+    });
+
+    // Select all / toggle bulk bar
+    $('#select-all').on('change', function(){
+        $('.row-checkbox').prop('checked', $(this).prop('checked'));
+        toggleBulkBar();
+    });
+    $(document).on('change', '.row-checkbox', function(){
+        $('#select-all').prop('checked', $('.row-checkbox:checked').length === $('.row-checkbox').length);
+        toggleBulkBar();
+    });
+    function toggleBulkBar(){
+        if($('.row-checkbox:checked').length>0){
+            $('#bulk-action-bar').show();
+        } else {
+            $('#bulk-action-bar').hide();
+        }
+    }
+
+    // Bulk Update SKU
+    $('#bulk-update-sku').on('click', function(e){
+        e.preventDefault();
+        let ids = $('.row-checkbox:checked').map(function(){ return $(this).val(); }).get();
+        if(ids.length===0){ alert('Select at least one product'); return; }
+        if(confirm('Update SKU for '+ids.length+' products?')){
+            $.ajax({
+                url: "{{ route('bulkUpdateSku') }}",
+                type: 'POST',
+                data: { _token: "{{ csrf_token() }}", ids: ids },
+                success: function(response){ alert(response.message); location.reload(); },
+                error: function(){ alert('Failed to update SKU'); }
             });
         }
     });

@@ -64,8 +64,8 @@
 
     <div class="card-body">
         {{-- ✅ Bulk Action Bar --}}
-        <div id="bulk-action-bar" class="mb-3" style="display:none;">
-            <button id="bulk-update-sku" class="btn btn-warning">Update SKU for Selected</button>
+        <div id="bulk-action-bar" class="mb-3">
+            <button id="bulk-update-sku" class="btn btn-warning">Set Update Related Prodcut</button>
         </div>
 
         <div class="table-responsive">
@@ -98,12 +98,12 @@
 
                         <tr @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>
                             {{-- ✅ Row Checkbox --}}
-                            <td class="text-center align-middle">
+                            <td class="text-center align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>
                                 <input type="checkbox" class="row-checkbox form-check-input" value="{{ $product->product_id }}">
                             </td>
 
                             {{-- ✅ Action --}}
-                            <td class="text-center align-middle">
+                            <td class="text-center align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>
                                 <div class="d-flex align-items-center gap-10 justify-content-center">
                                     <a href="{{ route('editProduct', $product->product_id) }}">
                                         <button type="button" class="bg-success-focus text-success-600 bg-hover-success-200 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle">
@@ -128,7 +128,7 @@
                             </td>
 
                             {{-- ✅ Image / Video --}}
-                            <td class="text-center align-middle">
+                            <td class="text-center align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>
                                 @if($media && $mediaUrl)
                                     @if(in_array($ext, $videoExtensions))
                                         <video width="80" height="80" muted autoplay loop playsinline style="object-fit: cover; border-radius: 5px; display: block;">
@@ -144,16 +144,16 @@
                             </td>
 
                             {{-- ✅ Remaining Columns --}}
-                            <td class="align-middle">{{ \Illuminate\Support\Str::limit(\Illuminate\Support\Str::title($product->product_name), 60) }}</td>
-                            <td class="align-middle">{{ $product->sku }}</td>
-                            <td class="align-middle">{{ $product->category_name }}</td>
-                            <td class="align-middle">${{ number_format($product->product_price, 2) }}</td>
-                            <td class="align-middle">
+                            <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ \Illuminate\Support\Str::limit(\Illuminate\Support\Str::title($product->product_name), 60) }}</td>
+                            <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ $product->sku }}</td>
+                            <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ $product->category_name }}</td>
+                            <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>${{ number_format($product->product_price, 2) }}</td>
+                            <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>
                                 ${{ number_format($product->purchase_value, 2) }}<br>
                                 <p class="text-muted">{{ $product->purchase_code }}</p>
                             </td>
-                            <td class="align-middle">{{ \Illuminate\Support\Str::limit($product->description, 60) }}</td>
-                            <td class="align-middle">{{ $product->note }}</td>
+                            <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ \Illuminate\Support\Str::limit($product->description, 60) }}</td>
+                            <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ $product->note }}</td>
                         </tr>
                     @empty
                         <tr>

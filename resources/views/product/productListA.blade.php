@@ -64,8 +64,8 @@
 
     <div class="card-body">
         {{-- ✅ Bulk Action Bar --}}
-        <div id="bulk-action-bar" class="mb-3" style="display:none;">
-            <button id="bulk-update-sku" class="btn btn-warning">Update SKU for Selected</button>
+        <div id="bulk-action-bar" class="mb-3">
+            <button id="bulk-update-sku" class="btn btn-warning">Set Update Related Prodcut</button>
         </div>
 
         <div class="table-responsive">

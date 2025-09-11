@@ -47,7 +47,11 @@
                                     </form>                                          
                                 </div>
                             </td>
-                            <td>{{ $category->category_name }}</td>
+                            <td>
+                                <a href="{{ route('search') }}?category_id={{ $category->category_id }}">
+                                    {{ $category->category_name }} ({{ $category->products_count }})
+                                </a>
+                            </td>
                             <td>{{ $category->alice_name }}</td>
                             <td>{{ $category->subcategory ? $category->subcategory->category_name : '-' }}</td>
                             

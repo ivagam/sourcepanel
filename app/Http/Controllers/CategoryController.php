@@ -5,12 +5,20 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Domain;
+use App\Models\Product;
 
 class CategoryController extends Controller
 {
     public function index()
     {        
-        $categorys = Category::with('subcategory')->orderBy('created_at', 'desc')->get();        
+        $categorys = Category::with('subcategory')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        foreach ($categorys as $category) {
+            $category->products_count = Product::whereRaw("FIND_IN_SET(?, category_ids)", [$category->category_id])->count();
+        }
+
         return view('category.categoryList', compact('categorys'));
     }
 

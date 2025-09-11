@@ -147,10 +147,17 @@
                             <td class="align-middle">{{ \Illuminate\Support\Str::limit(\Illuminate\Support\Str::title($product->product_name), 60) }}</td>
                             <td class="align-middle">{{ $product->sku }}</td>
                             <td class="align-middle">{{ $product->category_name }}</td>
-                            <td class="align-middle">${{ number_format($product->product_price, 2) }}</td>
                             <td class="align-middle">
-                                ${{ number_format($product->purchase_value, 2) }}<br>
-                                <p class="text-muted">{{ $product->purchase_code }}</p>
+                                @if($product->product_price && $product->product_price != 0)
+                                    USD{{ number_format($product->product_price) }}
+                                @endif
+                            </td>
+
+                            <td class="align-middle">
+                                @if($product->purchase_value && $product->purchase_value != 0)
+                                    USD{{ number_format($product->purchase_value) }}<br>
+                                    <p class="text-muted">{{ $product->purchase_code }}</p>
+                                @endif
                             </td>
                             <td class="align-middle">{{ \Illuminate\Support\Str::limit($product->description, 60) }}</td>
                             <td class="align-middle">{{ $product->note }}</td>

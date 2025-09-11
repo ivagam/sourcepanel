@@ -147,10 +147,17 @@
                             <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ \Illuminate\Support\Str::limit(\Illuminate\Support\Str::title($product->product_name), 60) }}</td>
                             <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ $product->sku }}</td>
                             <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ $product->category_name }}</td>
-                            <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>${{ number_format($product->product_price, 2) }}</td>
                             <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>
-                                ${{ number_format($product->purchase_value, 2) }}<br>
-                                <p class="text-muted">{{ $product->purchase_code }}</p>
+                                @if($product->product_price && $product->product_price != 0)
+                                    USD{{ number_format($product->product_price) }}
+                                @endif
+                            </td>
+
+                            <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>
+                                @if($product->purchase_value && $product->purchase_value != 0)
+                                    USD{{ number_format($product->purchase_value) }}<br>
+                                    <p class="text-muted">{{ $product->purchase_code }}</p>
+                                @endif
                             </td>
                             <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ \Illuminate\Support\Str::limit($product->description, 60) }}</td>
                             <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ $product->note }}</td>

@@ -242,7 +242,7 @@ class ProductController extends Controller
 
         if ($request->category_id != 1) {
             $product->color = $request->color ?? $product->color;
-            $product->size = $request->size ?? $product->size;
+            $product->size = $request->size ?? ',';
         } else {
             $product->color = null;
             $product->size = null;
@@ -441,7 +441,8 @@ class ProductController extends Controller
     public function search(Request $request)
     {
         $search = strtolower($request->input('search'));
-       
+        $categoryId = $request->input('category_id');
+
         $query = Product::query()
             ->select([
                 'products.*',
@@ -450,7 +451,10 @@ class ProductController extends Controller
                         WHERE FIND_IN_SET(category.category_id, products.category_ids)
                         ) as category_name")
             ]);
-       
+
+        if ($categoryId) {
+            $query->whereRaw("FIND_IN_SET(?, products.category_ids)", [$categoryId]);
+        }
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -461,8 +465,8 @@ class ProductController extends Controller
         }
 
         $products = $query->orderBy('products.created_at', 'desc')->paginate(50);
-
-        return view('product.searchResults', compact('products'));        
+        
+        return view('product.searchResults', compact('products'));
     }
     
     public function bulkUpdateSku(Request $request)
@@ -472,7 +476,6 @@ class ProductController extends Controller
             return response()->json(['message' => 'No products selected.'], 400);
         }
 
-        // Generate one SKU for all selected
         $newSku = 'SKU' . rand(100000, 999999);
 
         Product::whereIn('product_id', $ids)->update([
@@ -484,6 +487,6 @@ class ProductController extends Controller
         ]);
     }
 
-
+    
     
 }

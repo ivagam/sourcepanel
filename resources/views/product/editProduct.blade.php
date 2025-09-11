@@ -131,16 +131,15 @@
                         </div>
 
                         <div class="mb-3">                           
-                             <p id="reverseImagesBtn1" style="text-align:right;padding:0px;margin:0px;cursor:pointer">Reverse Images</p>
+                             <p id="reverseImagesBtn1" style="text-align:right;padding:0px;margin:0px;cursor:pointer"></p>
                             <label class="form-label">Uploads Files</label>
                             <div class="dropzone" id="dropzoneEdit"></div>
                         </div>
-
+                        <p id="reverseImagesBtn2" style="text-align:right;padding:0px;margin:0px;cursor:pointer"></p>
                         <!-- Store existing image file paths -->
                         @foreach($selectedImages as $image)
                             <input type="hidden" name="existing_images[]" value="{{ $image->file_path }}">
-                        @endforeach
-                        <p id="reverseImagesBtn2" style="text-align:right;padding:0px;margin:0px;cursor:pointer">Reverse Images</p>
+                        @endforeach                        
                         <div id="imageOrderBox" class="d-flex flex-wrap mt-3 gap-2">
                            
                             @foreach($selectedImages->sortBy('serial_no')->values() as $index => $image)
@@ -582,6 +581,7 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
 
             container.innerHTML = previewHTML;
             document.getElementById("imageOrderBox").appendChild(container);
+            updateReverseButtonText();
         }
     },
 
@@ -663,6 +663,7 @@ editDropzone.on("removedfile", function(file) {
         .catch(error => {
             console.error('Error deleting image:', error);
         });
+        updateReverseButtonText();
     }
 });
 

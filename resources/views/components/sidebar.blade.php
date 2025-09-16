@@ -76,11 +76,25 @@
                     <span>Others Brands</span>
                 </a>
             </li>
+
+            <li>
+                  <a href="{{ route('scrapeList') }}">
+                        <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
+                    <span>Scrape</span>
+                </a>
+            </li>
             
             <li>
                   <a href="{{ route('customerIndex') }}">
                     <iconify-icon icon="heroicons:users" class="menu-icon"></iconify-icon>
                     <span>Customer</span>
+                </a>
+            </li>
+
+            <li>
+                  <a href="{{ route('whatsappIndex') }}">
+                    <iconify-icon icon="heroicons:users" class="menu-icon"></iconify-icon>
+                    <span>Whatsapp Message </span>
                 </a>
             </li>
 

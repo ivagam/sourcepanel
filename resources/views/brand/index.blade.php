@@ -69,7 +69,7 @@
                                     @enderror
                                 </div>
                             </div>
-                            <button class="btn btn-primary" type="submit">Upload Brand</button>
+                            <button class="btn btn-primary" type="submit">submit</button>
                         </form>
                     </div>
                 </div>

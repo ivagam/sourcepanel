@@ -18,7 +18,8 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\BrandController;
 use App\Http\Controllers\SeoController;
-
+use App\Http\Controllers\ScrapeController;
+use App\Http\Controllers\WhatsappController;
 
 Route::controller(AuthenticationController::class)->group(function () {
     Route::get('/', 'signin')->name('signin');
@@ -105,18 +106,17 @@ Route::prefix('product')->middleware('auth')->group(function () {
         Route::get('/productListA', 'productListA')->name('productListA');
         Route::get('/productListB', 'productListB')->name('productListB');
         Route::get('/productListC', 'productListC')->name('productListC');
-        Route::get('/search', 'search')->name('search');
+        Route::get('/search', 'search')->name('search');        
         Route::post('/store', 'store')->name('storeproduct');
         Route::get('/editProduct/{id}', 'editProduct')->name('editProduct');
         Route::put('/updateProduct/{id}', 'updateProduct')->name('updateProduct');
-        Route::delete('/deleteProduct/{id}', 'deleteProduct')->name('deleteProduct');
+        Route::delete('/deleteProduct/{id}', 'deleteProduct')->name('deleteProduct');        
         Route::get('/by-category/{id}', 'getByCategory')->name('byCategory');
         Route::post('/upload-temp-image', 'uploadTempImage')->name('uploadTempImage');
         Route::post('/delete-image', 'deleteImage')->name('deleteImage');
-        Route::post('/update-image-order', 'updateImageOrder')->name('updateImageOrder');
+        Route::post('/update-image-order', 'updateImageOrder')->name('updateImageOrder');        
         Route::get('/duplicate/{id}', 'duplicateProduct')->name('duplicateProduct');        
         Route::post('/bulk-update-sku', 'bulkUpdateSku')->name('bulkUpdateSku');
-
     });
 });
 
@@ -151,5 +151,29 @@ Route::prefix('brand')->middleware('auth')->group(function () {
         Route::get('/', 'index')->name('brandIndex');
         Route::post('/store', 'store')->name('storebrand');
         Route::delete('/destroy/{id}', 'destroy')->name('deletebrand');
+    });
+});
+
+Route::prefix('scrape')->middleware('auth')->group(function () {
+    Route::controller(ScrapeController::class)->group(function () {
+        Route::get('/', 'index')->name('scrape');
+        Route::get('/scrapeList', 'scrapeList')->name('scrapeList');
+        Route::get('/editScrape/{id}', 'editScrape')->name('editScrape');
+        Route::post('/update-scrape-image-order', 'updateScrapeImageOrder')->name('updateScrapeImageOrder');
+        Route::post('/upload-scrape-temp-image', 'uploadScrapeTempImage')->name('uploadScrapeTempImage');
+        Route::delete('/deleteScrapeProduct/{id}', 'deleteScrapeProduct')->name('deleteScrapeProduct');
+        Route::post('/delete-scrape-image', 'deleteScrapeImage')->name('deleteScrapeImage');
+        Route::put('/updateScrapeProduct/{id}', 'updateScrapeProduct')->name('updateScrapeProduct');
+        Route::get('/duplicateScrapeProduct/{id}', 'duplicateScrapeProduct')->name('duplicateScrapeProduct');
+        Route::post('/bulk-update-scrape-sku', 'bulkUpdateScrapeSku')->name('bulkUpdateScrapeSku');
+        Route::get('/searchscrape', 'searchscrape')->name('searchscrape');
+    });
+});
+
+Route::prefix('whatsapp')->middleware('auth')->group(function () {
+    Route::controller(WhatsappController::class)->group(function () {
+        Route::get('/', 'index')->name('whatsappIndex');
+        Route::post('/store', 'store')->name('storewhatsapp');
+        Route::delete('/destroy/{id}', 'destroy')->name('deletewhatsapp');
     });
 });

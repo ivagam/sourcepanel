@@ -20,6 +20,7 @@ use App\Http\Controllers\BrandController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\ScrapeController;
 use App\Http\Controllers\WhatsappController;
+use App\Http\Controllers\ParseImageController;
 
 Route::controller(AuthenticationController::class)->group(function () {
     Route::get('/', 'signin')->name('signin');
@@ -74,6 +75,8 @@ Route::prefix('category')->middleware('auth')->group(function () {
         Route::delete('/delete/{id}', 'destroy')->name('deletecategory');
         Route::get('/get-subcategories/{id}', 'getSubcategories');
         Route::get('/get-watch-subcategories/{id}', 'getWatchSubcategories');
+        Route::post('/bulk-edit-category', 'bulkEditCategory')->name('bulkEditCategory');
+        Route::post('/bulk-delete-category', 'bulkDeleteCategory')->name('bulkDeleteCategory');
     });
 });
 
@@ -175,5 +178,13 @@ Route::prefix('whatsapp')->middleware('auth')->group(function () {
         Route::get('/', 'index')->name('whatsappIndex');
         Route::post('/store', 'store')->name('storewhatsapp');
         Route::delete('/destroy/{id}', 'destroy')->name('deletewhatsapp');
+    });
+});
+
+Route::prefix('parseimage')->middleware('auth')->group(function () {
+    Route::controller(ParseImageController::class)->group(function () {
+        Route::get('/', 'index')->name('parseImage');
+        Route::post('/url', 'parseUrl')->name('parseImage.url');
+        Route::post('/store', 'storeImages')->name('parseImage.store');
     });
 });

@@ -54,14 +54,7 @@
                         <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
                     <span>Product List C</span>
                 </a>
-            </li>
-
-            <li>
-                  <a href="{{ route('seo') }}">
-                        <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
-                    <span>SEO</span>
-                </a>
-            </li>
+            </li>            
 
             <li>
                 <a href="{{ route('addProduct', ['main_category' => 1]) }}">
@@ -74,27 +67,6 @@
                 <a href="{{ route('addProduct', ['main_category' => 113]) }}">
                     <iconify-icon icon="mdi:plus-circle-outline" class="menu-icon"></iconify-icon>
                     <span>Others Brands</span>
-                </a>
-            </li>
-
-            <li>
-                  <a href="{{ route('scrapeList') }}">
-                        <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
-                    <span>Scrape</span>
-                </a>
-            </li>
-            
-            <li>
-                  <a href="{{ route('customerIndex') }}">
-                    <iconify-icon icon="heroicons:users" class="menu-icon"></iconify-icon>
-                    <span>Customer</span>
-                </a>
-            </li>
-
-            <li>
-                  <a href="{{ route('whatsappIndex') }}">
-                    <iconify-icon icon="heroicons:users" class="menu-icon"></iconify-icon>
-                    <span>Whatsapp Message </span>
                 </a>
             </li>
 
@@ -127,6 +99,55 @@
                 </a>
                 <ul class="sidebar-submenu">
                     
+                    <li>
+                        <a href="{{ route('scrapeList') }}">
+                                <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
+                            <span>Scrape</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('parseImage') }}">
+                            <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
+                            <span>Parse Image</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('seo') }}">
+                                <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
+                            <span>SEO</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('whatsappIndex') }}">
+                            <iconify-icon icon="heroicons:users" class="menu-icon"></iconify-icon>
+                            <span>Whatsapp Message </span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ env('REPLADEEZ_URL') . 'msg' }}" target="_blank">
+                            <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
+                            <span>Whatsapp Msg</span>
+                        </a>
+                    </li>                    
+
+                    <li>
+                        <a href="{{ env('REPLADEEZ_URL') . 'cal' }}" target="_blank">
+                            <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
+                            <span>Cal</span>
+                        </a>
+                    </li>                    
+
+                    <li>
+                        <a href="{{ route('customerIndex') }}">
+                            <iconify-icon icon="heroicons:users" class="menu-icon"></iconify-icon>
+                            <span>Customer</span>
+                        </a>
+                    </li>
+                
                     <li>
                         <a href="{{ route('domainIndex') }}">
                             <iconify-icon icon="heroicons:globe-alt" class="menu-icon"></iconify-icon>

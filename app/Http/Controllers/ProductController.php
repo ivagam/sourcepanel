@@ -25,7 +25,6 @@ class ProductController extends Controller
         $product->product_url         = Str::slug($product->product_name);
         $product->sku                 = 'SKU' . rand(100000, 999999);
         $product->created_by          = session('user_id');
-        $product->size                = 'S,L,M,XL,XXL';
         $product->seo                 = 0;
         $product->save();
 
@@ -242,7 +241,7 @@ class ProductController extends Controller
 
         if ($request->category_id != 1) {
             $product->color = $request->color ?? $product->color;
-            $product->size = $request->size ?? ',';
+            $product->size = $request->size ?? null;
         } else {
             $product->color = null;
             $product->size = null;

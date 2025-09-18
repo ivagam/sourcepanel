@@ -162,4 +162,33 @@ class CategoryController extends Controller
         return response()->json($subcategories);
     }
 
+    public function bulkEditCategory(Request $request)
+    {
+        $request->validate([
+            'old_name' => 'required|string',
+            'new_name' => 'required|string'
+        ]);
+
+        $oldName = strtolower($request->old_name);
+
+        $updated = Category::whereRaw('LOWER(category_name) = ?', [$oldName])
+            ->update(['category_name' => $request->new_name]);
+        
+        return redirect()->route('categoryList')->with('success', "$updated category(s) updated successfully.");
+    }
+
+    public function bulkDeleteCategory(Request $request)
+    {
+        $request->validate([
+            'delete_name' => 'required|string'
+        ]);
+
+        $deleteName = strtolower($request->delete_name);
+
+        $deleted = Category::whereRaw('LOWER(category_name) = ?', [$deleteName])
+            ->delete();
+        
+        return redirect()->route('categoryList')->with('success', "$deleted category(s) deleted successfully.");
+    }
+
 }

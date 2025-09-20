@@ -762,6 +762,8 @@ $(document).ready(function () {
         $('#checkboxOther1').prop('checked', true);
     }
 
+     calculatePurchase();
+
     $('.category-toggle').on('change', function () {
         if (this.checked) {
             $('.category-toggle').not(this).prop('checked', false);
@@ -824,124 +826,85 @@ $(document).ready(function () {
     });
 
 
-document.addEventListener('DOMContentLoaded', () => {
-    const purchaseValueInput = document.getElementById('purchase_value');
-    const purchaseCodeInput = document.getElementById('purchase_code');
-    const productPriceInput = document.querySelector('input[name="product_price"]');
-    const categoryCheckboxes = document.querySelectorAll('.category-toggle');
+$(document).ready(function () {
+    const purchaseValueInput = $('#purchase_value');
+    const purchaseCodeInput = $('#purchase_code');
+    const productPriceInput = $('input[name="product_price"]');
+    const categoryCheckboxes = $('.category-toggle');
 
     function getSelectedCategory() {
-        for (const checkbox of categoryCheckboxes) {
-            if (checkbox.checked) {
-                return checkbox.value;
-            }
-        }
-        return null;
+        return categoryCheckboxes.filter(':checked').val() || null;
     }
 
-    function clearInputs() {
-        purchaseValueInput.value = '';
-        purchaseCodeInput.value = '';
-        productPriceInput.value = '';
-    }
+    function calculatePurchase() {
+        const value = parseFloat(purchaseValueInput.val()) || 715;
+        const mainCategory = getSelectedCategory();
+        if (!mainCategory) return;
 
-    categoryCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-            if (checkbox.checked) {
-                categoryCheckboxes.forEach(cb => {
-                    if (cb !== checkbox) cb.checked = false;
-                });
-                clearInputs();
-            } else {
-                clearInputs();
-            }
-        });
-    });
+        const numberToLetter = {
+            '1':'A','2':'B','3':'C','4':'D','5':'E','6':'F','7':'G','8':'H','9':'I'
+        };
 
-    purchaseValueInput.addEventListener('input', () => {
-    const value = parseFloat(purchaseValueInput.value.trim());
-    const mainCategory = getSelectedCategory();
+        const getRandomLetter = () => 'abcdefghijklmnopqrstuvwxyz'.charAt(Math.floor(Math.random() * 26));
+        const getRandomLetters = (length) => Array.from({length}, getRandomLetter).join('');
 
-    if (!value || isNaN(value) || !mainCategory) {
-        purchaseCodeInput.value = '';
-        productPriceInput.value = '';
-        return;
-    }
-
-    const numberToLetter = {
-        '1': 'A', '2': 'B', '3': 'C', '4': 'D',
-        '5': 'E', '6': 'F', '7': 'G', '8': 'H', '9': 'I'
-    };
-
-    const getRandomLetter = () => {
-        const chars = 'abcdefghijklmnopqrstuvwxyz';
-        return chars.charAt(Math.floor(Math.random() * chars.length));
-    };
-
-    const getRandomLetters = (length) => {
-        let result = '';
-        for (let i = 0; i < length; i++) {
-            result += getRandomLetter();
+        let converted = '';
+        for (let digit of value.toString()) {
+            converted += digit === '0' ? getRandomLetter() : numberToLetter[digit] || '';
         }
-        return result;
-    };
 
-    let converted = '';
-    for (let digit of value.toString()) {
-        if (digit === '0') {
-            converted += getRandomLetter();
-        } else {
-            converted += numberToLetter[digit] || '';
+        purchaseCodeInput.val(getRandomLetters(4) + converted);
+
+        let productPrice = 0;
+        const dividedValue = value / 7;
+
+        if (mainCategory === '113') {
+            if (dividedValue <= 65) productPrice = dividedValue + 40;
+            else if (dividedValue <= 199) productPrice = dividedValue * 1.6;
+            else productPrice = dividedValue * 1.5;
+        } else if (mainCategory === '1') {
+            if (dividedValue <= 100) productPrice = dividedValue + 80;
+            else if (dividedValue <= 199) productPrice = dividedValue + 90;
+            else if (dividedValue <= 339) productPrice = dividedValue + 100;
+            else productPrice = dividedValue * 1.3;
         }
-    }
 
-    const finalCode = getRandomLetters(4) + converted;
-    purchaseCodeInput.value = finalCode;
-
-    let productPrice = 0;
-
-    const dividedValue = value / 7;
-
-    if (mainCategory === '113') {
-        if (dividedValue <= 65) {
-            productPrice = dividedValue + 40;
-        } else if (dividedValue > 65 && dividedValue <= 199) {
-            productPrice = dividedValue * 1.6;
-        } else {
-            productPrice = dividedValue * 1.5;
-        }
-    } else if (mainCategory === '1') {
-        if (dividedValue <= 100) {
-            productPrice = dividedValue + 80;
-        } else if (dividedValue >= 101 && dividedValue <= 199) {
-            productPrice = dividedValue + 90;
-        } else if (dividedValue >= 200 && dividedValue <= 339) {
-            productPrice = dividedValue + 100;
-        } else {
-            productPrice = dividedValue * 1.3;
-        }
-    }
-
-    function adjustLastDigit(num) {
-        let n = Math.round(num);
-        let lastDigit = n % 10;
-        const allowedDigits = [2, 4, 6, 8];
-        let closest = allowedDigits.reduce((prev, curr) => {
-            const prevDiff = Math.abs(lastDigit - prev);
-            const currDiff = Math.abs(lastDigit - curr);
-            if (currDiff < prevDiff) return curr;
-            if (currDiff === prevDiff) return Math.max(curr, prev);
+        const allowedDigits = [2,4,6,8];
+        let n = Math.round(productPrice);
+        const lastDigit = n % 10;
+        const closest = allowedDigits.reduce((prev,curr)=>{
+            const prevDiff = Math.abs(lastDigit-prev), currDiff = Math.abs(lastDigit-curr);
+            if(currDiff<prevDiff) return curr;
+            if(currDiff===prevDiff) return Math.max(curr,prev);
             return prev;
         });
-        return n - lastDigit + closest;
+        productPriceInput.val(n - lastDigit + closest);
     }
 
-    productPrice = adjustLastDigit(productPrice);
+    // Pre-check category based on #category_ids value
+    const categoryIds = $('#category_ids').val();
+    const mainCatId = categoryIds ? categoryIds.split(',')[0] : null;
 
-    productPriceInput.value = productPrice;
+    if (mainCatId === '1') {
+        $('#checkboxWatches').prop('checked', true);
+    } else if (mainCatId === '113') {
+        $('#checkboxOther1').prop('checked', true);
+    }
+
+    // Call calculatePurchase AFTER checkbox is set
+    calculatePurchase();
+
+    // Handle changes
+    categoryCheckboxes.on('change', function () {
+        if (this.checked) {
+            categoryCheckboxes.not(this).prop('checked', false);
+            calculatePurchase();
+        }
+    });
+
+    purchaseValueInput.on('input', calculatePurchase);
 });
 
-});
 
 document.addEventListener("DOMContentLoaded", function () {    
   var quill = new Quill("#editor", {

@@ -26,6 +26,8 @@ class ProductController extends Controller
         $product->sku                 = 'SKU' . rand(100000, 999999);
         $product->created_by          = session('user_id');
         $product->seo                 = 0;
+        $product->size                = '25cms';
+        $product->purchase_value      = '715';
         $product->save();
 
         $lastInsertedId = $product->product_id;
@@ -236,7 +238,7 @@ class ProductController extends Controller
         }
 
         $product->product_name = $request->product_name ?? $product->product_name;
-        $product->product_price = $request->product_price ?? $product->product_price;
+        $product->product_price = $request->product_price ?? $product->product_price;     
         $product->category_id = $request->category_id ?? $product->category_id;
 
         if ($request->category_id != 1) {
@@ -258,7 +260,9 @@ class ProductController extends Controller
         $product->description = $request->description ?? $product->description;
         $product->meta_keywords = $request->meta_keywords ?? $product->meta_keywords;
         $product->meta_description = $request->meta_description ?? $product->meta_description;
-        $product->purchase_value = $request->purchase_value ?? $product->purchase_value;
+        $product->purchase_value  = $request->filled('purchase_value') 
+        ? $request->purchase_value 
+        : 715;
         $product->purchase_code = $request->purchase_code ?? $product->purchase_code;
         $product->note = $request->note ?? $product->note;
         $product->domains = is_array($request->domains) ? implode(',', $request->domains) : $product->domains;        

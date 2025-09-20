@@ -70,6 +70,20 @@
                 </a>
             </li>
 
+            <li>
+                <a href="{{ env('REPLADEEZ_URL') . 'msg' }}" target="_blank">
+                    <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
+                    <span>Whatsapp Msg</span>
+                </a>
+            </li>                    
+
+            <li>
+                <a href="{{ env('REPLADEEZ_URL') . 'cal' }}" target="_blank">
+                    <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
+                    <span>Cal</span>
+                </a>
+            </li> 
+
            <!--<li>
                   <a href="{{ route('salesIndex') }}">
                     <iconify-icon icon="heroicons:shopping-cart" class="menu-icon"></iconify-icon>
@@ -98,13 +112,6 @@
                     <span>Setting</span>
                 </a>
                 <ul class="sidebar-submenu">
-                    
-                    <li>
-                        <a href="{{ route('scrapeList') }}">
-                                <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
-                            <span>Scrape</span>
-                        </a>
-                    </li>
 
                     <li>
                         <a href="{{ route('parseImage') }}">
@@ -112,6 +119,13 @@
                             <span>Parse Image</span>
                         </a>
                     </li>
+                    
+                    <li>
+                        <a href="{{ route('scrapeList') }}">
+                                <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
+                            <span>Scrape</span>
+                        </a>
+                    </li>                    
 
                     <li>
                         <a href="{{ route('seo') }}">
@@ -125,21 +139,7 @@
                             <iconify-icon icon="heroicons:users" class="menu-icon"></iconify-icon>
                             <span>Whatsapp Message </span>
                         </a>
-                    </li>
-
-                    <li>
-                        <a href="{{ env('REPLADEEZ_URL') . 'msg' }}" target="_blank">
-                            <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
-                            <span>Whatsapp Msg</span>
-                        </a>
-                    </li>                    
-
-                    <li>
-                        <a href="{{ env('REPLADEEZ_URL') . 'cal' }}" target="_blank">
-                            <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
-                            <span>Cal</span>
-                        </a>
-                    </li>                    
+                    </li>                                       
 
                     <li>
                         <a href="{{ route('customerIndex') }}">

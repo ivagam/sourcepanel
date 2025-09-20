@@ -8,9 +8,19 @@ use App\Models\Product;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
 
 class ParseImageController extends Controller
 {
+
+    private $apiKey;
+
+    public function __construct()
+    {
+        $this->apiKey = env('EXTRACT_PICS_API_KEY');
+    }
+
+
     public function index()
     {
         $scrapedData = session('scrapedData', []); 
@@ -20,31 +30,56 @@ class ParseImageController extends Controller
     public function parseUrl(Request $request)
     {
         $url = $request->page_url;
-        $html = @file_get_contents($url);
-        if (!$html) {
-            return redirect()->route('parseImage.index')->with('error', "Failed to fetch URL: $url");
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey,
+            'Content-Type' => 'application/json',
+        ])->post('https://api.extract.pics/v0/extractions', [
+            'url' => $url,
+        ]);
+
+        if ($response->failed()) {
+            return redirect()->route('parseImage')->with('error', 'Failed to start extraction.');
         }
 
-        $dom = new \DOMDocument();
-        libxml_use_internal_errors(true);
-        $dom->loadHTML($html);
-        libxml_clear_errors();
+        $data = $response->json()['data'] ?? null;
+        if (!$data) {
+            return redirect()->route('parseImage')->with('error', 'No data returned from API.');
+        }
 
-        $xpath = new \DOMXPath($dom);
-        $img_tags = $xpath->query("//img");
+        $extractionId = $data['id'];
 
-        $scrapedData = [];
-        foreach ($img_tags as $img) {
-            $src = $img->getAttribute('src');
-            if ($src && !preg_match('/base64/', $src)) {
-                $scrapedData[] = ['image' => $src];
+        $status = $data['status'];
+        $imageUrls = [];
+
+        while ($status !== 'done' && $status !== 'error') {
+
+            $check = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+            ])->get("https://api.extract.pics/v0/extractions/{$extractionId}");
+
+            if ($check->failed()) {
+                break;
+            }
+
+            $checkData = $check->json()['data'] ?? null;
+            $status = $checkData['status'] ?? 'error';
+
+            if ($status === 'done') {
+                $imageUrls = $checkData['images'] ?? [];
             }
         }
 
-        session()->flash('scrapedData', $scrapedData);
-        session()->flash('page_url', $url);
+        if (empty($imageUrls)) {
+            return redirect()->route('parseImage')->with('error', 'No images found.');
+        }
 
-        return redirect()->route('parseImage');
+        $scrapedData = array_map(fn($img) => ['image' => $img['url']], $imageUrls);
+
+        return redirect()->route('parseImage')->with([
+            'scrapedData' => $scrapedData,
+            'page_url' => $url
+        ]);
     }
 
     public function storeImages(Request $request)
@@ -66,6 +101,8 @@ class ParseImageController extends Controller
         $product->sku = 'SKU' . rand(100000, 999999);
         $product->created_by = session('user_id');
         $product->seo = 0;
+        $product->size = '25cms';
+        $product->purchase_value = '715';
         $product->save();
 
         $productId = $product->product_id;
@@ -123,5 +160,22 @@ class ParseImageController extends Controller
             \Log::error("Image download failed: " . $e->getMessage());
             return null;
         }
+    }
+
+    private function fetchHtml($url)
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+
+        $html = curl_exec($ch);
+        curl_close($ch);
+
+        return $html;
     }
 }

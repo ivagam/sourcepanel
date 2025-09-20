@@ -184,7 +184,7 @@ Route::prefix('whatsapp')->middleware('auth')->group(function () {
 Route::prefix('parseimage')->middleware('auth')->group(function () {
     Route::controller(ParseImageController::class)->group(function () {
         Route::get('/', 'index')->name('parseImage');
-        Route::post('/url', 'parseUrl')->name('parseImage.url');
+        Route::match(['get','post'], '/url', 'parseUrl')->name('parseImage.url');
         Route::post('/store', 'storeImages')->name('parseImage.store');
     });
 });

@@ -161,7 +161,7 @@
                                 <p class="text-muted">{{ $product->purchase_code }}</p>
                             @endif
                         </td>
-                        <td class="align-middle">{{ \Illuminate\Support\Str::limit($product->description, 60) }}</td>
+                        <td class="align-middle">{{ \Illuminate\Support\Str::limit($product->description, 20) }}</td>
                         <td class="align-middle">{{ $product->note }}</td>
                     </tr>
                 @empty

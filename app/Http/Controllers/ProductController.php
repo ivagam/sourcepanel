@@ -15,7 +15,7 @@ class ProductController extends Controller
 {
     public function addProduct(Request $request)
     {
-        $mainCategory = $request->query('main_category')?$request->query('main_category'):'0';
+        $mainCategory = $request->query('main_category')?$request->query('main_category'):'113';
 
         $totalProducts = DB::table('products')->count();
         $product = new Product();
@@ -256,15 +256,20 @@ class ProductController extends Controller
         }
 
         $oldName = $product->product_name;
+        $content = trim($request->description);
 
-        $product->description = $request->description ?? $product->description;
-        $product->meta_keywords = $request->meta_keywords ?? $product->meta_keywords;
-        $product->meta_description = $request->meta_description ?? $product->meta_description;
+        if ($content === '<p><br></p>' || $content === '<p></p>') {
+            $content = null;
+        }
+
+        $product->description = $content;
+        $product->meta_keywords = $request->meta_keywords ?? '';
+        $product->meta_description = $request->meta_description ?? '';
         $product->purchase_value  = $request->filled('purchase_value') 
         ? $request->purchase_value 
         : 715;
         $product->purchase_code = $request->purchase_code ?? $product->purchase_code;
-        $product->note = $request->note ?? $product->note;
+        $product->note = $request->note ?? '';
         $product->domains = is_array($request->domains) ? implode(',', $request->domains) : $product->domains;        
         $product->created_by = session('user_id');
         $product->created_at = now();

@@ -300,7 +300,7 @@
 
                         <div class="col-md-6">
                             <label class="form-label">Meta Description</label>
-                            <textarea name="meta_description" class="form-control">{{ old('meta_description', $product->meta_description) }}</textarea>                            
+                            <textarea name="meta_description" class="form-control">{{ old('meta_description', $product->meta_description) }}</textarea>
                         </div>
 
                         <div class="col-md-6">
@@ -430,8 +430,8 @@ $(document).ready(function () {
 });
 
 function resetSubcategories() {
-    $('#watch-subcategories').html('').hide();           // clear + hide watch subcategories
-    $('#dynamic-subcategories').html('<div class="row"></div>').hide();  // clear + hide dynamic subcategories
+    $('#watch-subcategories').html('').hide();
+    $('#dynamic-subcategories').html('<div class="row"></div>').hide();
     $('#final_category_id').val('');
 }
 
@@ -460,47 +460,6 @@ function loadWatchSubcategories(parentId, chain = []) {
         $('#watch-subcategories').html(html).show();
     }).fail(() => {
         console.warn('Watch subcategories request aborted or failed.');
-    });
-}
-
-function loadSubcategories(parentId, level = 2, selectedId = null) {
-    return $.ajax({
-        url: `${BASE_URL}category/get-subcategories/${parentId}`,
-        type: 'GET',
-    }).done(function (response) {
-        $(`#dynamic-subcategories .subcat-level`).filter(function () {
-            return parseInt($(this).data('level')) >= level;
-        }).remove();
-
-        $('#final_category_id').val(parentId);
-
-        if (!response.length) return;
-
-        const labelNumber = level;
-        const options = [
-            `<option value="">-- Select Category --</option>`,
-            ...response.map(cat =>
-                `<option value="${cat.category_id}" ${selectedId == cat.category_id ? 'selected' : ''}>${cat.category_name}</option>`
-            )
-        ].join('');
-
-        const dropdown = `
-            <div class="col-md-6 subcat-level" data-level="${level}">
-                <label class="form-label">Category ${labelNumber}</label>
-                <select class="form-select" onchange="loadSubcategories(this.value, ${level + 1})">
-                    ${options}
-                </select>
-            </div>
-        `;
-
-        if (!$('#dynamic-subcategories .row').length) {
-            $('#dynamic-subcategories').html('<div class="row"></div>');
-        }
-
-        $('#dynamic-subcategories .row').append(dropdown);
-        $('#dynamic-subcategories').show();
-    }).fail(() => {
-        console.warn('Subcategories request aborted or failed.');
     });
 }
 
@@ -756,14 +715,44 @@ $(document).ready(function () {
     const categoryIds = $('#category_ids').val();
     const mainCatId = categoryIds ? categoryIds.split(',')[0] : null;
 
+    // Pre-check main category
     if (mainCatId === '1') {
         $('#checkboxWatches').prop('checked', true);
     } else if (mainCatId === '113') {
-        $('#checkboxOther1').prop('checked', true);
+    $('#checkboxOther1').prop('checked', true);
+
+    const productInput = $('#product_name');
+    if (productInput.length) {
+        const productName = (productInput.val() || '').trim();
+        const firstWord = productName.split(' ')[0].toLowerCase();
+
+        const category1Select = $('#dynamic-subcategories select').first();
+        let matched = false;
+
+        if (category1Select.length) {
+            category1Select.find('option').each(function() {
+                const optionText = $(this).text().trim().toLowerCase();
+                if(optionText === firstWord) {
+                    $(this).prop('selected', true);
+                    matched = true;
+                    return false; // break loop
+                }
+            });
+
+            if(matched) {
+                const selectedCategory1 = category1Select.val();
+                if(selectedCategory1) {
+                    loadSubcategories(selectedCategory1, 2);
+                }
+            }
+        }
     }
+}
 
-     calculatePurchase();
 
+    calculatePurchase();
+
+    // Handle category toggle
     $('.category-toggle').on('change', function () {
         if (this.checked) {
             $('.category-toggle').not(this).prop('checked', false);
@@ -784,8 +773,13 @@ $(document).ready(function () {
                 currentAjax = loadSubcategories(selectedCategory, 1);
             }
             toggleColorSizeInputs();
+
+            calculatePurchase(); // Keep calculation after toggle
         }
     });
+
+    // Update purchase on input
+    $('#purchase_value').on('input', calculatePurchase);
 });
 
     function toggleColorSizeInputs() {
@@ -826,17 +820,16 @@ $(document).ready(function () {
     });
 
 
-$(document).ready(function () {
-    const purchaseValueInput = $('#purchase_value');
-    const purchaseCodeInput = $('#purchase_code');
-    const productPriceInput = $('input[name="product_price"]');
-    const categoryCheckboxes = $('.category-toggle');
-
-    function getSelectedCategory() {
-        return categoryCheckboxes.filter(':checked').val() || null;
-    }
-
     function calculatePurchase() {
+        const purchaseValueInput = $('#purchase_value');
+        const purchaseCodeInput = $('#purchase_code');
+        const productPriceInput = $('input[name="product_price"]');
+        const categoryCheckboxes = $('.category-toggle');
+
+        function getSelectedCategory() {
+            return categoryCheckboxes.filter(':checked').val() || null;
+        }
+
         const value = parseFloat(purchaseValueInput.val()) || 715;
         const mainCategory = getSelectedCategory();
         if (!mainCategory) return;
@@ -881,47 +874,67 @@ $(document).ready(function () {
         productPriceInput.val(n - lastDigit + closest);
     }
 
-    // Pre-check category based on #category_ids value
-    const categoryIds = $('#category_ids').val();
-    const mainCatId = categoryIds ? categoryIds.split(',')[0] : null;
+    function loadSubcategories(parentId, level = 2, selectedId = null) {
+    return $.ajax({
+        url: `${BASE_URL}category/get-subcategories/${parentId}`,
+        type: 'GET',
+    }).done(function (response) {
+        $(`#dynamic-subcategories .subcat-level`).filter(function () {
+            return parseInt($(this).data('level')) >= level;
+        }).remove();
 
-    if (mainCatId === '1') {
-        $('#checkboxWatches').prop('checked', true);
-    } else if (mainCatId === '113') {
-        $('#checkboxOther1').prop('checked', true);
-    }
+        $('#final_category_id').val(parentId);
 
-    // Call calculatePurchase AFTER checkbox is set
-    calculatePurchase();
+        if (!response.length) return;
 
-    // Handle changes
-    categoryCheckboxes.on('change', function () {
-        if (this.checked) {
-            categoryCheckboxes.not(this).prop('checked', false);
-            calculatePurchase();
+        const labelNumber = level;
+        const options = [
+            `<option value="">-- Select Category --</option>`,
+            ...response.map(cat =>
+                `<option value="${cat.category_id}" ${selectedId == cat.category_id ? 'selected' : ''}>${cat.category_name}</option>`
+            )
+        ].join('');
+
+        const dropdown = `
+            <div class="col-md-6 subcat-level" data-level="${level}">
+                <label class="form-label">Category ${labelNumber}</label>
+                <select class="form-select" onchange="loadSubcategories(this.value, ${level + 1})">
+                    ${options}
+                </select>
+            </div>
+        `;
+
+        if (!$('#dynamic-subcategories .row').length) {
+            $('#dynamic-subcategories').html('<div class="row"></div>');
         }
+
+        $('#dynamic-subcategories .row').append(dropdown);
+        $('#dynamic-subcategories').show();
+    }).fail(() => {
+        console.warn('Subcategories request aborted or failed.');
+    });
+}
+
+    document.addEventListener("DOMContentLoaded", function () {    
+    var quill = new Quill("#editor", {
+        modules: { toolbar: "#toolbar-container" },
+        theme: "snow",
+        formats: ['font','size','bold','list','indent']
     });
 
-    purchaseValueInput.on('input', calculatePurchase);
-});
+    const hiddenInput = document.querySelector("#description");
 
+    quill.clipboard.dangerouslyPasteHTML(hiddenInput.value);
 
-document.addEventListener("DOMContentLoaded", function () {    
-  var quill = new Quill("#editor", {
-    modules: { toolbar: "#toolbar-container" },
-    theme: "snow",
-    formats: ['font','size','bold','list','indent']
-  });
+    quill.on("text-change", function () {
+        hiddenInput.value = quill.root.innerHTML;
+    });
 
-  const hiddenInput = document.querySelector("#description");
-  // Load old content
-  quill.root.innerHTML = hiddenInput.value;
+    document.querySelector("form").addEventListener("submit", function () {
+        hiddenInput.value = quill.root.innerHTML;
+    });
+    });
 
-  // Sync changes back to hidden textarea
-  quill.on("text-change", function () {
-    hiddenInput.value = quill.root.innerHTML;
-  });
-});
 
 const container = document.getElementById('imageOrderBox');
 const reverseBtn1 = document.getElementById('reverseImagesBtn1');
@@ -953,6 +966,33 @@ updateReverseButtonText();
 [reverseBtn1, reverseBtn2].forEach(btn => {
     btn.addEventListener('click', reverseImages);
 });
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    const productInput = document.querySelector('input[name="product_name"]');
+    const mainCategorySelect = document.getElementById('mainCategorySelect');
+
+    if (productInput && mainCategorySelect) {
+        productInput.addEventListener('blur', function () {
+            if (mainCategorySelect.value !== '113') return;
+
+            const firstWord = (productInput.value || '').trim().split(' ')[0];
+            if (!firstWord) return;
+
+            const category1Select = document.querySelector('#dynamic-subcategories select:first-of-type');
+            if (!category1Select) return;
+
+            Array.from(category1Select.options).forEach(option => {
+                const optionText = option.text.trim().toLowerCase();
+                if (optionText.startsWith(firstWord.toLowerCase())) {
+                    option.selected = true;
+                    category1Select.dispatchEvent(new Event('change'));
+                }
+            });
+        });
+    }
+});
+
 </script>
 
 @endsection

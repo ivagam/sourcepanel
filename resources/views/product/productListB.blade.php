@@ -159,7 +159,7 @@
                                     <p class="text-muted">{{ $product->purchase_code }}</p>
                                 @endif
                             </td>
-                            <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ \Illuminate\Support\Str::limit($product->description, 60) }}</td>
+                            <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ \Illuminate\Support\Str::limit($product->description, 20) }}</td>
                             <td class="align-middle" @if($product->is_updated) style="background-color: #e4f7e4ff !important;" @endif>{{ $product->note }}</td>
                         </tr>
                     @empty

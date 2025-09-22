@@ -90,13 +90,13 @@ class ParseImageController extends Controller
             return redirect()->back()->with('error', 'No images selected!');
         }
 
-        $mainCategory = $request->input('main_category', 0);
+        
         $totalProducts = Product::count();
 
         $product = new Product();
         $product->product_name = 'xyz ' . $totalProducts;
         $product->category_ids = $mainCategory . ',';
-        $product->category_id = $mainCategory;
+        $product->category_id = '113';
         $product->product_url = Str::slug($product->product_name);
         $product->sku = 'SKU' . rand(100000, 999999);
         $product->created_by = session('user_id');

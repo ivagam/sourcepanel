@@ -259,7 +259,7 @@
 
 
                         <div class="col-md-6">
-                            <label class="form-label">Product Description (Original)</label>
+                            <label class="form-label">Chinese Translator</label>
                             <div class="card-body p-0">
                                 <div id="toolbar-container">
                                     <span class="ql-formats">
@@ -277,16 +277,11 @@
                                     </span>
                                 </div>
                                 <div id="editor">{!! old('description', $product->description) !!}</div>
-
-                                <!-- Hidden textarea (Laravel will receive English) -->
-                                <textarea name="description" id="description" style="display:none;height:200px">
-                                    {!! old('description', $product->description) !!}
-                                </textarea>
                             </div>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Product Description (English)</label>
+                            <label class="form-label">Product Description</label>
                             <div class="card-body p-0">
                                 <div id="toolbar-container-en">
                                     <span class="ql-formats">
@@ -303,9 +298,13 @@
                                         <button class="ql-indent" value="+1"></button>
                                     </span>
                                 </div>
-                                <div id="editor_en"></div>
+                                <div id="editor_en">{!! old('description_en', $product->description_en ?? $product->description) !!}</div>
                             </div>
-                        </div>                  
+                        </div>
+
+                        <!-- Hidden textarea for Laravel -->
+                        <textarea name="description" id="description" style="display:none;"></textarea>
+
 
                         <div class="col-md-6">
                             <label class="form-label">Note</label>
@@ -1006,7 +1005,7 @@ document.addEventListener('DOMContentLoaded', function () {
     for (let i = 0; i < words.length; i++) {
       const word = words[i];
       match = Array.from(category1Select.options)
-        .find(opt => opt.text.trim().toLowerCase().startsWith(word.toLowerCase()));
+        .find(opt => opt.text.trim().toLowerCase().includes(word.toLowerCase())); // changed here
       if (match) break;
     }
 
@@ -1024,9 +1023,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
-
 document.addEventListener("DOMContentLoaded", function () {
-    
     const quill = new Quill("#editor", {
         modules: { toolbar: "#toolbar-container" },
         theme: "snow"
@@ -1038,6 +1035,8 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     const hiddenTextarea = document.getElementById("description");
+
+    hiddenTextarea.value = quillEn.root.innerHTML;
 
     function containsChinese(text) {
         return /[\u4e00-\u9fff]/.test(text);
@@ -1057,20 +1056,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     quill.root.addEventListener("blur", async function () {
         let text = quill.getText().trim();
-        if (!text) { 
-            hiddenTextarea.value = ''; 
-            quillEn.setText('');
-            return; 
-        }
+        if (!text) return;
 
         if (containsChinese(text)) {
             const translated = await translateFree(text);
-            quillEn.setText(translated);
-            hiddenTextarea.value = translated;
-        } else {
-            quillEn.setContents(quill.getContents());
-            hiddenTextarea.value = quill.root.innerHTML;
+            quillEn.root.innerHTML = translated;
         }
+    });
+
+    quillEn.on('text-change', function () {
+        hiddenTextarea.value = quillEn.root.innerHTML;
     });
 
     document.querySelector("form").addEventListener("submit", function () {

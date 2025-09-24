@@ -488,4 +488,20 @@ class ScrapeController extends Controller
 
         return view('scrape.scrapeUrl', compact('scrapeUrl'));        
     }
+
+    public function destroy($id)
+    {
+        ScrapeUrl::where('id', $id)->delete();
+        return redirect()->route('scrapeUrl')->with('success', 'ScrapeUrl deleted successfully.');
+    }
+
+    public function destroyMultiple(Request $request)
+    {
+        $ids = $request->ids; // array of selected IDs
+        if ($ids) {
+            ScrapeUrl::whereIn('id', $ids)->delete();
+            return redirect()->route('scrapeUrl')->with('success', 'Selected ScrapeUrls deleted successfully.');
+        }
+        return redirect()->route('scrapeUrl')->with('success', 'No URLs selected.');
+    }
 }

@@ -158,8 +158,7 @@ Route::prefix('brand')->middleware('auth')->group(function () {
 });
 
 Route::prefix('scrape')->middleware('auth')->group(function () {
-    Route::controller(ScrapeController::class)->group(function () {
-        
+    Route::controller(ScrapeController::class)->group(function () {        
         Route::get('/scrapeList', 'scrapeList')->name('scrapeList');
         Route::get('/editScrape/{id}', 'editScrape')->name('editScrape');
         Route::post('/update-scrape-image-order', 'updateScrapeImageOrder')->name('updateScrapeImageOrder');
@@ -171,6 +170,9 @@ Route::prefix('scrape')->middleware('auth')->group(function () {
         Route::post('/bulk-update-scrape-sku', 'bulkUpdateScrapeSku')->name('bulkUpdateScrapeSku');
         Route::get('/searchscrape', 'searchscrape')->name('searchscrape');
         Route::get('/scrapeUrl', 'scrapeUrl')->name('scrapeUrl');
+        Route::delete('/delete/{id}', 'destroy')->name('deletescrapeurl');        
+        Route::delete('/delete-multiple', 'destroyMultiple')->name('bulkdeletescrapeurl');
+
     });
 });
 

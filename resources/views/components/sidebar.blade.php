@@ -123,9 +123,16 @@
                     <li>
                         <a href="{{ route('scrapeList') }}">
                                 <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
-                            <span>Scrape</span>
+                            <span>Scrape Product</span>
                         </a>
-                    </li>                    
+                    </li>
+                    
+                    <li>
+                        <a href="{{ route('scrapeUrl') }}">
+                                <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
+                            <span>Scrape Url</span>
+                        </a>
+                    </li>
 
                     <li>
                         <a href="{{ route('seo') }}">

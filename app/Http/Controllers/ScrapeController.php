@@ -10,23 +10,28 @@ use Illuminate\Support\Str;
 use App\Models\Category;
 use App\Models\Domain;
 use App\Models\Media;
+use App\Models\ScrapeUrl;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\DB;
 
 class ScrapeController extends Controller
 {
     public function index()
-    {
-        $scrape = Scrape::where('status', 0)->first();
-        if (!$scrape) {
-            return "No URLs to scrape.";
-        }
+{
+    // Get up to 200 URLs at once
+    $scrapes = ScrapeUrl::where('product_status', 0)->limit(200)->get();
+    if ($scrapes->isEmpty()) {
+        return "No URLs to scrape.";
+    }
 
+    foreach ($scrapes as $scrape) {
         $url = $scrape->url;
 
         $html = @file_get_contents($url);
         if (!$html) {
-            return "Failed to fetch URL: $url";
+            $scrape->product_status = 2; // no content
+            $scrape->save();
+            continue;
         }
 
         $dom = new \DOMDocument();
@@ -35,39 +40,31 @@ class ScrapeController extends Controller
         libxml_clear_errors();
 
         $h1_tags = $dom->getElementsByTagName('h1');
-        $product_name = $h1_tags->length > 0 ? trim($h1_tags->item(0)->textContent) : 'Unnamed Product';
+        $product_name = $h1_tags->length > 0 ? trim($h1_tags->item(0)->textContent) : '';
+        if (!$product_name) {
+            $totalProducts = DB::table('scrape_product')->count();
+            $product_name = 'xyz ' . ($totalProducts + 1);
+        }
 
         $description = '';
         $p_tags = $dom->getElementsByTagName('p');
         $p_count = $p_tags->length;
         for ($i = 0; $i < $p_count - 1; $i++) {
-                $text = $p_tags->item($i)->textContent;                
-                $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');                
-                $text = trim($text);                
-                $text = preg_replace('/\s+/', ' ', $text);                
-                $description .= $text . "\n";
-            }
+            $text = $p_tags->item($i)->textContent;                
+            $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');                
+            $text = trim($text);                
+            $text = preg_replace('/\s+/', ' ', $text);                
+            $description .= $text . "\n";
+        }
 
         $sku = 'SKU' . rand(100000, 999999);
-
         $slug = Str::slug($product_name);
         $randomNumber = rand(1000, 9999);
         $product_url = $slug . '_' . $randomNumber;
-
         $size = 'S,L,M,XL,XXL';
 
-        $product = ScrapeProduct::create([
-            'scrape_id' => $scrape->scrape_id,
-            'product_name' => $product_name,
-            'description' => $description,
-            'size' => $size,
-            'sku' => $sku,
-            'product_url' => $product_url,
-            'created_at' => now(),
-        ]);
-
-        $maxSerial = ScrapeImage::where('scrape_product_id', $product->scrape_product_id)->max('serial_no') ?? 0;
-
+        // Check images first
+        $foundImages = [];
         $div_tags = $dom->getElementsByTagName('div');
         foreach ($div_tags as $div) {
             $class = $div->getAttribute('class');
@@ -75,28 +72,57 @@ class ScrapeController extends Controller
                 $imgs = $div->getElementsByTagName('img');
                 foreach ($imgs as $img) {
                     $src = $img->getAttribute('src');
+                    if (!$src) {
+                        $src = $img->getAttribute('data-src');
+                    }
                     if ($src) {
                         $savedFileName = $this->downloadImage($src);
                         if ($savedFileName) {
-                            $maxSerial++;
-                            ScrapeImage::create([                                
-                                'scrape_product_id' => $product->scrape_product_id,
-                                'file_path' => $savedFileName,
-                                'serial_no' => $maxSerial,
-                                'created_by'  => session('user_id'),
-                            ]);
+                            $foundImages[] = $savedFileName;
                         }
                     }
                 }
             }
         }
 
-        // Update scrape status
-        $scrape->status = 1;
-        $scrape->save();
+        // Only create ScrapeProduct if at least one image exists
+        if (!empty($foundImages)) {
+            $product = ScrapeProduct::create([
+                'scrape_id' => $scrape->id,
+                'product_name' => $product_name,
+                'description' => $description,
+                'category_id' => 113,
+                'category_ids' =>  113 . ',',
+                'size' => $size,
+                'sku' => $sku,
+                'product_url' => $product_url,
+                'created_at' => now(),
+            ]);
 
-        return "Scraping completed for URL: $url";
+            $serial = 0;
+            foreach ($foundImages as $file) {
+                $serial++;
+                ScrapeImage::create([
+                    'scrape_product_id' => $product->scrape_product_id,
+                    'file_path' => $file,
+                    'serial_no' => $serial,
+                    'created_by' => session('user_id') ?? 1,
+                ]);
+            }
+
+            $scrape->product_status = 1; // product created successfully
+        } else {
+            $scrape->product_status = 2; // no images found
+        }
+
+        // Save status
+        $scrape->save();
     }
+
+    return "Scraping completed for " . $scrapes->count() . " URLs.";
+}
+
+
 
     public function updateScrapeProduct(Request $request, $id)
     {        
@@ -456,4 +482,10 @@ class ScrapeController extends Controller
         return view('scrape.searchResults', compact('products'));
     }
 
+    public function scrapeUrl ()
+    {
+        $scrapeUrl = ScrapeUrl::orderBy('created_at', 'desc')->get();
+
+        return view('scrape.scrapeUrl', compact('scrapeUrl'));        
+    }
 }

@@ -75,10 +75,10 @@
     z-index: 10;
 }
 
-#editor {
-    height: 150px;   /* set your desired height */
+#editor, #editor_en {
+    height: 150px;
     max-height: 200px;
-    overflow-y: auto; /* add scrollbar if content exceeds */
+    overflow-y: auto;
     border: 1px solid #ddd;
     padding: 10px;
     background: #fff;
@@ -259,9 +259,8 @@
 
 
                         <div class="col-md-6">
-                            <label class="form-label">Product Description</label>
+                            <label class="form-label">Product Description (Original)</label>
                             <div class="card-body p-0">
-
                                 <div id="toolbar-container">
                                     <span class="ql-formats">
                                         <select class="ql-font"></select>
@@ -277,15 +276,36 @@
                                         <button class="ql-indent" value="+1"></button>
                                     </span>
                                 </div>
-                                
                                 <div id="editor">{!! old('description', $product->description) !!}</div>
 
-                                <!-- Hidden textarea (Laravel will receive this) -->
+                                <!-- Hidden textarea (Laravel will receive English) -->
                                 <textarea name="description" id="description" style="display:none;height:200px">
                                     {!! old('description', $product->description) !!}
                                 </textarea>
                             </div>
-                        </div>                     
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Product Description (English)</label>
+                            <div class="card-body p-0">
+                                <div id="toolbar-container-en">
+                                    <span class="ql-formats">
+                                        <select class="ql-font"></select>
+                                        <select class="ql-size"></select>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-bold"></button>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-list" value="ordered"></button>
+                                        <button class="ql-list" value="bullet"></button>
+                                        <button class="ql-indent" value="-1"></button>
+                                        <button class="ql-indent" value="+1"></button>
+                                    </span>
+                                </div>
+                                <div id="editor_en"></div>
+                            </div>
+                        </div>                  
 
                         <div class="col-md-6">
                             <label class="form-label">Note</label>
@@ -373,7 +393,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.2/min/dropzone.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 
 @php
     $lastSerial = $product->images->max('serial_no') ?? 0;
@@ -969,28 +990,92 @@ updateReverseButtonText();
 
 
 document.addEventListener('DOMContentLoaded', function () {
-    const productInput = document.querySelector('input[name="product_name"]');
-    const mainCategorySelect = document.getElementById('mainCategorySelect');
+  const productInput = document.querySelector('input[name="product_name"]');
+  const mainCategorySelect = document.getElementById('mainCategorySelect');
+  if (!productInput || !mainCategorySelect) return;
 
-    if (productInput && mainCategorySelect) {
-        productInput.addEventListener('blur', function () {
-            if (mainCategorySelect.value !== '113') return;
+  productInput.addEventListener('blur', function () {
+    if (mainCategorySelect.value !== '113') return;
 
-            const firstWord = (productInput.value || '').trim().split(' ')[0];
-            if (!firstWord) return;
+    const words = (productInput.value || '').trim().split(/\s+/);
+    const category1Select = document.querySelector('#dynamic-subcategories select');
+    if (!category1Select) return;
 
-            const category1Select = document.querySelector('#dynamic-subcategories select:first-of-type');
-            if (!category1Select) return;
+    let match = null;
 
-            Array.from(category1Select.options).forEach(option => {
-                const optionText = option.text.trim().toLowerCase();
-                if (optionText.startsWith(firstWord.toLowerCase())) {
-                    option.selected = true;
-                    category1Select.dispatchEvent(new Event('change'));
-                }
-            });
-        });
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i];
+      match = Array.from(category1Select.options)
+        .find(opt => opt.text.trim().toLowerCase().startsWith(word.toLowerCase()));
+      if (match) break;
     }
+
+    if (match) {
+      category1Select.value = match.value;
+      if (window.jQuery) $(category1Select).trigger('change');
+      else category1Select.dispatchEvent(new Event('change', { bubbles: true }));
+    } else {
+      category1Select.value = "";
+      category1Select.selectedIndex = 0;
+
+      const cat2Container = document.querySelector('#dynamic-subcategories .subcat-level[data-level="2"]');
+      if (cat2Container) cat2Container.remove();
+    }
+  });
+});
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    
+    const quill = new Quill("#editor", {
+        modules: { toolbar: "#toolbar-container" },
+        theme: "snow"
+    });
+
+    const quillEn = new Quill("#editor_en", {
+        modules: { toolbar: "#toolbar-container-en" },
+        theme: "snow"
+    });
+
+    const hiddenTextarea = document.getElementById("description");
+
+    function containsChinese(text) {
+        return /[\u4e00-\u9fff]/.test(text);
+    }
+
+    async function translateFree(text) {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh&tl=en&dt=t&q=${encodeURIComponent(text)}`;
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            return data[0].map(item => item[0]).join('') || text;
+        } catch (e) {
+            console.error("Translation failed:", e);
+            return text;
+        }
+    }
+
+    quill.root.addEventListener("blur", async function () {
+        let text = quill.getText().trim();
+        if (!text) { 
+            hiddenTextarea.value = ''; 
+            quillEn.setText('');
+            return; 
+        }
+
+        if (containsChinese(text)) {
+            const translated = await translateFree(text);
+            quillEn.setText(translated);
+            hiddenTextarea.value = translated;
+        } else {
+            quillEn.setContents(quill.getContents());
+            hiddenTextarea.value = quill.root.innerHTML;
+        }
+    });
+
+    document.querySelector("form").addEventListener("submit", function () {
+        hiddenTextarea.value = quillEn.root.innerHTML;
+    });
 });
 
 </script>

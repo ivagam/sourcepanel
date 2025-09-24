@@ -94,9 +94,9 @@ class ParseImageController extends Controller
         $totalProducts = Product::count();
 
         $product = new Product();
-        $product->product_name = 'xyz ' . $totalProducts;
-        $product->category_ids = $mainCategory . ',';
+        $product->product_name = 'xyz ' . $totalProducts;        
         $product->category_id = '113';
+        $product->category_ids        = 113 . ',';
         $product->product_url = Str::slug($product->product_name);
         $product->sku = 'SKU' . rand(100000, 999999);
         $product->created_by = session('user_id');

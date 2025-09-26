@@ -257,6 +257,27 @@
 
                         <div class="col-md-12" id="dynamic-subcategories"></div>
 
+                        <div class="col-md-6">
+                            <label class="form-label">Product Description</label>
+                            <div class="card-body p-0">
+                                <div id="toolbar-container-en">
+                                    <span class="ql-formats">
+                                        <select class="ql-font"></select>
+                                        <select class="ql-size"></select>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-bold"></button>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-list" value="ordered"></button>
+                                        <button class="ql-list" value="bullet"></button>
+                                        <button class="ql-indent" value="-1"></button>
+                                        <button class="ql-indent" value="+1"></button>
+                                    </span>
+                                </div>
+                                <div id="editor_en">{!! old('description_en', $product->description_en ?? $product->description) !!}</div>
+                            </div>
+                        </div>
 
                         <div class="col-md-6">
                             <label class="form-label">Chinese Translator</label>
@@ -279,28 +300,7 @@
                                 <div id="editor">{!! old('description', $product->description) !!}</div>
                             </div>
                         </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Product Description</label>
-                            <div class="card-body p-0">
-                                <div id="toolbar-container-en">
-                                    <span class="ql-formats">
-                                        <select class="ql-font"></select>
-                                        <select class="ql-size"></select>
-                                    </span>
-                                    <span class="ql-formats">
-                                        <button class="ql-bold"></button>
-                                    </span>
-                                    <span class="ql-formats">
-                                        <button class="ql-list" value="ordered"></button>
-                                        <button class="ql-list" value="bullet"></button>
-                                        <button class="ql-indent" value="-1"></button>
-                                        <button class="ql-indent" value="+1"></button>
-                                    </span>
-                                </div>
-                                <div id="editor_en">{!! old('description_en', $product->description_en ?? $product->description) !!}</div>
-                            </div>
-                        </div>
+                        
 
                         <!-- Hidden textarea for Laravel -->
                         <textarea name="description" id="description" style="display:none;"></textarea>
@@ -421,7 +421,9 @@ $(document).ready(function () {
 
     $('#mainCategorySelect').on('change', function () {
         const selectedId = $(this).val();
-        resetSubcategories();
+        
+        resetSubcategories(); 
+        
         $('#category_ids').val(selectedId || '');
 
         if (selectedId === '1') {
@@ -430,6 +432,7 @@ $(document).ready(function () {
             loadSubcategories(selectedId, 1);
         }
     });
+
 
     $('form').on('submit', function () {
         const selectedIds = [];
@@ -449,11 +452,15 @@ $(document).ready(function () {
     });
 });
 
-function resetSubcategories() {
-    $('#watch-subcategories').html('').hide();
-    $('#dynamic-subcategories').html('<div class="row"></div>').hide();
-    $('#final_category_id').val('');
-}
+    function resetSubcategories(show = false) {
+        $('#watch-subcategories').html('').hide();
+        $('#dynamic-subcategories').html('<div class="row"></div>');
+
+        if (show) $('#dynamic-subcategories').show(); // Show only when needed
+
+        $('#final_category_id').val('');
+    }
+
 
 function loadWatchSubcategories(parentId, chain = []) {
     return $.ajax({
@@ -895,10 +902,10 @@ $(document).ready(function () {
     }
 
     function loadSubcategories(parentId, level = 2, selectedId = null) {
-    return $.ajax({
-        url: `${BASE_URL}category/get-subcategories/${parentId}`,
-        type: 'GET',
-    }).done(function (response) {
+        return $.ajax({
+            url: `${BASE_URL}category/get-subcategories/${parentId}`,
+            type: 'GET',
+        }).done(function (response) {
         $(`#dynamic-subcategories .subcat-level`).filter(function () {
             return parseInt($(this).data('level')) >= level;
         }).remove();
@@ -989,39 +996,115 @@ updateReverseButtonText();
 
 
 document.addEventListener('DOMContentLoaded', function () {
-  const productInput = document.querySelector('input[name="product_name"]');
-  const mainCategorySelect = document.getElementById('mainCategorySelect');
-  if (!productInput || !mainCategorySelect) return;
+    const productInput = document.querySelector('input[name="product_name"]');
+    const mainCategorySelect = document.getElementById('mainCategorySelect');
+    if (!productInput || !mainCategorySelect) return;
 
-  productInput.addEventListener('blur', function () {
-    if (mainCategorySelect.value !== '113') return;
+    const dictionary = {
+        "Clothings": ["clothings","shirt","hoodie","jacket","cardigan","sweater","coat","jeans","pants","shorts","under garment","bikini","scarf","swim","vest","dress"],
+        "Shoes": ["shoes","sneakers","boot","loafers","ballerina","sandal","slide","mule","moccasin","slippers","flip flop","chappal"],
+        "Accessories": ["accessories","umbrella","vision","pen","gift","perfume","clip","band","doll","dog","handicraft","sculpture","fancy","bat","tennis","golf","cricket","badminton","racket"],
+        "Belt": ["belt"],
+        "Sunglass": ["sunglass","plain","prescription"],
+        "Jewellery": ["jewellery","bracelet","necklace","jewel","ring","brooch"],
+        "Caps": ["caps","hats","beanie"],
+        "Watch": ["watch","clock","alarm"]
+    };
 
-    const words = (productInput.value || '').trim().split(/\s+/);
-    const category1Select = document.querySelector('#dynamic-subcategories select');
-    if (!category1Select) return;
-
-    let match = null;
-
-    for (let i = 0; i < words.length; i++) {
-      const word = words[i];
-      match = Array.from(category1Select.options)
-        .find(opt => opt.text.trim().toLowerCase().includes(word.toLowerCase())); // changed here
-      if (match) break;
+    function clearAllSubcategories(container) {
+        const selects = container.querySelectorAll('.subcat-level select');
+        selects.forEach(select => {
+            select.value = "";
+            if (window.jQuery) $(select).trigger('change');
+            else select.dispatchEvent(new Event('change', { bubbles: true }));
+        });
     }
 
-    if (match) {
-      category1Select.value = match.value;
-      if (window.jQuery) $(category1Select).trigger('change');
-      else category1Select.dispatchEvent(new Event('change', { bubbles: true }));
-    } else {
-      category1Select.value = "";
-      category1Select.selectedIndex = 0;
-
-      const cat2Container = document.querySelector('#dynamic-subcategories .subcat-level[data-level="2"]');
-      if (cat2Container) cat2Container.remove();
+    function setCategorySelect(select, value) {
+        const matchOption = Array.from(select.options)
+            .find(opt => opt.text.trim().toLowerCase().includes(value.toLowerCase()));
+        if (matchOption) {
+            select.value = matchOption.value;
+            if (window.jQuery) $(select).trigger('change');
+            else select.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     }
-  });
+
+    function runCategoryMatch() {
+        if (mainCategorySelect.value !== '113') return;
+
+        const words = (productInput.value || '').trim().split(/\s+/);
+        const categoryContainer = document.querySelector('#dynamic-subcategories');
+        if (!categoryContainer) return;
+
+        const category1Select = categoryContainer.querySelector('.subcat-level[data-level="1"] select');
+        if (!category1Select) return;
+
+        // ---------- CATEGORY 1 ----------
+        const match1 = Array.from(category1Select.options)
+            .find(opt => words.some(word => opt.text.trim().toLowerCase().includes(word.toLowerCase())));
+
+        if (match1) {
+            category1Select.value = match1.value;
+            if (window.jQuery) $(category1Select).trigger('change');
+            else category1Select.dispatchEvent(new Event('change', { bubbles: true }));
+
+            // ---------- CATEGORY 2 ----------
+            let match2Category = null;
+            for (let i = words.length - 1; i >= 0; i--) {
+                const word = words[i].toLowerCase();
+                for (const [cat, items] of Object.entries(dictionary)) {
+                    if (items.some(item => word.includes(item.toLowerCase()))) {
+                        match2Category = cat;
+                        break;
+                    }
+                }
+                if (match2Category) break;
+            }
+
+            if (match2Category) {
+                const observer = new MutationObserver((mutations, obs) => {
+                    const category2Select = categoryContainer.querySelector('.subcat-level[data-level="2"] select');
+                    if (category2Select) {
+                        setCategorySelect(category2Select, match2Category);
+                        categoryContainer.style.display = 'block';
+                        obs.disconnect();
+                    }
+                });
+                observer.observe(categoryContainer, { childList: true, subtree: true });
+            } else {
+                const category2Select = categoryContainer.querySelector('.subcat-level[data-level="2"] select');
+                if (category2Select) setCategorySelect(category2Select, "");
+            }
+
+        } else {
+            category1Select.value = "";
+            category1Select.selectedIndex = 0;
+            clearAllSubcategories(categoryContainer);
+        }
+    }
+
+    productInput.addEventListener('blur', runCategoryMatch);
+    productInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            runCategoryMatch();
+        }
+    });
 });
+
+
+function setCategory2Value(select, matchCategory) {        
+        const matchOption = Array.from(select.options)
+            .find(opt => opt.text.trim().toLowerCase().includes(matchCategory.toLowerCase()));            
+        if (matchOption) {            
+            select.value = matchOption.value;            
+            setTimeout(() => {
+            if (window.jQuery) $(select).trigger('change');
+            else select.dispatchEvent(new Event('change', { bubbles: true }));
+        }, 100);
+        }
+    }
+
 
 document.addEventListener("DOMContentLoaded", function () {
     const quill = new Quill("#editor", {

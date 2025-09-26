@@ -50,7 +50,8 @@ class ProductController extends Controller
                         ) as category_name")
             ])
             ->where('products.is_updated', 0)
-            ->where('products.is_product_c', '!=', 1);
+            ->where('products.is_product_c', '!=', 1)
+            ->where('products.is_delete', 0);
 
         if ($categoryFilter) {
             $query->whereRaw("FIND_IN_SET(?, products.category_ids)", [$categoryFilter]);
@@ -84,7 +85,8 @@ class ProductController extends Controller
                         ) as category_name")
             ])
             ->where('products.is_updated', 1)
-            ->where('products.is_product_c', '!=', 1);
+            ->where('products.is_product_c', '!=', 1)
+            ->where('products.is_delete', 0);
 
         if ($categoryFilter) {
             $query->whereRaw("FIND_IN_SET(?, products.category_ids)", [$categoryFilter]);
@@ -118,7 +120,8 @@ class ProductController extends Controller
                         ) as category_name")
             ])
             ->where('products.is_updated', 0)
-            ->where('products.is_product_c', '!=', 0);
+            ->where('products.is_product_c', '!=', 0)
+            ->where('products.is_delete', 0);
 
         if ($categoryFilter) {
             $query->whereRaw("FIND_IN_SET(?, products.category_ids)", [$categoryFilter]);
@@ -323,12 +326,12 @@ class ProductController extends Controller
     {
         $product = Product::where('product_id', $product_id)->firstOrFail();
 
-        $isUpdated = $product->is_updated;
-        Image::where('product_id', $product_id)->delete();
-        $product->delete();
-        
-        return redirect()->route('productListA')->with('success', 'Product deleted successfully!');
+        $product->is_delete = 1;
+        $product->save();              
+
+        return redirect()->route('productListA')->with('success', 'Product marked as deleted successfully!');
     }
+
     
     public function getByCategory($id)
     {
@@ -495,6 +498,38 @@ class ProductController extends Controller
         ]);
     }
 
-    
+    public function deletedProductList(Request $request)
+    {
+        $search = strtolower($request->input('search'));
+        $categoryFilter = $request->input('category_filter');
+
+        $query = Product::query()
+            ->select([
+                'products.*',
+                DB::raw("(SELECT GROUP_CONCAT(category_name SEPARATOR ', ') 
+                        FROM category 
+                        WHERE FIND_IN_SET(category.category_id, products.category_ids)
+                        ) as category_name")
+            ])
+            ->where('products.is_delete', 1); // ✅ only deleted products
+
+        if ($categoryFilter) {
+            $query->whereRaw("FIND_IN_SET(?, products.category_ids)", [$categoryFilter]);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw("MATCH(products.product_name, products.description) AGAINST(? IN BOOLEAN MODE)", [$search])
+                ->orWhereRaw("LOWER(products.product_name) LIKE ?", ['%' . $search . '%'])
+                ->orWhereRaw("LOWER(products.description) LIKE ?", ['%' . $search . '%'])
+                ->orWhereRaw("LOWER(products.sku) LIKE ?", ['%' . $search . '%']);
+            });
+        }
+
+        $products = $query->orderBy('products.created_at', 'desc')->paginate(50);
+
+        return view('product.deletedProductList', compact('products'));
+    }
+ 
     
 }

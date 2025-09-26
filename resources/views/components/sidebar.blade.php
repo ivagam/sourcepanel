@@ -71,6 +71,13 @@
             </li>
 
             <li>
+                  <a href="{{ route('deletedProductList') }}">
+                        <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
+                    <span>Delete Product</span>
+                </a>
+            </li>
+
+            <li>
                 <a href="{{ env('REPLADEEZ_URL') . 'msg' }}" target="_blank">
                     <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
                     <span>Whatsapp Msg</span>

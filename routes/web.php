@@ -113,13 +113,14 @@ Route::prefix('product')->middleware('auth')->group(function () {
         Route::post('/store', 'store')->name('storeproduct');
         Route::get('/editProduct/{id}', 'editProduct')->name('editProduct');
         Route::put('/updateProduct/{id}', 'updateProduct')->name('updateProduct');
-        Route::delete('/deleteProduct/{id}', 'deleteProduct')->name('deleteProduct');        
+        Route::delete('/deleteProduct/{id}', 'deleteProduct')->name('deleteProduct');
         Route::get('/by-category/{id}', 'getByCategory')->name('byCategory');
         Route::post('/upload-temp-image', 'uploadTempImage')->name('uploadTempImage');
         Route::post('/delete-image', 'deleteImage')->name('deleteImage');
         Route::post('/update-image-order', 'updateImageOrder')->name('updateImageOrder');        
         Route::get('/duplicate/{id}', 'duplicateProduct')->name('duplicateProduct');        
         Route::post('/bulk-update-sku', 'bulkUpdateSku')->name('bulkUpdateSku');
+        Route::get('/deletedProductList', 'deletedProductList')->name('deletedProductList');
     });
 });
 

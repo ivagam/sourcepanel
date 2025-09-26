@@ -35,6 +35,7 @@ class Product extends Model
         'sku',
         'is_updated',
         'is_product_c',
+        'is_delete',
     ];
 
     public function category()

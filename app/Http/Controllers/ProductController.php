@@ -259,13 +259,14 @@ class ProductController extends Controller
         }
 
         $oldName = $product->product_name;
-        $content = trim($request->description);
+        $content = trim($request->description_en);
 
         if ($content === '<p><br></p>' || $content === '<p></p>') {
             $content = null;
         }
 
         $product->description = $content;
+        $product->chinese_description = $request->chinese_description ?? '';
         $product->meta_keywords = $request->meta_keywords ?? '';
         $product->meta_description = $request->meta_description ?? '';
         $product->purchase_value  = $request->filled('purchase_value') 
@@ -307,9 +308,19 @@ class ProductController extends Controller
 
         foreach ($existingImages as $path) {
             if (!Image::where('product_id', $product->product_id)->where('file_path', $path)->exists()) {
+
+                $isVideo = preg_match('/\.(mp4|webm|ogg)$/i', $path);
+
+                if ($isVideo) {
+                    $serialNo = (Image::where('product_id', $product->product_id)->max('serial_no') ?? 0) + 1000;
+                } else {
+                    $serialNo = (Image::where('product_id', $product->product_id)->max('serial_no') ?? 0) + 1;
+                }
+                
                 Image::create([
                     'product_id' => $product->product_id,
                     'file_path' => $path,
+                    'serial_no'  => $serialNo,
                     'created_by' => session('user_id'),
                 ]);
             }

@@ -11,6 +11,10 @@
     <div class="alert alert-success">{{ session('success') }}</div>
 @endif
 
+@if(session('error'))
+    <div class="alert alert-danger">{{ session('error') }}</div>
+@endif
+
 <div class="card h-100 p-0 radius-12">
     <div class="card-body p-24">
         <h5 class="card-title mb-3">Edit Category</h5>

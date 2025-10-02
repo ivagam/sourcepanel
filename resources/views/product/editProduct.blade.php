@@ -87,15 +87,24 @@
     min-height:120px !important;
     border:1px solid #000 !important;
 }
+
+.form-buttons {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    padding: 10px 0;
+    z-index: 999;
+    display: flex;
+    gap: 10px;
+}
+
 </style>
 
 <div class="card h-100 p-0 radius-12">
     <div class="card-body p-24">
         <div class="col-lg-12">
-            <div class="card">
-               
-                <div class="card-body">
-                    <form id="productEditForm" class="row gy-3 needs-validation" method="POST"
+            <div class="card">               
+                <form id="productEditForm" class="row gy-3 needs-validation" method="POST"
                         action="{{ route('updateProduct', ['id' => $product->product_id] + ($isDuplicate ? ['duplicate' => 1] : [])) }}"
                         novalidate enctype="multipart/form-data">
                         @csrf
@@ -104,7 +113,7 @@
                         <input type="hidden" name="category_id" id="final_category_id" value="{{ old('category_id', $product->category_id) }}">
                         <input type="hidden" name="category_ids" id="category_ids" value="{{ old('category_ids', $product->category_ids) }}">
                         
-                        <div class="d-flex gap-3 justify-content-start">
+                        <div class="form-buttons sticky-top-buttons">
                             <button type="submit" name="is_updated" value="0" class="btn btn-primary">Update</button>
                             <button type="submit" name="is_updated" value="1" class="btn btn-success">Complete</button>
                             <button type="submit" name="is_product_c" value="1" class="btn btn-warning">Is Product C</button>
@@ -258,7 +267,31 @@
                         <div class="col-md-12" id="dynamic-subcategories"></div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Product Description</label>
+                            <label class="form-label">Enter Chinese Text</label>
+                            <div class="card-body p-0">
+                                <div id="toolbar-container-input">
+                                    <span class="ql-formats">
+                                        <select class="ql-font"></select>
+                                        <select class="ql-size"></select>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-bold"></button>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-list" value="ordered"></button>
+                                        <button class="ql-list" value="bullet"></button>
+                                        <button class="ql-indent" value="-1"></button>
+                                        <button class="ql-indent" value="+1"></button>
+                                    </span>
+                                </div>
+                                <div id="editor_input"></div>
+                                <textarea name="input_chinese" id="input_chinese" hidden></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Input 2: English Description -->
+                        <div class="col-md-6">
+                            <label class="form-label">Product Description (English)</label>
                             <div class="card-body p-0">
                                 <div id="toolbar-container-en">
                                     <span class="ql-formats">
@@ -276,11 +309,13 @@
                                     </span>
                                 </div>
                                 <div id="editor_en">{!! old('description_en', $product->description_en ?? $product->description) !!}</div>
+                                <textarea name="description_en" id="description_en" hidden></textarea>
                             </div>
                         </div>
 
+                        <!-- Input 3: Chinese Description -->
                         <div class="col-md-6">
-                            <label class="form-label">Chinese Translator</label>
+                            <label class="form-label">Chinese Description</label>
                             <div class="card-body p-0">
                                 <div id="toolbar-container">
                                     <span class="ql-formats">
@@ -297,13 +332,11 @@
                                         <button class="ql-indent" value="+1"></button>
                                     </span>
                                 </div>
-                                <div id="editor">{!! old('description', $product->description) !!}</div>
+                                <div id="editor">{!! old('chinese_description', $product->chinese_description ?? '') !!}</div>
+                                <textarea name="chinese_description" id="chinese_description" hidden></textarea>
                             </div>
                         </div>
-                        
 
-                        <!-- Hidden textarea for Laravel -->
-                        <textarea name="description" id="description" style="display:none;"></textarea>
 
 
                         <div class="col-md-6">
@@ -343,7 +376,6 @@
                         </div>
 
                     </form>
-                </div>
             </div>
         </div>
     </div>
@@ -1001,7 +1033,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!productInput || !mainCategorySelect) return;
 
     const dictionary = {
-        "Clothings": ["clothings","shirt","hoodie","jacket","cardigan","sweater","coat","jeans","pants","shorts","under garment","bikini","scarf","swim","vest","dress"],
+        "Clothings": ["cloth","clothing","clothings","shirt","hoodie","jacket","cardigan","sweater","coat","jeans","pants","shorts","under garment","bikini","scarf","swim","vest","dress"],
         "Shoes": ["shoes","sneakers","boot","loafers","ballerina","sandal","slide","mule","moccasin","slippers","flip flop","chappal"],
         "Accessories": ["accessories","umbrella","vision","pen","gift","perfume","clip","band","doll","dog","handicraft","sculpture","fancy","bat","tennis","golf","cricket","badminton","racket"],
         "Belt": ["belt"],
@@ -1041,8 +1073,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!category1Select) return;
 
         // ---------- CATEGORY 1 ----------
-        const match1 = Array.from(category1Select.options)
-            .find(opt => words.some(word => opt.text.trim().toLowerCase().includes(word.toLowerCase())));
+        let match1 = null;
+        for (let i = 0; i < words.length; i++) {
+            const word = words[i].toLowerCase();
+            match1 = Array.from(category1Select.options)
+                .find(opt => opt.text.trim().toLowerCase().includes(word));
+            if (match1) break; // stop at the first match only
+        }
 
         if (match1) {
             category1Select.value = match1.value;
@@ -1094,32 +1131,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 function setCategory2Value(select, matchCategory) {        
-        const matchOption = Array.from(select.options)
-            .find(opt => opt.text.trim().toLowerCase().includes(matchCategory.toLowerCase()));            
-        if (matchOption) {            
-            select.value = matchOption.value;            
-            setTimeout(() => {
+    const matchOption = Array.from(select.options)
+        .find(opt => opt.text.trim().toLowerCase().includes(matchCategory.toLowerCase()));            
+    if (matchOption) {            
+        select.value = matchOption.value;            
+        setTimeout(() => {
             if (window.jQuery) $(select).trigger('change');
             else select.dispatchEvent(new Event('change', { bubbles: true }));
         }, 100);
-        }
     }
+}
+
 
 
 document.addEventListener("DOMContentLoaded", function () {
-    const quill = new Quill("#editor", {
-        modules: { toolbar: "#toolbar-container" },
+    const quillInput = new Quill("#editor_input", {
+        modules: { toolbar: "#toolbar-container-input" },
         theme: "snow"
     });
-
     const quillEn = new Quill("#editor_en", {
         modules: { toolbar: "#toolbar-container-en" },
         theme: "snow"
     });
+    const quillCn = new Quill("#editor", {
+        modules: { toolbar: "#toolbar-container" },
+        theme: "snow"
+    });
 
-    const hiddenTextarea = document.getElementById("description");
+    const hiddenInput = document.getElementById("input_chinese");
+    const hiddenEn = document.getElementById("description_en");
+    const hiddenCn = document.getElementById("chinese_description");
 
-    hiddenTextarea.value = quillEn.root.innerHTML;
+    if (!hiddenInput || !hiddenEn || !hiddenCn) {
+        console.error("One or more hidden fields are missing!");
+        return;
+    }
 
     function containsChinese(text) {
         return /[\u4e00-\u9fff]/.test(text);
@@ -1132,30 +1178,77 @@ document.addEventListener("DOMContentLoaded", function () {
             const data = await res.json();
             return data[0].map(item => item[0]).join('') || text;
         } catch (e) {
-            console.error("Translation failed:", e);
             return text;
         }
     }
 
-    quill.root.addEventListener("blur", async function () {
-        let text = quill.getText().trim();
+    quillInput.root.addEventListener("blur", async function () {
+        let text = quillInput.getText().trim();
         if (!text) return;
 
+        hiddenInput.value = quillInput.root.innerHTML;
+
         if (containsChinese(text)) {
+            quillCn.root.innerHTML = quillInput.root.innerHTML;
+            hiddenCn.value = quillInput.root.innerHTML;
+
             const translated = await translateFree(text);
             quillEn.root.innerHTML = translated;
+            hiddenEn.value = translated;
+
+            quillInput.setText('');
+            hiddenInput.value = '';
         }
     });
 
-    quillEn.on('text-change', function () {
-        hiddenTextarea.value = quillEn.root.innerHTML;
-    });
+    quillInput.on("text-change", () => hiddenInput.value = quillInput.root.innerHTML);
+    quillCn.on("text-change", () => hiddenCn.value = quillCn.root.innerHTML);
+    quillEn.on("text-change", () => hiddenEn.value = quillEn.root.innerHTML);
 
-    document.querySelector("form").addEventListener("submit", function () {
-        hiddenTextarea.value = quillEn.root.innerHTML;
-    });
+    const form = document.querySelector("form");
+    if (form) {
+        form.addEventListener("submit", () => {
+            hiddenInput.value = quillInput.root.innerHTML;
+            hiddenCn.value = quillCn.root.innerHTML;
+            hiddenEn.value = quillEn.root.innerHTML;
+        });
+    }
 });
 
+
+document.addEventListener("DOMContentLoaded", function () {
+    const productNameInput = document.querySelector("input[name='product_name']");
+    const sizeInput = document.querySelector("input[name='size']");
+    const colorSizeBox = document.getElementById("colorSizeBox");
+
+    function setSizeByProductName(name) {
+        const title = name.toLowerCase();
+
+        if (/shirt|hoodie|jacket|cardigan|sweater|coat|jeans|pants|shorts|under garment|bikini|scarf|swim|vest|dress|jumper/.test(title)) {
+            return "S,M,L,XL,XXL";
+        } else if (/handbag|shopping|tote|clutch|wallet|purse/.test(title)) {
+            return "75 cms";
+        } else if (/sneakers|boot|loafers|ballerina|sandal|slide|mule|moccasin|slippers|flip flop|chappal/.test(title)) {
+            return "EU35-46";
+        } else if (/belt/.test(title)) {
+            return "90-125 cms";
+        }
+        return "";
+    }
+
+    function updateSize() {
+        const newSize = setSizeByProductName(productNameInput.value);
+
+        if (newSize) {
+            sizeInput.value = newSize;
+        }
+        colorSizeBox.style.display = "block";
+    }
+
+    productNameInput.addEventListener("input", updateSize);
+
+    updateSize();
+});
 </script>
 
 @endsection

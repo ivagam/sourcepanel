@@ -39,6 +39,7 @@ class ScrapeController extends Controller
         $dom->loadHTML($html);
         libxml_clear_errors();
 
+        // --- Product Name ---
         $h1_tags = $dom->getElementsByTagName('h1');
         $product_name = $h1_tags->length > 0 ? trim($h1_tags->item(0)->textContent) : '';
         if (!$product_name) {
@@ -46,47 +47,66 @@ class ScrapeController extends Controller
             $product_name = 'xyz ' . ($totalProducts + 1);
         }
 
+        // --- Description ---
         $description = '';
         $p_tags = $dom->getElementsByTagName('p');
-        $p_count = $p_tags->length;
-        for ($i = 0; $i < $p_count - 1; $i++) {
-            $text = $p_tags->item($i)->textContent;                
-            $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');                
-            $text = trim($text);                
-            $text = preg_replace('/\s+/', ' ', $text);                
+        foreach ($p_tags as $p) {
+            $text = trim(html_entity_decode($p->textContent, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+            $text = preg_replace('/\s+/', ' ', $text);
             $description .= $text . "\n";
         }
 
+        // --- Product Data ---
         $sku = 'SKU' . rand(100000, 999999);
         $slug = Str::slug($product_name);
-        $randomNumber = rand(1000, 9999);
-        $product_url = $slug . '_' . $randomNumber;
+        $product_url = $slug . '_' . rand(1000, 9999);
         $size = 'S,L,M,XL,XXL';
 
-        // Check images first
-        $foundImages = [];
+        // --- Collect Files ---
+        $foundFiles = [];
         $div_tags = $dom->getElementsByTagName('div');
         foreach ($div_tags as $div) {
             $class = $div->getAttribute('class');
             if ($class === 'separator') {
+                // --- Images ---
                 $imgs = $div->getElementsByTagName('img');
                 foreach ($imgs as $img) {
-                    $src = $img->getAttribute('src');
+                    $src = $img->getAttribute('src') ?: $img->getAttribute('data-src');
+                    if ($src) {
+                        $savedFile = $this->downloadFile($src);
+                        if ($savedFile) $foundFiles[] = $savedFile;
+                    }
+                }
+
+                // --- Video tags ---
+                $videos = $div->getElementsByTagName('video');
+                foreach ($videos as $video) {
+                    $src = $video->getAttribute('src');
                     if (!$src) {
-                        $src = $img->getAttribute('data-src');
+                        $sources = $video->getElementsByTagName('source');
+                        if ($sources->length > 0) {
+                            $src = $sources->item(0)->getAttribute('src');
+                        }
                     }
                     if ($src) {
-                        $savedFileName = $this->downloadImage($src);
-                        if ($savedFileName) {
-                            $foundImages[] = $savedFileName;
-                        }
+                        $savedFile = $this->downloadFile($src);
+                        if ($savedFile) $foundFiles[] = $savedFile;
+                    }
+                }
+
+                // --- Iframe videos (store URL only) ---
+                $iframes = $div->getElementsByTagName('iframe');
+                foreach ($iframes as $iframe) {
+                    $src = $iframe->getAttribute('src');
+                    if ($src) {
+                        $foundFiles[] = $src; // store iframe URL
                     }
                 }
             }
         }
 
-        // Only create ScrapeProduct if at least one image exists
-        if (!empty($foundImages)) {
+        // --- Create Product if files exist ---
+        if (!empty($foundFiles)) {
             $product = ScrapeProduct::create([
                 'scrape_id' => $scrape->id,
                 'product_name' => $product_name,
@@ -100,11 +120,11 @@ class ScrapeController extends Controller
             ]);
 
             $serial = 0;
-            foreach ($foundImages as $file) {
+            foreach ($foundFiles as $file) {
                 $serial++;
                 ScrapeImage::create([
                     'scrape_product_id' => $product->scrape_product_id,
-                    'file_path' => $file,
+                    'file_path' => $file, // either local filename or iframe URL
                     'serial_no' => $serial,
                     'created_by' => session('user_id') ?? 1,
                 ]);
@@ -112,15 +132,42 @@ class ScrapeController extends Controller
 
             $scrape->product_status = 1; // product created successfully
         } else {
-            $scrape->product_status = 2; // no images found
+            $scrape->product_status = 2; // no files found
         }
 
-        // Save status
         $scrape->save();
     }
 
     return "Scraping completed for " . $scrapes->count() . " URLs.";
 }
+
+// --- Download image/video file ---
+private function downloadFile($fileUrl)
+{
+    try {
+        $fileContent = @file_get_contents($fileUrl);
+        if (!$fileContent) return null;
+
+        $ext = strtolower(pathinfo(parse_url($fileUrl, PHP_URL_PATH), PATHINFO_EXTENSION));
+        if (!in_array($ext, ['jpg','jpeg','png','gif','bmp','webp','mp4','webm','ogg'])) {
+            $ext = 'jpg';
+        }
+
+        $filename = time() . '_' . substr(md5(uniqid(mt_rand(), true)), 0, 3) . '.' . $ext;
+
+        $uploadPath = public_path('uploads');
+        if (!File::exists($uploadPath)) {
+            File::makeDirectory($uploadPath, 0777, true);
+        }
+
+        file_put_contents($uploadPath . '/' . $filename, $fileContent);
+        return $filename;
+    } catch (\Exception $e) {
+        \Log::error("File download failed: " . $e->getMessage());
+        return null;
+    }
+}
+
 
 
 

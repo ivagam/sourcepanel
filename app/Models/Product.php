@@ -36,6 +36,7 @@ class Product extends Model
         'is_updated',
         'is_product_c',
         'is_delete',
+        'chinese_description',
     ];
 
     public function category()

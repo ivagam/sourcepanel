@@ -21,18 +21,31 @@
                 </a>
             </li>
 
-            <li>
-                  <a href="{{ route('categoryList') }}">
-                        <iconify-icon icon="mdi:format-list-bulleted" class="menu-icon"></iconify-icon>
-                    <span>Category List</span>
+            <li class="dropdown">
+                <a  href="javascript:void(0)">
+                    <iconify-icon icon="heroicons:user" class="menu-icon"></iconify-icon>
+                    <span>Category</span>
                 </a>
-            </li>
-
-            <li>
-                  <a href="{{ route('addcategory') }}">
-                        <iconify-icon icon="mdi:plus-box" class="menu-icon"></iconify-icon>
-                    <span>Add Category</span>
-                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ route('categoryList') }}">
+                            <iconify-icon icon="mdi:format-list-bulleted" class="menu-icon"></iconify-icon>
+                            <span>Category List</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('addcategory') }}">
+                            <iconify-icon icon="mdi:plus-box" class="menu-icon"></iconify-icon>
+                            <span>Add Category</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('filterCategory') }}">
+                            <iconify-icon icon="mdi:plus-box" class="menu-icon"></iconify-icon>
+                            <span>Category Filter</span>
+                        </a>
+                    </li>
+                </ul>
             </li>
 
             <li>
@@ -97,6 +110,10 @@
                     <span>Sales</span>
                 </a>
             </li>-->
+
+            <li>
+                <a  href="{{ route('taskList') }}"><iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon> Task List</a>
+            </li> 
             
             <li class="dropdown">
                 <a  href="javascript:void(0)">

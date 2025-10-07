@@ -189,7 +189,7 @@ class ProductController extends Controller
         $categories = Category::all();
         $domains = Domain::all();
         $media = Media::all();
-        $mainCategories = Category::whereNull('subcategory_id')->get();
+        $mainCategories = Category::whereNull('subcategory_id')->get();         
 
         $selectedImages = Image::where('product_id', $id)->get();
 

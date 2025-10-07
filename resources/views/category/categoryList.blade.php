@@ -13,7 +13,6 @@
     <div class="alert alert-success">{{ session('success') }}</div>
 @endif
 
-<!-- Add the two buttons at the top-right corner without removing any existing styles -->
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h5 class="card-title mb-0">Category List</h5>
     <div>
@@ -112,13 +111,37 @@
                 <h5 class="modal-title">Bulk Delete Category</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
+
             <div class="modal-body">
+                <!-- Level 1 -->
                 <div class="mb-3">
-                    <label for="delete_name" class="form-label">Category Name to Delete</label>
-                    <input type="text" class="form-control" id="delete_name" name="delete_name" required>
+                    <label class="form-label">Category 1</label>
+                    <select class="form-select" id="level1">
+                        <option value="">-- Select --</option>
+                        @foreach($categorys->where('subcategory_id', 113) as $cat)
+                            <option value="{{ $cat->category_id }}">{{ $cat->category_name }}</option>
+                        @endforeach
+                    </select>
                 </div>
-                <p class="text-muted">Only categories matching exactly this name will be deleted.</p>
+
+                <!-- Level 2 -->
+                <div class="mb-3">
+                    <label class="form-label">Category 2</label>
+                    <select class="form-select" id="level2">
+                        <option value="">-- Select --</option>
+                    </select>
+                </div>
+
+                <!-- Level 3 -->
+                <div class="mb-3">
+                    <label class="form-label">Category 3</label>
+                    <select class="form-select" id="level3">
+                        <option value="">-- Select --</option>
+                    </select>
+                </div>
+                
             </div>
+
             <div class="modal-footer">
                 <button type="submit" class="btn btn-danger">Delete</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -127,14 +150,56 @@
     </form>
   </div>
 </div>
-
 @endsection
 
+@section('scripts')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(document).ready(function() {
-        setTimeout(function() {
-            $(".alert").fadeOut("slow");
-        }, 3000);
-    });
-</script>
+const BASE_URL = "{{ env('SOURCE_PANEL') }}";
 
+$(document).ready(function() {
+    setTimeout(() => $(".alert").fadeOut("slow"), 3000);
+
+    // Level 1 → Level 2
+    $('#level1').change(function() {
+        let id = $(this).val();
+        $('#level2').html('<option value="">-- Select --</option>');
+        $('#level3').html('<option value="">-- Select --</option>');
+        if (!id) return;
+
+        $.get(BASE_URL + "category/get-subcategories/" + id, function(data) {
+            data.forEach(cat => {
+                $('#level2').append(`<option value="${cat.category_id}">${cat.category_name}</option>`);
+            });
+        });
+    });
+
+    // Level 2 → Level 3
+    $('#level2').change(function() {
+        let id = $(this).val();
+        $('#level3').html('<option value="">-- Select --</option>');
+        if (!id) return;
+
+        $.get(BASE_URL + "category/get-subcategories/" + id, function(data) {
+            data.forEach(cat => {
+                $('#level3').append(`<option value="${cat.category_id}">${cat.category_name}</option>`);
+            });
+        });
+    });
+
+    // Form submit: allow any selected level
+    $('#deleteModal form').on('submit', function(e) {
+        let selectedId = $('#level3').val() || $('#level2').val() || $('#level1').val();
+        if (!selectedId) {
+            alert('Please select at least one category.');
+            e.preventDefault();
+            return false;
+        }
+        // add hidden input dynamically
+        if ($('#category_id').length === 0) {
+            $(this).append('<input type="hidden" name="category_id" id="category_id" />');
+        }
+        $('#category_id').val(selectedId);
+    });
+});
+</script>

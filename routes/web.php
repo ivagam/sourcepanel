@@ -21,6 +21,7 @@ use App\Http\Controllers\SeoController;
 use App\Http\Controllers\ScrapeController;
 use App\Http\Controllers\WhatsappController;
 use App\Http\Controllers\ParseImageController;
+use App\Http\Controllers\TaskController;
 
 Route::controller(AuthenticationController::class)->group(function () {
     Route::get('/', 'signin')->name('signin');
@@ -77,6 +78,10 @@ Route::prefix('category')->middleware('auth')->group(function () {
         Route::get('/get-watch-subcategories/{id}', 'getWatchSubcategories');
         Route::post('/bulk-edit-category', 'bulkEditCategory')->name('bulkEditCategory');
         Route::post('/bulk-delete-category', 'bulkDeleteCategory')->name('bulkDeleteCategory');
+        Route::get('/filterCategory', 'filterCategory')->name('filterCategory');
+        Route::post('/update-alice-names', 'updateAliceNames')->name('updateAliceNames');
+        Route::post('/update-all-alice-names', 'updateAllAliceNames')->name('updateAllAliceNames');
+
     });
 });
 
@@ -190,6 +195,19 @@ Route::prefix('parseimage')->middleware('auth')->group(function () {
         Route::get('/', 'index')->name('parseImage');
         Route::match(['get','post'], '/url', 'parseUrl')->name('parseImage.url');
         Route::post('/store', 'storeImages')->name('parseImage.store');
+    });
+});
+
+Route::prefix('task')->middleware('auth')->group(function () {
+    Route::controller(TaskController::class)->group(function () {
+        Route::get('/list', 'index')->name('taskList');
+        Route::get('/add', 'create')->name('addtask');
+        Route::post('/store', 'store')->name('storetask');
+        Route::get('/edit/{id}', 'edit')->name('edittask');
+        Route::put('/update/{id}', 'update')->name('updatetask');
+        Route::delete('/delete/{id}', 'destroy')->name('deletetask');
+        Route::post('/update-status', 'updateStatus')->name('updatetaskstatus');
+
     });
 });
 

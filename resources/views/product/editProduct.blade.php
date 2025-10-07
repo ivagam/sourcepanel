@@ -269,7 +269,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Enter Chinese Text</label>
                             <div class="card-body p-0">
-                                <div id="toolbar-container-input">
+                                <div id="toolbar-container-input"class="mb-12">
                                     <span class="ql-formats">
                                         <select class="ql-font"></select>
                                         <select class="ql-size"></select>
@@ -950,7 +950,11 @@ $(document).ready(function () {
         const options = [
             `<option value="">-- Select Category --</option>`,
             ...response.map(cat =>
-                `<option value="${cat.category_id}" ${selectedId == cat.category_id ? 'selected' : ''}>${cat.category_name}</option>`
+                `<option value="${cat.category_id}" 
+                    ${selectedId == cat.category_id ? 'selected' : ''} 
+                    data-alice_name="${cat.alice_name || ''}">
+                    ${cat.category_name}
+                </option>`
             )
         ].join('');
 
@@ -1032,16 +1036,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const mainCategorySelect = document.getElementById('mainCategorySelect');
     if (!productInput || !mainCategorySelect) return;
 
-    const dictionary = {
-        "Clothings": ["cloth","clothing","clothings","shirt","hoodie","jacket","cardigan","sweater","coat","jeans","pants","shorts","under garment","bikini","scarf","swim","vest","dress"],
-        "Shoes": ["shoes","sneakers","boot","loafers","ballerina","sandal","slide","mule","moccasin","slippers","flip flop","chappal"],
-        "Accessories": ["accessories","umbrella","vision","pen","gift","perfume","clip","band","doll","dog","handicraft","sculpture","fancy","bat","tennis","golf","cricket","badminton","racket"],
-        "Belt": ["belt"],
-        "Sunglass": ["sunglass","plain","prescription"],
-        "Jewellery": ["jewellery","bracelet","necklace","jewel","ring","brooch"],
-        "Caps": ["caps","hats","beanie"],
-        "Watch": ["watch","clock","alarm"]
-    };
+    let popupOpen = false; // ✅ prevents re-running while popup open
 
     function clearAllSubcategories(container) {
         const selects = container.querySelectorAll('.subcat-level select');
@@ -1052,73 +1047,200 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function setCategorySelect(select, value) {
-        const matchOption = Array.from(select.options)
-            .find(opt => opt.text.trim().toLowerCase().includes(value.toLowerCase()));
+    function setCategorySelect(select, matchOption) {
         if (matchOption) {
             select.value = matchOption.value;
+            if (window.jQuery) $(select).trigger('change');
+            else select.dispatchEvent(new Event('change', { bubbles: true }));
+        } else {
+            select.value = "";
+            select.selectedIndex = 0;
             if (window.jQuery) $(select).trigger('change');
             else select.dispatchEvent(new Event('change', { bubbles: true }));
         }
     }
 
+    // ✅ Single-selection popup (radio-like)
+    function showCategoryPopup(matches, callback) {
+        popupOpen = true;
+
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = 0;
+        overlay.style.left = 0;
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.background = 'rgba(0,0,0,0.3)';
+        overlay.style.zIndex = 9998;
+
+        const popup = document.createElement('div');
+        popup.style.position = 'fixed';
+        popup.style.top = '50%';
+        popup.style.left = '50%';
+        popup.style.transform = 'translate(-50%, -50%)';
+        popup.style.background = '#fff';
+        popup.style.padding = '20px';
+        popup.style.borderRadius = '10px';
+        popup.style.zIndex = 9999;
+        popup.style.minWidth = '280px';
+        popup.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
+        popup.style.fontFamily = 'Arial, sans-serif';
+
+        const title = document.createElement('div');
+        title.textContent = 'Multiple Category matches found:';
+        title.style.fontWeight = 'bold';
+        title.style.marginBottom = '10px';
+        title.style.fontSize = '15px';
+        popup.appendChild(title);
+
+        // ✅ checkboxes with single-selection logic
+        matches.forEach((opt, index) => {
+            const label = document.createElement('label');
+            label.style.display = 'flex';
+            label.style.alignItems = 'center';
+            label.style.marginBottom = '8px';
+            label.style.cursor = 'pointer';
+            label.style.gap = '8px';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.name = 'categoryPopup';
+            checkbox.value = index;
+            checkbox.style.appearance = 'auto';
+            checkbox.style.width = '16px';
+            checkbox.style.height = '16px';
+            checkbox.style.cursor = 'pointer';
+
+            // ✅ make only one selectable
+            checkbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    popup.querySelectorAll('input[name="categoryPopup"]').forEach(cb => {
+                        if (cb !== e.target) cb.checked = false;
+                    });
+                }
+            });
+
+            const text = document.createElement('span');
+            text.textContent = opt.text;
+            text.style.fontSize = '14px';
+
+            label.appendChild(checkbox);
+            label.appendChild(text);
+            popup.appendChild(label);
+        });
+
+        const confirmBtn = document.createElement('button');
+        confirmBtn.textContent = 'Confirm';
+        confirmBtn.style.marginTop = '10px';
+        confirmBtn.style.padding = '6px 14px';
+        confirmBtn.style.cursor = 'pointer';
+        confirmBtn.style.background = '#007bff';
+        confirmBtn.style.color = '#fff';
+        confirmBtn.style.border = 'none';
+        confirmBtn.style.borderRadius = '6px';
+        confirmBtn.style.fontSize = '14px';
+        popup.appendChild(confirmBtn);
+
+        document.body.appendChild(overlay);
+        document.body.appendChild(popup);
+
+        confirmBtn.addEventListener('click', () => {
+            const checked = Array.from(popup.querySelectorAll('input[name="categoryPopup"]:checked'));
+            if (checked.length > 0) {
+                const selectedIndex = parseInt(checked[0].value, 10);
+                callback(matches[selectedIndex]);
+            }
+
+            document.body.removeChild(popup);
+            document.body.removeChild(overlay);
+            popupOpen = false;
+        });
+    }
+
     function runCategoryMatch() {
+        if (popupOpen) return;
         if (mainCategorySelect.value !== '113') return;
 
         const words = (productInput.value || '').trim().split(/\s+/);
+        const lowerWords = words.map(w => w.toLowerCase());
         const categoryContainer = document.querySelector('#dynamic-subcategories');
         if (!categoryContainer) return;
 
         const category1Select = categoryContainer.querySelector('.subcat-level[data-level="1"] select');
         if (!category1Select) return;
 
-        // ---------- CATEGORY 1 ----------
+        // ---------- CATEGORY 1 MATCH ----------
         let match1 = null;
-        for (let i = 0; i < words.length; i++) {
-            const word = words[i].toLowerCase();
+        for (const word of lowerWords) {
             match1 = Array.from(category1Select.options)
                 .find(opt => opt.text.trim().toLowerCase().includes(word));
-            if (match1) break; // stop at the first match only
+            if (match1) break;
         }
 
-        if (match1) {
-            category1Select.value = match1.value;
-            if (window.jQuery) $(category1Select).trigger('change');
-            else category1Select.dispatchEvent(new Event('change', { bubbles: true }));
+        setCategorySelect(category1Select, match1);
 
-            // ---------- CATEGORY 2 ----------
-            let match2Category = null;
-            for (let i = words.length - 1; i >= 0; i--) {
-                const word = words[i].toLowerCase();
-                for (const [cat, items] of Object.entries(dictionary)) {
-                    if (items.some(item => word.includes(item.toLowerCase()))) {
-                        match2Category = cat;
-                        break;
+        // ---------- CATEGORY 2 MATCH ----------
+        const category2Observer = new MutationObserver((mutations, obs) => {
+            const category2Select = categoryContainer.querySelector('.subcat-level[data-level="2"] select');
+            if (category2Select) {
+                let match2 = null;
+                const options = Array.from(category2Select.options);
+
+                outerLoop:
+                for (const opt of options) {
+                    const rawAlice = opt.dataset.alice_name || opt.text || "";
+                    const aliceParts = rawAlice.split(',').map(p => p.trim().toLowerCase()).filter(Boolean);
+
+                    for (const alice of aliceParts) {
+                        for (const word of lowerWords) {
+                            if (word === alice) {
+                                match2 = opt;
+                                break outerLoop;
+                            }
+                        }
                     }
                 }
-                if (match2Category) break;
-            }
 
-            if (match2Category) {
-                const observer = new MutationObserver((mutations, obs) => {
-                    const category2Select = categoryContainer.querySelector('.subcat-level[data-level="2"] select');
-                    if (category2Select) {
-                        setCategorySelect(category2Select, match2Category);
-                        categoryContainer.style.display = 'block';
-                        obs.disconnect();
+                setCategorySelect(category2Select, match2);
+                obs.disconnect();
+
+                // ---------- CATEGORY 3 MATCH ----------
+                const category3Observer = new MutationObserver((mutations, obs3) => {
+                    const category3Select = categoryContainer.querySelector('.subcat-level[data-level="3"] select');
+                    if (category3Select) {
+                        const options3 = Array.from(category3Select.options);
+                        const matchedOptions = [];
+
+                        for (const opt of options3) {
+                            const rawAlice = opt.dataset.alice_name || "";
+                            if (!rawAlice.trim()) continue;
+
+                            const aliceParts = rawAlice.split(',').map(p => p.trim().toLowerCase()).filter(Boolean);
+                            for (const alice of aliceParts) {
+                                for (const word of lowerWords) {
+                                    if (word === alice) {
+                                        matchedOptions.push(opt);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (matchedOptions.length === 1) {
+                            setCategorySelect(category3Select, matchedOptions[0]);
+                        } else if (matchedOptions.length > 1) {
+                            showCategoryPopup(matchedOptions, selected => {
+                                setCategorySelect(category3Select, selected);
+                            });
+                        }
+
+                        obs3.disconnect();
                     }
                 });
-                observer.observe(categoryContainer, { childList: true, subtree: true });
-            } else {
-                const category2Select = categoryContainer.querySelector('.subcat-level[data-level="2"] select');
-                if (category2Select) setCategorySelect(category2Select, "");
+                category3Observer.observe(categoryContainer, { childList: true, subtree: true });
             }
-
-        } else {
-            category1Select.value = "";
-            category1Select.selectedIndex = 0;
-            clearAllSubcategories(categoryContainer);
-        }
+        });
+        category2Observer.observe(categoryContainer, { childList: true, subtree: true });
     }
 
     productInput.addEventListener('blur', runCategoryMatch);
@@ -1130,11 +1252,11 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 
-function setCategory2Value(select, matchCategory) {        
+function setCategory2Value(select, matchCategory) {
     const matchOption = Array.from(select.options)
-        .find(opt => opt.text.trim().toLowerCase().includes(matchCategory.toLowerCase()));            
-    if (matchOption) {            
-        select.value = matchOption.value;            
+        .find(opt => opt.text.trim().toLowerCase().includes(matchCategory.toLowerCase()));
+    if (matchOption) {
+        select.value = matchOption.value;
         setTimeout(() => {
             if (window.jQuery) $(select).trigger('change');
             else select.dispatchEvent(new Event('change', { bubbles: true }));
@@ -1219,8 +1341,7 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener("DOMContentLoaded", function () {
     const productNameInput = document.querySelector("input[name='product_name']");
     const sizeInput = document.querySelector("input[name='size']");
-    const colorSizeBox = document.getElementById("colorSizeBox");
-
+    
     function setSizeByProductName(name) {
         const title = name.toLowerCase();
 
@@ -1241,8 +1362,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (newSize) {
             sizeInput.value = newSize;
-        }
-        colorSizeBox.style.display = "block";
+        }        
     }
 
     productNameInput.addEventListener("input", updateSize);

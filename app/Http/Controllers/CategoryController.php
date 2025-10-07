@@ -16,7 +16,7 @@ class CategoryController extends Controller
             ->get();
 
         foreach ($categorys as $category) {
-            $category->products_count = Product::whereRaw("FIND_IN_SET(?, category_ids)", [$category->category_id])->count();
+            $category->products_count = \App\Models\Product::whereRaw("FIND_IN_SET(?, category_ids)", [$category->category_id])->count();
         }
 
         return view('category.categoryList', compact('categorys'));
@@ -221,15 +221,69 @@ class CategoryController extends Controller
     public function bulkDeleteCategory(Request $request)
     {
         $request->validate([
-            'delete_name' => 'required|string'
+            'category_id' => 'required|integer'
         ]);
+      
 
-        $deleteName = strtolower($request->delete_name);
+        $deletedCount = $this->deleteRecursive($request->category_id);
 
-        $deleted = Category::whereRaw('LOWER(category_name) = ?', [$deleteName])
-            ->delete();
-        
-        return redirect()->route('categoryList')->with('success', "$deleted category(s) deleted successfully.");
+        return redirect()->route('categoryList')->with('success', "$deletedCount category(s) deleted successfully.");
     }
+
+    // Recursive function
+    private function deleteRecursive($id)
+    {
+        $count = 0;
+        $children = Category::where('subcategory_id', $id)->get();
+
+        foreach ($children as $child) {
+            $count += $this->deleteRecursive($child->category_id);
+        }
+
+        $deleted = Category::where('category_id', $id)->delete();
+        return $count + $deleted;
+    }
+
+    public function filterCategory(Request $request)
+    {
+        $categories = Category::where('subcategory_id', 114)->get();
+        return view('category.filterCategory', compact('categories'));
+    }
+
+    public function updateAliceNames(Request $request)
+    {
+        $aliceNames = $request->input('alice_names', []);
+
+        foreach ($aliceNames as $categoryId => $aliceName) {
+            $category = Category::find($categoryId);
+            if ($category) {
+                $categoryName = $category->category_name;
+
+                Category::where('category_name', $categoryName)
+                    ->update(['alice_name' => $aliceName]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Category Search keyword updated successfully for all matching categories!');
+    }
+
+    public function updateAllAliceNames(Request $request)
+    {
+        $aliceNames = $request->input('alice_names', []);
+
+        foreach ($aliceNames as $categoryId => $aliceName) {
+            $category = Category::find($categoryId);
+            if ($category) {
+                $parts = explode(' ', $category->category_name);
+                $labelName = trim(implode(' ', array_slice($parts, 1)));
+
+                Category::where('category_name', 'like', "%{$labelName}")
+                    ->update(['alice_name' => $aliceName]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'All category search keywords updated successfully for all matching labels!');
+    }
+
 
 }

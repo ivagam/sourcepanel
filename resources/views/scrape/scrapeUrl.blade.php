@@ -13,94 +13,84 @@
 <div class="card basic-data-table">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">Scrape URL</h5>
-        <button id="deleteSelectedBtn" class="remove-item-btn bg-danger-focus bg-hover-danger-200 text-danger-600 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle" disabled>
-            <iconify-icon icon="fluent:delete-24-regular" class="menu-icon"></iconify-icon>
-        </button>
+        <form id="bulkDeleteForm" action="{{ route('bulkdeletescrapeurl') }}" method="POST" onsubmit="return confirm('Are you sure you want to delete selected Scrape URLs?');">
+            @csrf
+            @method('DELETE')
+            <button id="deleteSelectedBtn" class="remove-item-btn bg-danger-focus bg-hover-danger-200 text-danger-600 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle" disabled>
+                <iconify-icon icon="fluent:delete-24-regular" class="menu-icon"></iconify-icon>
+            </button>
+        </form>
     </div>
+
     <div class="card-body">
         <div class="table-responsive">
-            <form id="bulkDeleteForm" action="{{ route('bulkdeletescrapeurl') }}" method="POST" onsubmit="return confirm('Are you sure you want to delete selected ScrapeUrls?');">
-                @csrf
-                @method('DELETE')
-                <table class="table bordered-table mb-0" id="dataTable" style="min-width: 1000px;" data-page-length='10'>
-                    <thead>
+            <table class="table bordered-table mb-0" style="min-width: 1000px;">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width: 5%;">
+                            <input class="form-check-input" type="checkbox" id="selectAll">
+                        </th>
+                        <th class="text-center" style="width: 10%;">Action</th>
+                        <th class="text-start" style="width: 40%;">URL</th>
+                        <th class="text-center" style="width: 15%;">Anchor Text</th>
+                        <th class="text-center" style="width: 10%;">Status</th>
+                        <th class="text-center" style="width: 10%;">Product Status</th>
+                        <th class="text-center" style="width: 10%;">Domain</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($scrapeUrl as $url)
                         <tr>
-                            <th class="text-center" style="width: 5%;">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="selectAll">
-                                </div>
-                            </th>
-                            <th class="text-center" style="width: 10%;">Action</th>
-                            <th class="text-start" style="width: 40%;">URL</th>
-                            <th class="text-center" style="width: 15%;">Anchor Text</th>
-                            <th class="text-center" style="width: 10%;">Status</th>
-                            <th class="text-center" style="width: 10%;">Product Status</th>
-                            <th class="text-center" style="width: 10%;">Domain</th>
+                            <td class="text-center">
+                                <input class="form-check-input selectItem" type="checkbox" name="ids[]" value="{{ $url->id }}">
+                            </td>
+                            <td class="text-center">
+                                <form action="{{ route('deletescrapeurl', $url->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this Scrape URL?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="remove-item-btn bg-danger-focus bg-hover-danger-200 text-danger-600 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle">
+                                        <iconify-icon icon="fluent:delete-24-regular" class="menu-icon"></iconify-icon>
+                                    </button>
+                                </form>
+                            </td>
+                            <td><a href="{{ $url->url }}" target="_blank">{{ $url->url }}</a></td>
+                            <td class="text-center">{{ $url->anchor_text ?? '' }}</td>
+                            <td class="text-center">{{ ucfirst($url->status) }}</td>
+                            <td class="text-center">{{ ucfirst($url->product_status) }}</td>
+                            <td class="text-center">{{ $url->domain }}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($scrapeUrl as $url)
-                            <tr>
-                                <td class="text-center">
-                                    <div class="form-check">
-                                        <input class="form-check-input selectItem" type="checkbox" name="ids[]" value="{{ $url->id }}">
-                                    </div>
-                                </td>
-                                <td class="text-center">
-                                    <div class="d-flex align-items-center gap-10">
-                                        <form action="{{ route('deletescrapeurl', $url->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this ScrapeUrl?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="remove-item-btn bg-danger-focus bg-hover-danger-200 text-danger-600 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle">
-                                                <iconify-icon icon="fluent:delete-24-regular" class="menu-icon"></iconify-icon>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                                <td>
-                                    <a href="{{ $url->url }}" target="_blank">{{ $url->url }}</a>
-                                </td>
-                                <td class="text-center">{{ $url->anchor_text ?? '' }}</td>
-                                <td class="text-center">{{ ucfirst($url->status) }}</td>
-                                <td class="text-center">{{ ucfirst($url->product_status) }}</td>
-                                <td class="text-center">{{ $url->domain }}</td>                                
-                            </tr>
-                        @empty
-                        @endforelse
-                    </tbody>
-                </table>
-            </form>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="text-center">No Scrape URLs found.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        {{-- ✅ Laravel Pagination --}}
+        <div class="mt-3 text-end">
+            {{ $scrapeUrl->appends(request()->query())->links() }}
         </div>
     </div>
 </div>
 
 @endsection
 
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-
+@push('scripts')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-$(document).ready(function() {
-    $('#dataTable').DataTable({
-        columnDefs: [
-            { orderable: false, targets: [0, 1] },
-            { searchable: false, targets: [0, 1] }
-        ],
-        language: {
-            emptyTable: "No URLs found."
-        }
-    });
+$(function() {
+    // Fade out alerts
+    setTimeout(() => $(".alert").fadeOut("slow"), 3000);
 
-    setTimeout(function() {
-        $(".alert").fadeOut("slow");
-    }, 3000);
-
+    // Checkbox logic
     $('#selectAll').on('change', function() {
         $('.selectItem').prop('checked', this.checked);
         toggleDeleteButton();
     });
 
-    $('.selectItem').on('change', function() {
+    $(document).on('change', '.selectItem', function() {
         $('#selectAll').prop('checked', $('.selectItem:checked').length === $('.selectItem').length);
         toggleDeleteButton();
     });
@@ -109,8 +99,11 @@ $(document).ready(function() {
         $('#deleteSelectedBtn').prop('disabled', $('.selectItem:checked').length === 0);
     }
 
-    $('#deleteSelectedBtn').on('click', function() {
+    // Submit bulk delete
+    $('#deleteSelectedBtn').on('click', function(e) {
+        e.preventDefault();
         $('#bulkDeleteForm').submit();
     });
 });
 </script>
+@endpush

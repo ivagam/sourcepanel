@@ -266,29 +266,6 @@
 
                         <div class="col-md-12" id="dynamic-subcategories"></div>
 
-                        <div class="col-md-6">
-                            <label class="form-label">Enter Chinese Text</label>
-                            <div class="card-body p-0">
-                                <div id="toolbar-container-input"class="mb-12">
-                                    <span class="ql-formats">
-                                        <select class="ql-font"></select>
-                                        <select class="ql-size"></select>
-                                    </span>
-                                    <span class="ql-formats">
-                                        <button class="ql-bold"></button>
-                                    </span>
-                                    <span class="ql-formats">
-                                        <button class="ql-list" value="ordered"></button>
-                                        <button class="ql-list" value="bullet"></button>
-                                        <button class="ql-indent" value="-1"></button>
-                                        <button class="ql-indent" value="+1"></button>
-                                    </span>
-                                </div>
-                                <div id="editor_input"></div>
-                                <textarea name="input_chinese" id="input_chinese" hidden></textarea>
-                            </div>
-                        </div>
-
                         <!-- Input 2: English Description -->
                         <div class="col-md-6">
                             <label class="form-label">Product Description (English)</label>
@@ -312,6 +289,29 @@
                                 <textarea name="description_en" id="description_en" hidden></textarea>
                             </div>
                         </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Enter Chinese Text</label>
+                            <div class="card-body p-0">
+                                <div id="toolbar-container-input"class="mb-12">
+                                    <span class="ql-formats">
+                                        <select class="ql-font"></select>
+                                        <select class="ql-size"></select>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-bold"></button>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-list" value="ordered"></button>
+                                        <button class="ql-list" value="bullet"></button>
+                                        <button class="ql-indent" value="-1"></button>
+                                        <button class="ql-indent" value="+1"></button>
+                                    </span>
+                                </div>
+                                <div id="editor_input"></div>
+                                <textarea name="input_chinese" id="input_chinese" hidden></textarea>
+                            </div>
+                        </div>                        
 
                         <!-- Input 3: Chinese Description -->
                         <div class="col-md-6">
@@ -1060,8 +1060,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ✅ Single-selection popup (radio-like)
-    function showCategoryPopup(matches, callback) {
+   function showCategoryPopup(matches, callback) {
         popupOpen = true;
 
         const overlay = document.createElement('div');
@@ -1093,7 +1092,7 @@ document.addEventListener('DOMContentLoaded', function () {
         title.style.fontSize = '15px';
         popup.appendChild(title);
 
-        // ✅ checkboxes with single-selection logic
+        // ✅ checkboxes with instant confirm logic
         matches.forEach((opt, index) => {
             const label = document.createElement('label');
             label.style.display = 'flex';
@@ -1111,12 +1110,22 @@ document.addEventListener('DOMContentLoaded', function () {
             checkbox.style.height = '16px';
             checkbox.style.cursor = 'pointer';
 
-            // ✅ make only one selectable
+            // ✅ instant confirm when clicked
             checkbox.addEventListener('change', (e) => {
                 if (e.target.checked) {
+                    // Uncheck all others
                     popup.querySelectorAll('input[name="categoryPopup"]').forEach(cb => {
                         if (cb !== e.target) cb.checked = false;
                     });
+
+                    // Immediately confirm
+                    const selectedIndex = parseInt(e.target.value, 10);
+                    callback(matches[selectedIndex]);
+
+                    // Close popup
+                    document.body.removeChild(popup);
+                    document.body.removeChild(overlay);
+                    popupOpen = false;
                 }
             });
 
@@ -1129,32 +1138,8 @@ document.addEventListener('DOMContentLoaded', function () {
             popup.appendChild(label);
         });
 
-        const confirmBtn = document.createElement('button');
-        confirmBtn.textContent = 'Confirm';
-        confirmBtn.style.marginTop = '10px';
-        confirmBtn.style.padding = '6px 14px';
-        confirmBtn.style.cursor = 'pointer';
-        confirmBtn.style.background = '#007bff';
-        confirmBtn.style.color = '#fff';
-        confirmBtn.style.border = 'none';
-        confirmBtn.style.borderRadius = '6px';
-        confirmBtn.style.fontSize = '14px';
-        popup.appendChild(confirmBtn);
-
         document.body.appendChild(overlay);
         document.body.appendChild(popup);
-
-        confirmBtn.addEventListener('click', () => {
-            const checked = Array.from(popup.querySelectorAll('input[name="categoryPopup"]:checked'));
-            if (checked.length > 0) {
-                const selectedIndex = parseInt(checked[0].value, 10);
-                callback(matches[selectedIndex]);
-            }
-
-            document.body.removeChild(popup);
-            document.body.removeChild(overlay);
-            popupOpen = false;
-        });
     }
 
     function runCategoryMatch() {
@@ -1206,38 +1191,63 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 // ---------- CATEGORY 3 MATCH ----------
                 const category3Observer = new MutationObserver((mutations, obs3) => {
-                    const category3Select = categoryContainer.querySelector('.subcat-level[data-level="3"] select');
-                    if (category3Select) {
-                        const options3 = Array.from(category3Select.options);
-                        const matchedOptions = [];
+                const category3Select = categoryContainer.querySelector('.subcat-level[data-level="3"] select');
+                if (category3Select) {
+                    const options3 = Array.from(category3Select.options);
+                    const matchedOptions = [];
+                    const seenValues = new Set();
 
-                        for (const opt of options3) {
-                            const rawAlice = opt.dataset.alice_name || "";
-                            if (!rawAlice.trim()) continue;
+                    // helper to normalize tokens (lowercase + strip non-alnum)
+                    const normalize = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
 
-                            const aliceParts = rawAlice.split(',').map(p => p.trim().toLowerCase()).filter(Boolean);
-                            for (const alice of aliceParts) {
-                                for (const word of lowerWords) {
-                                    if (word === alice) {
+                    outer:
+                    for (const opt of options3) {
+                        const rawAlice = opt.dataset.alice_name || "";
+                        if (!rawAlice.trim()) continue;
+
+                        // split on comma, slash, pipe, etc — more robust than only comma
+                        const aliceParts = rawAlice.split(/[,\/|]+/)
+                            .map(p => p.trim().toLowerCase())
+                            .filter(Boolean);
+
+                        for (const alice of aliceParts) {
+                            const aliceNorm = normalize(alice);
+                            for (const word of lowerWords) {
+                                const wordNorm = normalize(word);
+
+                                // match exact or singular/plural variants (simple heuristic)
+                                if (
+                                    wordNorm === aliceNorm ||
+                                    wordNorm === aliceNorm.replace(/s$/, '') ||
+                                    wordNorm.replace(/s$/, '') === aliceNorm
+                                ) {
+                                    // dedupe by option value (so same option isn't pushed twice)
+                                    if (!seenValues.has(opt.value)) {
                                         matchedOptions.push(opt);
-                                        break;
+                                        seenValues.add(opt.value);
                                     }
+                                    // once this option matched, skip remaining aliceParts/words
+                                    continue outer;
                                 }
                             }
                         }
+                    }
 
-                        if (matchedOptions.length === 1) {
-                            setCategorySelect(category3Select, matchedOptions[0]);
-                        } else if (matchedOptions.length > 1) {
+                    if (matchedOptions.length === 1) {
+                        setCategorySelect(category3Select, matchedOptions[0]);
+                    } else if (matchedOptions.length > 1) {
+                        // safety: don't open multiple popups
+                        if (!popupOpen) {
                             showCategoryPopup(matchedOptions, selected => {
                                 setCategorySelect(category3Select, selected);
                             });
                         }
-
-                        obs3.disconnect();
                     }
-                });
-                category3Observer.observe(categoryContainer, { childList: true, subtree: true });
+
+                    obs3.disconnect();
+                }
+            });
+            category3Observer.observe(categoryContainer, { childList: true, subtree: true });
             }
         });
         category2Observer.observe(categoryContainer, { childList: true, subtree: true });

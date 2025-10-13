@@ -531,8 +531,8 @@ private function downloadFile($fileUrl)
 
     public function scrapeUrl ()
     {
-        $scrapeUrl = ScrapeUrl::orderBy('created_at', 'desc')->get();
-
+        $scrapeUrl = ScrapeUrl::orderBy('created_at', 'desc')->paginate(50);
+        
         return view('scrape.scrapeUrl', compact('scrapeUrl'));        
     }
 

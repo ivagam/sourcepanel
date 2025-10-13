@@ -2,10 +2,7 @@
 
 @php
     $title = 'Category List';
-    $subTitle = 'All Categories';
-    $script = '<script>
-                    let table = new DataTable("#dataTable");
-               </script>';
+    $subTitle = 'All Categories';   
 @endphp
 
 @section('content')
@@ -27,7 +24,7 @@
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table bordered-table mb-0" id="dataTable" style="min-width: 1000px;" data-page-length='10'>
+            <table class="table bordered-table mb-0" id="dataTable" style="min-width: 1000px;">
                 <thead>
                     <tr>
                         <th class="text-start" style="width: 10%;">Action</th>
@@ -69,6 +66,11 @@
                 </tbody>
             </table>
         </div>
+
+        <div class="mt-3 text-end">
+        {{ $categorys->appends(request()->query())->links() }}
+    </div>
+
     </div>
 </div>
 
@@ -118,7 +120,7 @@
                     <label class="form-label">Category 1</label>
                     <select class="form-select" id="level1">
                         <option value="">-- Select --</option>
-                        @foreach($categorys->where('subcategory_id', 113) as $cat)
+                        @foreach($cate->where('subcategory_id', 113) as $cat)
                             <option value="{{ $cat->category_id }}">{{ $cat->category_name }}</option>
                         @endforeach
                     </select>
@@ -148,6 +150,7 @@
             </div>
         </div>
     </form>
+    
   </div>
 </div>
 @endsection
@@ -189,17 +192,40 @@ $(document).ready(function() {
 
     // Form submit: allow any selected level
     $('#deleteModal form').on('submit', function(e) {
-        let selectedId = $('#level3').val() || $('#level2').val() || $('#level1').val();
-        if (!selectedId) {
-            alert('Please select at least one category.');
-            e.preventDefault();
-            return false;
-        }
-        // add hidden input dynamically
-        if ($('#category_id').length === 0) {
-            $(this).append('<input type="hidden" name="category_id" id="category_id" />');
-        }
-        $('#category_id').val(selectedId);
-    });
+    const level3Val = $('#level3').val();
+    const level2Val = $('#level2').val();
+    const level1Val = $('#level1').val();
+
+    let selectedId = null;
+    let level = null;
+
+    if (level3Val) {
+        selectedId = level3Val;
+        level = 3;
+    } else if (level2Val) {
+        selectedId = level2Val;
+        level = 2;
+    } else if (level1Val) {
+        selectedId = level1Val;
+        level = 1;
+    }
+
+    if (!selectedId) {
+        alert('Please select at least one category.');
+        e.preventDefault();
+        return false;
+    }
+
+    // add hidden inputs dynamically if not present
+    if ($('#category_id').length === 0) {
+        $(this).append('<input type="hidden" name="category_id" id="category_id" />');
+    }
+    if ($('#level_selected').length === 0) {
+        $(this).append('<input type="hidden" name="level" id="level_selected" />');
+    }
+
+    $('#category_id').val(selectedId);
+    $('#level_selected').val(level);
+});
 });
 </script>

@@ -17,7 +17,7 @@
 
 <div class="card h-100 p-0 radius-12">
     <div class="card-body p-24">
-        <h5 class="card-title mb-3">All Categories – Update Search Keywords</h5>
+        <h5 class="card-title mb-3">Category 2 Keywords</h5>
 
         <!-- 🔹 NEW FORM: Show all categories directly -->
         <form method="POST" action="{{ route('updateAllAliceNames') }}">
@@ -50,7 +50,7 @@
 <!-- 🔹 EXISTING FORM: Dropdown version stays below -->
 <div class="card h-100 p-0 radius-12">
     <div class="card-body p-24">
-        <h5 class="card-title mb-3">Category Search Keyword (Filtered by Dropdown)</h5>
+        <h5 class="card-title mb-3">Category 3 Keywords</h5>
 
         <form method="POST" action="{{ route('updateAliceNames') }}">
             @csrf

@@ -20,7 +20,8 @@ class DashboardController extends Controller
         $totalProducts = DB::table('products')->count();
         $totalCustomers = DB::table('customers')->count();
         $totalUsers = DB::table('admins')->count(); 
-
+        $totalScrape = DB::table('website_links')->count();
+        
         $todayOrders = CustomerOrder::with('customer')
             ->whereDate('created_at', Carbon::today())
             ->get();
@@ -32,6 +33,7 @@ class DashboardController extends Controller
             'totalCustomers', 
             'totalUsers',
             'todayOrders',
+            'totalScrape',
         ));
     }
 

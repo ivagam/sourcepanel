@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Domain;
 use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 
 class CategoryController extends Controller
 {
@@ -13,13 +14,17 @@ class CategoryController extends Controller
     {        
         $categorys = Category::with('subcategory')
             ->orderBy('created_at', 'desc')
+            ->paginate(50);
+
+        $cate = Category::with('subcategory')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         foreach ($categorys as $category) {
-            $category->products_count = \App\Models\Product::whereRaw("FIND_IN_SET(?, category_ids)", [$category->category_id])->count();
+            $category->products_count = Product::whereRaw("FIND_IN_SET(?, category_ids)", [$category->category_id])->count();
         }
 
-        return view('category.categoryList', compact('categorys'));
+        return view('category.categoryList', compact('categorys', 'cate'));
     }
 
     public function create(Request $request)
@@ -37,9 +42,10 @@ class CategoryController extends Controller
             'filter_keyword' => 'nullable|string',
         ]);
 
-        $brandName    = trim($request->category_name);
+        $brandName     = trim($request->category_name);
         $subcategoryId = $request->subcategory_id;
 
+        // Handle domains safely
         $domains = $request->domains;
         if (is_array($domains)) {
             $domains = implode(',', $domains);
@@ -49,7 +55,9 @@ class CategoryController extends Controller
             $domains = null;
         }
 
-        if ($subcategoryId != 113) {
+        $keyword = strtolower($request->input('filter_keyword', ''));
+
+        if ($subcategoryId != 113 && empty($keyword)) {
             Category::create([
                 'category_name'  => $brandName,
                 'subcategory_id' => $subcategoryId,
@@ -60,6 +68,39 @@ class CategoryController extends Controller
             ]);
 
             return redirect()->route('categoryList')->with('success', 'Category added successfully.');
+        }
+
+        if (!empty($keyword)) {
+            $category2_list = Category::where('subcategory_id', 113)->get();
+            $created = [];
+
+            foreach ($category2_list as $cat2) {
+                $category3_list = Category::where('subcategory_id', $cat2->category_id)
+                    ->whereRaw("LOWER(SUBSTRING_INDEX(category_name, ' ', -1)) = ?", [$keyword])
+                    ->get();
+
+                foreach ($category3_list as $category3) {
+                    $newCategory = Category::create([
+                        'category_name'  => $brandName,
+                        'subcategory_id' => $category3->category_id,
+                        'alice_name'     => $request->alice_name,
+                        'domains'        => $domains,
+                        'created_by'     => session('user_id'),
+                    ]);
+
+                    $newCategory->category_ids = implode(',', [
+                        113,
+                        $cat2->category_id,
+                        $category3->category_id,
+                        $newCategory->category_id
+                    ]);
+
+                    $newCategory->save();
+                    $created[] = $newCategory;
+                }
+            }
+
+            return redirect()->route('categoryList')->with('success', 'Categories added successfully.');
         }
 
         $brandCategory = Category::create([
@@ -78,7 +119,7 @@ class CategoryController extends Controller
         $templates = Category::where('subcategory_id', $templateId)->get();
 
         foreach ($templates as $template) {
-            $parts = explode(' ', $template->category_name, 2);
+            $parts  = explode(' ', $template->category_name, 2);
             $suffix = isset($parts[1]) ? $parts[1] : '';
             $newName = trim($brandName . ' ' . $suffix);
 
@@ -196,8 +237,8 @@ class CategoryController extends Controller
 
     public function getWatchSubcategories($parentId)
     {
-        $subcategories = Category::where('subcategory_id', $parentId) // FIXED: Correct field
-            ->with('children') // You already have 'children' relationship using 'subcategory_id'
+        $subcategories = Category::where('subcategory_id', $parentId)
+            ->with('children')
             ->get();
 
         return response()->json($subcategories);
@@ -221,27 +262,56 @@ class CategoryController extends Controller
     public function bulkDeleteCategory(Request $request)
     {
         $request->validate([
-            'category_id' => 'required|integer'
+            'category_id' => 'required|integer',
+            'level'       => 'required|integer|min:1|max:3',
         ]);
-      
 
-        $deletedCount = $this->deleteRecursive($request->category_id);
+        DB::beginTransaction();
+        try {
+            $deletedCount = 0;
 
-        return redirect()->route('categoryList')->with('success', "$deletedCount category(s) deleted successfully.");
+            if ($request->level == 3) {           
+                $name = Category::where('category_id', $request->category_id)->value('category_name');
+
+                if (!$name) {
+                    DB::rollBack();
+                    return redirect()->route('categoryList')->with('error', 'Selected category not found.');
+                }
+
+                $matchingIds = Category::whereRaw('LOWER(category_name) = ?', [mb_strtolower($name)])
+                    ->pluck('category_id')
+                    ->toArray();
+
+                $matchingIds = array_unique($matchingIds);
+
+                foreach ($matchingIds as $id) {
+                    $deletedCount += $this->deleteRecursive($id);
+                }
+            } else {
+                $deletedCount = $this->deleteRecursive($request->category_id);
+            }
+
+            DB::commit();
+            return redirect()->route('categoryList')->with('success', "$deletedCount category(s) deleted successfully.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Bulk delete failed: '.$e->getMessage());
+            return redirect()->route('categoryList')->with('error', 'Failed to delete categories. '.$e->getMessage());
+        }
     }
 
-    // Recursive function
     private function deleteRecursive($id)
     {
         $count = 0;
-        $children = Category::where('subcategory_id', $id)->get();
 
-        foreach ($children as $child) {
-            $count += $this->deleteRecursive($child->category_id);
+        $children = Category::where('subcategory_id', $id)->pluck('category_id')->toArray();
+
+        foreach ($children as $childId) {
+            $count += $this->deleteRecursive($childId);
         }
 
         $deleted = Category::where('category_id', $id)->delete();
-        return $count + $deleted;
+        return $count + (int) $deleted;
     }
 
     public function filterCategory(Request $request)

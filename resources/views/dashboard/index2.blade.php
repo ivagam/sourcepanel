@@ -87,6 +87,25 @@
                     </div>
                 </div>
 
+                <div class="col-xxl-4 col-sm-6">
+                    <div class="card p-3 shadow-2 radius-8 border input-form-light h-100 bg-gradient-end-2">
+                        <div class="card-body p-0">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-1 mb-8">
+
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="mb-0 w-48-px h-48-px bg-success-main flex-shrink-0 text-white d-flex justify-content-center align-items-center rounded-circle h6">
+                                        <iconify-icon icon="mdi:link-variant" class="icon"></iconify-icon>
+                                    </span>
+                                    <div>
+                                        <span class="mb-2 fw-medium text-secondary-light text-sm">Total Scrape</span>
+                                        <h6 class="fw-semibold">{{ $totalScrape }}</h6>
+                                    </div>
+                                </div>                                
+                            </div>                            
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
      

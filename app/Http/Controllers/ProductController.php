@@ -221,6 +221,9 @@ class ProductController extends Controller
     public function updateProduct(Request $request, $id)
     {
         $isDuplicate = $request->query('duplicate') == 1;
+        
+        $product = Product::findOrFail($id);
+        $oldName = $product->product_name;
 
         if ($isDuplicate) {
             $product = new Product();
@@ -257,8 +260,8 @@ class ProductController extends Controller
         } else {
             $product->category_ids = ($request->category_ids ?? $product->category_ids ?? '') . ',';
         }
-
-        $oldName = $product->product_name;
+        
+        
         $content = trim($request->description_en);
 
         if ($content === '<p><br></p>' || $content === '<p></p>') {
@@ -279,8 +282,9 @@ class ProductController extends Controller
         $product->created_at = now();
         $product->updated_at = now();
         $product->is_updated = $request->input('is_updated', 0);
-
-        if ($request->filled('product_name') && $request->product_name !== $oldName) {
+        $product->status = ($request->input('is_updated', 0) != 0 || $request->has('is_product_c')) ? 1 : 0;
+       
+        if (Str::contains(strtolower($oldName), 'xyz')) {
             $product->product_url = Str::slug($request->product_name) . '-' . rand(1000, 9999);
         }
 
@@ -297,9 +301,9 @@ class ProductController extends Controller
         } else {
             $product->is_product_c = $request->has('is_product_c') ? 1 : 0;
         }
-
+       
         $product->save();
-
+     
         $existingImages = $request->input('existing_images', []);
 
         Image::where('product_id', $product->product_id)
@@ -330,7 +334,22 @@ class ProductController extends Controller
             return response()->json(['success' => true, 'message' => 'Product updated successfully!']);
         }
 
-        return redirect()->route('productListA')->with('success', 'Product updated successfully!');
+        if ($request->is_updated == 0) {
+            return redirect()->route('addProduct', ['main_category' => 113]);
+        }else{
+            $latestProduct = Product::where('products.is_updated', 0)
+                ->where('products.is_product_c', '!=', 1)
+                ->where('products.is_delete', 0)
+                ->orderBy('products.product_id', 'asc')
+                ->first();
+            
+            if ($latestProduct) {        
+                return redirect()->route('editProduct', ['id' => $latestProduct->product_id]);
+            } else {        
+                return redirect()->route('productListA')->with('success', 'Product updated successfully!');
+            }
+        }
+        
     }
     
     public function deleteProduct($product_id)

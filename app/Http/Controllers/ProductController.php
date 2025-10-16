@@ -41,22 +41,28 @@ class ProductController extends Controller
         $search = strtolower($request->input('search'));
         $categoryFilter = $request->input('category_filter');
 
+        // Base query
         $query = Product::query()
             ->select([
                 'products.*',
+                // Category names
                 DB::raw("(SELECT GROUP_CONCAT(category_name SEPARATOR ', ') 
                         FROM category 
                         WHERE FIND_IN_SET(category.category_id, products.category_ids)
-                        ) as category_name")
+                        ) as category_name"),
+                // Count of images per product
+                DB::raw("(SELECT COUNT(*) FROM product_images WHERE product_images.product_id = products.product_id) as image_count")
             ])
             ->where('products.is_updated', 0)
             ->where('products.is_product_c', '!=', 1)
             ->where('products.is_delete', 0);
 
+        // Category filter
         if ($categoryFilter) {
             $query->whereRaw("FIND_IN_SET(?, products.category_ids)", [$categoryFilter]);
         }
 
+        // Search filter
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->whereRaw("MATCH(products.product_name, products.description) AGAINST(? IN BOOLEAN MODE)", [$search])
@@ -66,10 +72,16 @@ class ProductController extends Controller
             });
         }
 
-        $products = $query->orderBy('products.created_at', 'desc')->paginate(50);
+        // Order: no images first, then by creation date
+        $query->orderByRaw('image_count = 0 DESC')
+            ->orderBy('products.created_at', 'desc');
+
+        // Paginate
+        $products = $query->paginate(50);
 
         return view('product.productListA', compact('products'));
     }
+
 
     public function productListB(Request $request)
     {
@@ -334,9 +346,9 @@ class ProductController extends Controller
             return response()->json(['success' => true, 'message' => 'Product updated successfully!']);
         }
 
-        if ($request->is_updated == 0) {
+        if ($request->is_updated == 0 && $request->is_product_c != 1) {
             return redirect()->route('addProduct', ['main_category' => 113]);
-        }else{
+        }else{          
             $latestProduct = Product::where('products.is_updated', 0)
                 ->where('products.is_product_c', '!=', 1)
                 ->where('products.is_delete', 0)

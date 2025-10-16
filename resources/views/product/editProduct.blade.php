@@ -170,49 +170,48 @@
                             @endforeach
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-8">
                             <label class="form-label">Product Name <span class="text-danger">*</span></label>
                             <input type="text" name="product_name" class="form-control @error('product_name') is-invalid @enderror" value="{{ old('product_name', $product->product_name) }}">
                             @error('product_name')<div class="text-danger">{{ $message }}</div>@enderror
                         </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label">Product Value</label>
-                            <input type="text" name="sku" class="form-control" value="{{ old('sku', $product->sku) }}" >
-                        </div>
-
-                        <div class="row" style="margin: 0; padding: 0;">
-                            <div class="col-md-3" id="colorSizeBox" style="display: none;">
-                                <label class="form-label">Color & Size</label>
+                        <div class="col-md-4" id="colorSizeBox" style="display: none;">
+                            <label class="form-label">Color & Size</label>
+                            
+                            <div class="d-flex gap-1">
                                 <input 
                                     type="text" 
                                     name="size" 
                                     class="form-control" 
                                     placeholder="Enter size" 
                                     value="{{ old('size', $product->size ?? '') }}"
+                                    style="width: 40%;"
                                 >
-                                <div class="d-flex gap-1">
-                                    <input 
-                                        type="color" 
-                                        id="colorPicker" 
-                                        class="form-control form-control-color form-control-sm" 
-                                        value="{{ old('color', $product->color ?? '#000000') }}"
-                                        style="width: 30%; min-width: 40px;"
-                                    >
 
-                                    <input 
-                                        type="text" 
-                                        id="colorInput" 
-                                        name="color" 
-                                        class="form-control form-control-sm" 
-                                        placeholder="#000000" 
-                                        value="{{ old('color', $product->color ?? '') }}"
-                                        style="width: 70%;"
-                                    >
-                                </div>
+                                <input 
+                                    type="color" 
+                                    id="colorPicker" 
+                                    class="form-control form-control-color form-control-sm" 
+                                    value="{{ old('color', $product->color ?? '#000000') }}"
+                                    style="width: 20%; min-width: 40px;"
+                                >
+
+                                <input 
+                                    type="text" 
+                                    id="colorInput" 
+                                    name="color" 
+                                    class="form-control form-control-sm" 
+                                    placeholder="#000000" 
+                                    value="{{ old('color', $product->color ?? '') }}"
+                                    style="width: 40%;"
+                                >
                             </div>
-
-                            <div class="col-md-3">
+                        </div>
+                        
+                        <div class="row" style="margin: 0; padding: 0;">
+                            
+                            <div class="col-md-4">
                                 <label class="form-label">Numbers</label>
                                 <input 
                                     type="number" 
@@ -224,7 +223,7 @@
                             </div>
 
                             <!-- Purchase Code -->
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label">Purchase Code</label>
                                 <input 
                                     type="text" 
@@ -236,7 +235,7 @@
                             </div>
 
                             <!-- Product Price -->
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label">Product Price</label>
                                 <input 
                                     type="number" 
@@ -249,7 +248,7 @@
                         </div>
 
                     
-                        <div class="col-md-6" style="display: none;">
+                        <div class="col-md-3" style="display: none;">
                             <label class="form-label">Category</label>
                             <select class="form-select" id="mainCategorySelect" disabled>
                                 <option value="">-- Select Main Category --</option>
@@ -353,6 +352,11 @@
                         <div class="col-md-6">
                             <label class="form-label">Meta Description</label>
                             <textarea name="meta_description" class="form-control">{{ old('meta_description', $product->meta_description) }}</textarea>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Product Value</label>
+                            <input type="text" name="sku" class="form-control" value="{{ old('sku', $product->sku) }}" >
                         </div>
 
                         <div class="col-md-6">
@@ -959,7 +963,7 @@ $(document).ready(function () {
         ].join('');
 
         const dropdown = `
-            <div class="col-md-6 subcat-level" data-level="${level}">
+            <div class="col-md-3 subcat-level" data-level="${level}">
                 <label class="form-label">Category ${labelNumber}</label>
                 <select class="form-select" onchange="loadSubcategories(this.value, ${level + 1})">
                     ${options}

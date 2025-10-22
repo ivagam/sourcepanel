@@ -352,7 +352,7 @@ class ProductController extends Controller
             $latestProduct = Product::where('products.is_updated', 0)
                 ->where('products.is_product_c', '!=', 1)
                 ->where('products.is_delete', 0)
-                ->orderBy('products.product_id', 'asc')
+                ->orderBy('products.product_id', 'desc')
                 ->first();
             
             if ($latestProduct) {        

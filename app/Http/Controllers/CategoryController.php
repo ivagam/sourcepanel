@@ -44,8 +44,12 @@ class CategoryController extends Controller
 
         $brandName     = trim($request->category_name);
         $subcategoryId = $request->subcategory_id;
+        $selectedCategory = Category::find($subcategoryId);
 
-        // Handle domains safely
+        if ($selectedCategory) {            
+            $selectedCategoryId = $selectedCategory->subcategory_id;            
+        }        
+
         $domains = $request->domains;
         if (is_array($domains)) {
             $domains = implode(',', $domains);
@@ -56,6 +60,29 @@ class CategoryController extends Controller
         }
 
         $keyword = strtolower($request->input('filter_keyword', ''));
+        
+        if ($selectedCategoryId == 113 || $selectedCategory->subcategory_id == 113) {         
+            $category2_list = Category::where('subcategory_id', 113)->get();
+
+            foreach ($category2_list as $cat2) {
+                $newCat = Category::create([
+                    'category_name' => trim($cat2->category_name . ' ' . $brandName),
+                    'subcategory_id' => $cat2->category_id,
+                    'alice_name'     => $request->alice_name,
+                    'domains'        => $domains,
+                    'created_by'     => session('user_id'),
+                ]);
+
+                $newCat->category_ids = implode(',', [
+                    113,
+                    $cat2->category_id,
+                    $newCat->category_id
+                ]);
+                $newCat->save();
+            }
+
+            return redirect()->route('categoryList')->with('success', 'categories added successfully.');
+        }
 
         if ($subcategoryId != 113 && empty($keyword)) {
             Category::create([
@@ -68,7 +95,7 @@ class CategoryController extends Controller
             ]);
 
             return redirect()->route('categoryList')->with('success', 'Category added successfully.');
-        }
+        }        
 
         if (!empty($keyword)) {
             $category2_list = Category::where('subcategory_id', 113)->get();
@@ -101,7 +128,8 @@ class CategoryController extends Controller
             }
 
             return redirect()->route('categoryList')->with('success', 'Categories added successfully.');
-        }
+        }     
+               
 
         $brandCategory = Category::create([
             'category_name'  => $brandName,
@@ -270,7 +298,7 @@ class CategoryController extends Controller
         try {
             $deletedCount = 0;
 
-            if ($request->level == 3) {           
+            if ($request->level == 3) {
                 $name = Category::where('category_id', $request->category_id)->value('category_name');
 
                 if (!$name) {
@@ -287,9 +315,29 @@ class CategoryController extends Controller
                 foreach ($matchingIds as $id) {
                     $deletedCount += $this->deleteRecursive($id);
                 }
-            } else {
-                $deletedCount = $this->deleteRecursive($request->category_id);
-            }
+            } elseif ($request->level == 2) {
+                $name = Category::where('category_id', $request->category_id)->value('category_name');
+
+                if (!$name) {
+                    DB::rollBack();
+                    return redirect()->route('categoryList')->with('error', 'Selected category not found.');
+                }
+
+                $words = explode(' ', trim($name));
+                $lastWord = strtolower(end($words));
+
+                $matchingIds = Category::whereRaw("LOWER(SUBSTRING_INDEX(category_name, ' ', -1)) = ?", [$lastWord])
+                    ->pluck('category_id')
+                    ->toArray();
+
+                $matchingIds = array_unique($matchingIds);
+
+                foreach ($matchingIds as $id) {
+                    $deletedCount += $this->deleteRecursive($id);
+                }
+            }else {
+                    $deletedCount = $this->deleteRecursive($request->category_id);
+                }
 
             DB::commit();
             return redirect()->route('categoryList')->with('success', "$deletedCount category(s) deleted successfully.");

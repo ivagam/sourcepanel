@@ -9,8 +9,6 @@ use Carbon\Carbon;
 use App\Models\CustomerOrder;
 use Intervention\Image\Facades\Image;
 
-
-
 class DashboardController extends Controller
 {
     public function index()
@@ -21,6 +19,7 @@ class DashboardController extends Controller
         $totalCustomers = DB::table('customers')->count();
         $totalUsers = DB::table('admins')->count(); 
         $totalScrape = DB::table('website_links')->count();
+        $totalScrapeProduct = DB::table('scrape_product')->count();
         
         $todayOrders = CustomerOrder::with('customer')
             ->whereDate('created_at', Carbon::today())
@@ -34,6 +33,7 @@ class DashboardController extends Controller
             'totalUsers',
             'todayOrders',
             'totalScrape',
+            'totalScrapeProduct'
         ));
     }
 

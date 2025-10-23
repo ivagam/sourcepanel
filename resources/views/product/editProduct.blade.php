@@ -169,7 +169,7 @@
             </div>
 
             <div class="col-md-8">
-                <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                <label class="form-label">Product Name<span class="text-danger">*</span></label>
                 <input type="text" name="product_name" class="form-control @error('product_name') is-invalid @enderror" value="{{ old('product_name', $product->product_name) }}">
                 @error('product_name')<div class="text-danger">{{ $message }}</div>@enderror
             </div>
@@ -1154,14 +1154,49 @@ document.addEventListener('DOMContentLoaded', function () {
         const category1Select = categoryContainer.querySelector('.subcat-level[data-level="1"] select');
         if (!category1Select) return;
 
-        // ---------- CATEGORY 1 MATCH ----------
-        let match1 = null;
-        for (const word of lowerWords) {
-            match1 = Array.from(category1Select.options)
-                .find(opt => opt.text.trim().toLowerCase().includes(word));
-            if (match1) break;
+        const normalize = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+
+        function fuzzyMatch(word, target) {
+            const w = normalize(word);
+            const t = normalize(target);
+            if (!w || !t) return false;
+            if (w === t) return true;
+            if (w.replace(/s$/, '') === t || t.replace(/s$/, '') === w) return true;
+            // fuzzy partial (Louis Vuttion ~ Louis Vuitton)
+            return t.includes(w) || w.includes(t);
         }
 
+        function findBestMatch(select) {
+            if (!select) return null;
+            const options = Array.from(select.options);
+            let best = null;
+            let bestScore = 0;
+
+            for (const opt of options) {
+                const raw = opt.dataset.alice_name || opt.text || "";
+                const aliases = raw.split(/[,\/|]+/).map(p => p.trim()).filter(Boolean);
+                for (const alias of aliases) {
+                    for (const word of lowerWords) {
+                        if (fuzzyMatch(word, alias)) {
+                            // prefer exact or closer matches
+                            let score = 0;
+                            if (normalize(word) === normalize(alias)) score = 3;
+                            else if (alias.toLowerCase().includes(word.toLowerCase())) score = 2;
+                            else score = 1;
+
+                            if (score > bestScore) {
+                                best = opt;
+                                bestScore = score;
+                            }
+                        }
+                    }
+                }
+            }
+            return best;
+        }
+
+        // ---------- CATEGORY 1 ----------
+        const match1 = findBestMatch(category1Select);
         setCategorySelect(category1Select, match1);
 
         // ---------- CATEGORY 2 MATCH ----------

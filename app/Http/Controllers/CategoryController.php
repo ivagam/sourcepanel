@@ -365,7 +365,8 @@ class CategoryController extends Controller
     public function filterCategory(Request $request)
     {
         $categories = Category::where('subcategory_id', 114)->get();
-        return view('category.filterCategory', compact('categories'));
+        $brands = Category::where('subcategory_id', 113)->get();
+        return view('category.filterCategory', compact('categories', 'brands'));
     }
 
     public function updateAliceNames(Request $request)
@@ -383,7 +384,7 @@ class CategoryController extends Controller
         }
 
         return redirect()->back()->with('success', 'Category Search keyword updated successfully for all matching categories!');
-    }
+    }    
 
     public function updateAllAliceNames(Request $request)
     {
@@ -403,5 +404,17 @@ class CategoryController extends Controller
         return redirect()->back()->with('success', 'All category search keywords updated successfully for all matching labels!');
     }
 
+    public function updateBrandNames(Request $request)
+    {
+        $aliceNames = $request->input('alice_names', []);
+        
+        foreach ($aliceNames as $categoryId => $aliceName) {
+            $category = Category::find($categoryId);
+            if ($category) {
+                $category->update(['alice_name' => $aliceName]);
+            }
+        }
 
+        return redirect()->back()->with('success', 'Brand Search keyword updated successfully!');
+    }
 }

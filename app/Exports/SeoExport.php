@@ -11,7 +11,8 @@ class SeoExport implements FromCollection, WithHeadings
 {
     public function collection()
     {
-        $products = Product::where('seo', 0)
+        $products = Product::where('seo', 0)            
+            ->where('status', 1)
             ->limit(500)
             ->get(['product_id', 'product_name', 'category_id']);
 

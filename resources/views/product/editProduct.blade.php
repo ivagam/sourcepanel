@@ -102,282 +102,284 @@
 
 <div class="card h-100 p-0 radius-12">
     <div class="card-body p-24">
-    <form id="productEditForm" class="row gy-3 needs-validation" method="POST"
-            action="{{ route('updateProduct', ['id' => $product->product_id] + ($isDuplicate ? ['duplicate' => 1] : [])) }}"
-            novalidate enctype="multipart/form-data">
-            @csrf
-            @method('PUT')
-            
-            <input type="hidden" name="category_id" id="final_category_id" value="{{ old('category_id', $product->category_id) }}">
-            <input type="hidden" name="category_ids" id="category_ids" value="{{ old('category_ids', $product->category_ids) }}">
-            
-            <div class="form-buttons sticky-top-buttons">
-                <button type="submit" name="is_updated" value="0" class="btn btn-primary">Update</button>
-                <button type="submit" name="is_updated" value="1" class="btn btn-success">Complete</button>
-                <button type="submit" name="is_product_c" value="1" class="btn btn-warning">Is Product C</button>
-            </div>
-
-            <div class="col-12">
-                <div class="d-flex flex-wrap gap-4 align-items-center">
-
-                    <!-- Group 1: Category Checkboxes (same column: e.g., category_id) -->
-                    <div class="d-flex gap-4">
-                        <!-- Watches -->
-                        <div class="form-check d-flex align-items-center gap-2">
-                            <input class="form-check-input category-toggle" type="checkbox" name="category[]" value="1" id="checkboxWatches">
-                            <label class="form-check-label mb-0" for="checkboxWatches">Watches</label>
+                       
+                <form id="productEditForm" class="row gy-3 needs-validation" method="POST"
+                        action="{{ route('updateProduct', ['id' => $product->product_id] + ($isDuplicate ? ['duplicate' => 1] : [])) }}"
+                        novalidate enctype="multipart/form-data">
+                        @csrf
+                        @method('PUT')
+                        
+                        <input type="hidden" name="category_id" id="final_category_id" value="{{ old('category_id', $product->category_id) }}">
+                        <input type="hidden" name="category_ids" id="category_ids" value="{{ old('category_ids', $product->category_ids) }}">
+                        
+                        <div class="form-buttons sticky-top-buttons">
+                            <button type="submit" name="is_updated" value="0" class="btn btn-primary">Update</button>
+                            <button type="submit" name="is_updated" value="1" class="btn btn-success">Complete</button>
+                            <button type="submit" name="is_product_c" value="1" class="btn btn-warning">Is Product C</button>
                         </div>
 
-                        <!-- Other -->
-                        <div class="form-check d-flex align-items-center gap-2">
-                            <input class="form-check-input category-toggle" type="checkbox" name="category[]" value="113" id="checkboxOther1">
-                            <label class="form-check-label mb-0" for="checkboxOther1">Other</label>
+                        <div class="col-12">
+                            <div class="d-flex flex-wrap gap-4 align-items-center">
+
+                                <!-- Group 1: Category Checkboxes (same column: e.g., category_id) -->
+                                <div class="d-flex gap-4">
+                                    <!-- Watches -->
+                                    <div class="form-check d-flex align-items-center gap-2">
+                                        <input class="form-check-input category-toggle" type="checkbox" name="category[]" value="1" id="checkboxWatches">
+                                        <label class="form-check-label mb-0" for="checkboxWatches">Watches</label>
+                                    </div>
+
+                                    <!-- Other -->
+                                    <div class="form-check d-flex align-items-center gap-2">
+                                        <input class="form-check-input category-toggle" type="checkbox" name="category[]" value="113" id="checkboxOther1">
+                                        <label class="form-check-label mb-0" for="checkboxOther1">Other</label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </div>
 
-            <div class="mb-3">                           
-                    <p id="reverseImagesBtn1" style="text-align:right;padding:0px;margin:0px;cursor:pointer"></p>
-                <label class="form-label">Uploads Files</label>
-                <div class="dropzone" id="dropzoneEdit"></div>
-            </div>
-            <p id="reverseImagesBtn2" style="text-align:right;padding:0px;margin:0px;cursor:pointer"></p>
-            <!-- Store existing image file paths -->
-            @foreach($selectedImages as $image)
-                <input type="hidden" name="existing_images[]" value="{{ $image->file_path }}">
-            @endforeach                        
-            <div id="imageOrderBox" class="d-flex flex-wrap mt-3 gap-2">
-                
-                @foreach($selectedImages->sortBy('serial_no')->values() as $index => $image)
-                    @php
-                        $ext = strtolower(pathinfo($image->file_path, PATHINFO_EXTENSION));
-                        $mediaUrl = env('SOURCE_PANEL_IMAGE_URL') . $image->file_path;
-                        $isVideo = in_array($ext, ['mp4', 'mov', 'avi', 'webm']);
-                    @endphp
+                        <div class="mb-3">                           
+                             <p id="reverseImagesBtn1" style="text-align:right;padding:0px;margin:0px;cursor:pointer"></p>
+                            <label class="form-label">Uploads Files</label>
+                            <div class="dropzone" id="dropzoneEdit"></div>
+                        </div>
+                        <p id="reverseImagesBtn2" style="text-align:right;padding:0px;margin:0px;cursor:pointer"></p>
+                        <!-- Store existing image file paths -->
+                        @foreach($selectedImages as $image)
+                            <input type="hidden" name="existing_images[]" value="{{ $image->file_path }}">
+                        @endforeach                        
+                        <div id="imageOrderBox" class="d-flex flex-wrap mt-3 gap-2">
+                           
+                            @foreach($selectedImages->sortBy('serial_no')->values() as $index => $image)
+                                @php
+                                    $ext = strtolower(pathinfo($image->file_path, PATHINFO_EXTENSION));
+                                    $mediaUrl = env('SOURCE_PANEL_IMAGE_URL') . $image->file_path;
+                                    $isVideo = in_array($ext, ['mp4', 'mov', 'avi', 'webm']);
+                                @endphp
 
-                    <div class="position-relative image-box" data-id="{{ $image->image_id }}">
-                        @if($isVideo)
-                            <video width="120" height="120" controls style="cursor: pointer;" onclick="event.stopPropagation(); showFullMedia({{ $index }})">
-                                <source src="{{ $mediaUrl }}" type="video/{{ $ext }}">
-                            </video>
-                        @else
-                            <img src="{{ $mediaUrl }}" class="img-thumbnail" style="width: 120px; height: 120px; cursor: pointer;" onclick="showFullMedia({{ $index }})">
-                        @endif
-                    </div>
-                @endforeach
-            </div>
+                                <div class="position-relative image-box" data-id="{{ $image->image_id }}">
+                                    @if($isVideo)
+                                        <video width="120" height="120" controls style="cursor: pointer;" onclick="event.stopPropagation(); showFullMedia({{ $index }})">
+                                            <source src="{{ $mediaUrl }}" type="video/{{ $ext }}">
+                                        </video>
+                                    @else
+                                        <img src="{{ $mediaUrl }}" class="img-thumbnail" style="width: 120px; height: 120px; cursor: pointer;" onclick="showFullMedia({{ $index }})">
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
 
-            <div class="col-md-8">
-                <label class="form-label">Product Name<span class="text-danger">*</span></label>
-                <input type="text" name="product_name" class="form-control @error('product_name') is-invalid @enderror" value="{{ old('product_name', $product->product_name) }}">
-                @error('product_name')<div class="text-danger">{{ $message }}</div>@enderror
-            </div>
+                        <div class="col-md-8">
+                            <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                            <input type="text" name="product_name" class="form-control @error('product_name') is-invalid @enderror" value="{{ old('product_name', $product->product_name) }}">
+                            @error('product_name')<div class="text-danger">{{ $message }}</div>@enderror
+                        </div>
 
-            <div class="col-md-4" id="colorSizeBox" style="display: none;">
-                <label class="form-label">Color & Size</label>
-                
-                <div class="d-flex gap-1">
-                    <input 
-                        type="text" 
-                        name="size" 
-                        class="form-control" 
-                        placeholder="Enter size" 
-                        value="{{ old('size', $product->size ?? '') }}"
-                        style="width: 40%;"
-                    >
+                        <div class="col-md-4" id="colorSizeBox" style="display: none;">
+                            <label class="form-label">Color & Size</label>
+                            
+                            <div class="d-flex gap-1">
+                                <input 
+                                    type="text" 
+                                    name="size" 
+                                    class="form-control" 
+                                    placeholder="Enter size" 
+                                    value="{{ old('size', $product->size ?? '') }}"
+                                    style="width: 40%;"
+                                >
 
-                    <input 
-                        type="color" 
-                        id="colorPicker" 
-                        class="form-control form-control-color form-control-sm" 
-                        value="{{ old('color', $product->color ?? '#000000') }}"
-                        style="width: 20%; min-width: 40px;"
-                    >
+                                <input 
+                                    type="color" 
+                                    id="colorPicker" 
+                                    class="form-control form-control-color form-control-sm" 
+                                    value="{{ old('color', $product->color ?? '#000000') }}"
+                                    style="width: 20%; min-width: 40px;"
+                                >
 
-                    <input 
-                        type="text" 
-                        id="colorInput" 
-                        name="color" 
-                        class="form-control form-control-sm" 
-                        placeholder="#000000" 
-                        value="{{ old('color', $product->color ?? '') }}"
-                        style="width: 40%;"
-                    >
-                </div>
-            </div>
+                                <input 
+                                    type="text" 
+                                    id="colorInput" 
+                                    name="color" 
+                                    class="form-control form-control-sm" 
+                                    placeholder="#000000" 
+                                    value="{{ old('color', $product->color ?? '') }}"
+                                    style="width: 40%;"
+                                >
+                            </div>
+                        </div>
+                        
+                        <div class="row" style="margin: 0; padding: 0;">
+                            
+                            <div class="col-md-4">
+                                <label class="form-label">Numbers</label>
+                                <input 
+                                    type="number" 
+                                    name="purchase_value" 
+                                    id="purchase_value" 
+                                    class="form-control" 
+                                    value="{{ old('purchase_value', $product->purchase_value) }}"
+                                >
+                            </div>
+
+                            <!-- Purchase Code -->
+                            <div class="col-md-4">
+                                <label class="form-label">Purchase Code</label>
+                                <input 
+                                    type="text" 
+                                    name="purchase_code" 
+                                    id="purchase_code" 
+                                    class="form-control" 
+                                    value="{{ old('purchase_code', $product->purchase_code) }}"
+                                >
+                            </div>
+
+                            <!-- Product Price -->
+                            <div class="col-md-4">
+                                <label class="form-label">Product Price</label>
+                                <input 
+                                    type="number" 
+                                    name="product_price" 
+                                    step="0.01" 
+                                    class="form-control" 
+                                    value="{{ old('product_price', $product->product_price) }}"
+                                >
+                            </div>
+                        </div>
+
+                    
+                        <div class="col-md-4" style="display: none;">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" id="mainCategorySelect" disabled>
+                                <option value="">-- Select Main Category --</option>
+                                @foreach($mainCategories as $category)
+                                    <option value="{{ $category->category_id }}"
+                                        {{ old('main_category_id', explode(',', $product->category_ids ?? '')[0] ?? '') == $category->category_id ? 'selected' : '' }}>
+                                        {{ $category->category_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div id="watch-subcategories" class="col-md-12" style="display: none;"></div>
+
+                        <div class="col-md-12" id="dynamic-subcategories"></div>
+
+                        <!-- Input 2: English Description -->
+                        <div class="col-md-6">
+                            <label class="form-label">Product Description (English)</label>
+                            <div class="card-body p-0">
+                                <div id="toolbar-container-en">
+                                    <span class="ql-formats">
+                                        <select class="ql-font"></select>
+                                        <select class="ql-size"></select>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-bold"></button>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-list" value="ordered"></button>
+                                        <button class="ql-list" value="bullet"></button>
+                                        <button class="ql-indent" value="-1"></button>
+                                        <button class="ql-indent" value="+1"></button>
+                                    </span>
+                                </div>
+                                <div id="editor_en">{!! old('description_en', $product->description_en ?? $product->description) !!}</div>
+                                <textarea name="description_en" id="description_en" hidden></textarea>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Enter Chinese Text</label>
+                            <div class="card-body p-0">
+                                <div id="toolbar-container-input"class="mb-12">
+                                    <span class="ql-formats">
+                                        <select class="ql-font"></select>
+                                        <select class="ql-size"></select>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-bold"></button>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-list" value="ordered"></button>
+                                        <button class="ql-list" value="bullet"></button>
+                                        <button class="ql-indent" value="-1"></button>
+                                        <button class="ql-indent" value="+1"></button>
+                                    </span>
+                                </div>
+                                <div id="editor_input"></div>
+                                <textarea name="input_chinese" id="input_chinese" hidden></textarea>
+                            </div>
+                        </div>                        
+
+                        <!-- Input 3: Chinese Description -->
+                        <div class="col-md-6">
+                            <label class="form-label">Chinese Description</label>
+                            <div class="card-body p-0">
+                                <div id="toolbar-container">
+                                    <span class="ql-formats">
+                                        <select class="ql-font"></select>
+                                        <select class="ql-size"></select>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-bold"></button>
+                                    </span>
+                                    <span class="ql-formats">
+                                        <button class="ql-list" value="ordered"></button>
+                                        <button class="ql-list" value="bullet"></button>
+                                        <button class="ql-indent" value="-1"></button>
+                                        <button class="ql-indent" value="+1"></button>
+                                    </span>
+                                </div>
+                                <div id="editor">{!! old('chinese_description', $product->chinese_description ?? '') !!}</div>
+                                <textarea name="chinese_description" id="chinese_description" hidden></textarea>
+                            </div>
+                        </div>
+
+
+
+                        <div class="col-md-6">
+                            <label class="form-label">Note</label>
+                            <textarea name="note" class="form-control texteditor">{{ old('note', $product->note) }}</textarea>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Meta Keywords</label>
+                            <textarea name="meta_keywords" class="form-control">{{ old('meta_keywords', $product->meta_keywords) }}</textarea>
+                            
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Meta Description</label>
+                            <textarea name="meta_description" class="form-control">{{ old('meta_description', $product->meta_description) }}</textarea>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Product Value</label>
+                            <input type="text" name="sku" class="form-control" value="{{ old('sku', $product->sku) }}" >
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Domains</label>
+                            <select name="domains[]" class="form-control select2" multiple>
+                                @php
+                                    $selectedDomains = old('domains', explode(',', $product->domains));
+                                @endphp
+                                @foreach ($domains as $domain)
+                                    <option value="{{ $domain->domain_id }}" {{ in_array($domain->domain_id, $selectedDomains) ? 'selected' : '' }}>
+                                        {{ $domain->domain_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-12 d-flex gap-3">
+                            <button type="submit" name="is_updated" value="0" class="btn btn-primary">Update</button>
+                            <button type="submit" name="is_updated" value="1" class="btn btn-success">Complete</button>
+                            <button type="submit" name="is_product_c" value="1" class="btn btn-warning">Is Product C</button>
+                        </div>
+
+                    </form>
             
-            <div class="row" style="margin: 0; padding: 0;">
-                
-                <div class="col-md-4">
-                    <label class="form-label">Numbers</label>
-                    <input 
-                        type="number" 
-                        name="purchase_value" 
-                        id="purchase_value" 
-                        class="form-control" 
-                        value="{{ old('purchase_value', $product->purchase_value) }}"
-                    >
-                </div>
-
-                <!-- Purchase Code -->
-                <div class="col-md-4">
-                    <label class="form-label">Purchase Code</label>
-                    <input 
-                        type="text" 
-                        name="purchase_code" 
-                        id="purchase_code" 
-                        class="form-control" 
-                        value="{{ old('purchase_code', $product->purchase_code) }}"
-                    >
-                </div>
-
-                <!-- Product Price -->
-                <div class="col-md-4">
-                    <label class="form-label">Product Price</label>
-                    <input 
-                        type="number" 
-                        name="product_price" 
-                        step="0.01" 
-                        class="form-control" 
-                        value="{{ old('product_price', $product->product_price) }}"
-                    >
-                </div>
-            </div>
-
-        
-            <div class="col-md-4" style="display: none;">
-                <label class="form-label">Category</label>
-                <select class="form-select" id="mainCategorySelect" disabled>
-                    <option value="">-- Select Main Category --</option>
-                    @foreach($mainCategories as $category)
-                        <option value="{{ $category->category_id }}"
-                            {{ old('main_category_id', explode(',', $product->category_ids ?? '')[0] ?? '') == $category->category_id ? 'selected' : '' }}>
-                            {{ $category->category_name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div id="watch-subcategories" class="col-md-12" style="display: none;"></div>
-
-            <div class="col-md-12" id="dynamic-subcategories"></div>
-
-            <!-- Input 2: English Description -->
-            <div class="col-md-6">
-                <label class="form-label">Product Description (English)</label>
-                <div class="card-body p-0">
-                    <div id="toolbar-container-en">
-                        <span class="ql-formats">
-                            <select class="ql-font"></select>
-                            <select class="ql-size"></select>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-bold"></button>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-list" value="ordered"></button>
-                            <button class="ql-list" value="bullet"></button>
-                            <button class="ql-indent" value="-1"></button>
-                            <button class="ql-indent" value="+1"></button>
-                        </span>
-                    </div>
-                    <div id="editor_en">{!! old('description_en', $product->description_en ?? $product->description) !!}</div>
-                    <textarea name="description_en" id="description_en" hidden></textarea>
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <label class="form-label">Enter Chinese Text</label>
-                <div class="card-body p-0">
-                    <div id="toolbar-container-input"class="mb-12">
-                        <span class="ql-formats">
-                            <select class="ql-font"></select>
-                            <select class="ql-size"></select>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-bold"></button>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-list" value="ordered"></button>
-                            <button class="ql-list" value="bullet"></button>
-                            <button class="ql-indent" value="-1"></button>
-                            <button class="ql-indent" value="+1"></button>
-                        </span>
-                    </div>
-                    <div id="editor_input"></div>
-                    <textarea name="input_chinese" id="input_chinese" hidden></textarea>
-                </div>
-            </div>                        
-
-            <!-- Input 3: Chinese Description -->
-            <div class="col-md-6">
-                <label class="form-label">Chinese Description</label>
-                <div class="card-body p-0">
-                    <div id="toolbar-container">
-                        <span class="ql-formats">
-                            <select class="ql-font"></select>
-                            <select class="ql-size"></select>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-bold"></button>
-                        </span>
-                        <span class="ql-formats">
-                            <button class="ql-list" value="ordered"></button>
-                            <button class="ql-list" value="bullet"></button>
-                            <button class="ql-indent" value="-1"></button>
-                            <button class="ql-indent" value="+1"></button>
-                        </span>
-                    </div>
-                    <div id="editor">{!! old('chinese_description', $product->chinese_description ?? '') !!}</div>
-                    <textarea name="chinese_description" id="chinese_description" hidden></textarea>
-                </div>
-            </div>
-
-
-
-            <div class="col-md-6">
-                <label class="form-label">Note</label>
-                <textarea name="note" class="form-control texteditor">{{ old('note', $product->note) }}</textarea>
-            </div>
-
-            <div class="col-md-6">
-                <label class="form-label">Meta Keywords</label>
-                <textarea name="meta_keywords" class="form-control">{{ old('meta_keywords', $product->meta_keywords) }}</textarea>
-                
-            </div>
-
-            <div class="col-md-6">
-                <label class="form-label">Meta Description</label>
-                <textarea name="meta_description" class="form-control">{{ old('meta_description', $product->meta_description) }}</textarea>
-            </div>
-
-            <div class="col-md-6">
-                <label class="form-label">Product Value</label>
-                <input type="text" name="sku" class="form-control" value="{{ old('sku', $product->sku) }}" >
-            </div>
-
-            <div class="col-md-6">
-                <label class="form-label">Domains</label>
-                <select name="domains[]" class="form-control select2" multiple>
-                    @php
-                        $selectedDomains = old('domains', explode(',', $product->domains));
-                    @endphp
-                    @foreach ($domains as $domain)
-                        <option value="{{ $domain->domain_id }}" {{ in_array($domain->domain_id, $selectedDomains) ? 'selected' : '' }}>
-                            {{ $domain->domain_name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <div class="col-md-12 d-flex gap-3">
-                <button type="submit" name="is_updated" value="0" class="btn btn-primary">Update</button>
-                <button type="submit" name="is_updated" value="1" class="btn btn-success">Complete</button>
-                <button type="submit" name="is_product_c" value="1" class="btn btn-warning">Is Product C</button>
-            </div>
-
-        </form>
     </div>
 </div>
 
@@ -505,7 +507,7 @@ function loadWatchSubcategories(parentId, chain = []) {
         response.forEach((group, index) => {
             const selectedVal = chain[index + 1] || '';
             html += `
-                <div class="col-md-3 mb-3">
+                <div class="col-md-4 mb-4">
                     <label class="form-label">${group.category_name}</label>
                     <select class="form-select">
                         <option value="">-- Select ${group.category_name} --</option>
@@ -1154,49 +1156,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const category1Select = categoryContainer.querySelector('.subcat-level[data-level="1"] select');
         if (!category1Select) return;
 
-        const normalize = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
-
-        function fuzzyMatch(word, target) {
-            const w = normalize(word);
-            const t = normalize(target);
-            if (!w || !t) return false;
-            if (w === t) return true;
-            if (w.replace(/s$/, '') === t || t.replace(/s$/, '') === w) return true;
-            // fuzzy partial (Louis Vuttion ~ Louis Vuitton)
-            return t.includes(w) || w.includes(t);
+        // ---------- CATEGORY 1 MATCH ----------
+        let match1 = null;
+        for (const word of lowerWords) {
+            match1 = Array.from(category1Select.options)
+                .find(opt => opt.text.trim().toLowerCase().includes(word));
+            if (match1) break;
         }
 
-        function findBestMatch(select) {
-            if (!select) return null;
-            const options = Array.from(select.options);
-            let best = null;
-            let bestScore = 0;
-
-            for (const opt of options) {
-                const raw = opt.dataset.alice_name || opt.text || "";
-                const aliases = raw.split(/[,\/|]+/).map(p => p.trim()).filter(Boolean);
-                for (const alias of aliases) {
-                    for (const word of lowerWords) {
-                        if (fuzzyMatch(word, alias)) {
-                            // prefer exact or closer matches
-                            let score = 0;
-                            if (normalize(word) === normalize(alias)) score = 3;
-                            else if (alias.toLowerCase().includes(word.toLowerCase())) score = 2;
-                            else score = 1;
-
-                            if (score > bestScore) {
-                                best = opt;
-                                bestScore = score;
-                            }
-                        }
-                    }
-                }
-            }
-            return best;
-        }
-
-        // ---------- CATEGORY 1 ----------
-        const match1 = findBestMatch(category1Select);
         setCategorySelect(category1Select, match1);
 
         // ---------- CATEGORY 2 MATCH ----------
@@ -1232,6 +1199,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     const matchedOptions = [];
                     const seenValues = new Set();
 
+                    // helper to normalize tokens (lowercase + strip non-alnum)
                     const normalize = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
 
                     outer:
@@ -1239,6 +1207,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         const rawAlice = opt.dataset.alice_name || "";
                         if (!rawAlice.trim()) continue;
 
+                        // split on comma, slash, pipe, etc — more robust than only comma
                         const aliceParts = rawAlice.split(/[,\/|]+/)
                             .map(p => p.trim().toLowerCase())
                             .filter(Boolean);
@@ -1248,15 +1217,18 @@ document.addEventListener('DOMContentLoaded', function () {
                             for (const word of lowerWords) {
                                 const wordNorm = normalize(word);
 
+                                // match exact or singular/plural variants (simple heuristic)
                                 if (
                                     wordNorm === aliceNorm ||
                                     wordNorm === aliceNorm.replace(/s$/, '') ||
                                     wordNorm.replace(/s$/, '') === aliceNorm
                                 ) {
+                                    // dedupe by option value (so same option isn't pushed twice)
                                     if (!seenValues.has(opt.value)) {
                                         matchedOptions.push(opt);
                                         seenValues.add(opt.value);
                                     }
+                                    // once this option matched, skip remaining aliceParts/words
                                     continue outer;
                                 }
                             }
@@ -1266,6 +1238,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (matchedOptions.length === 1) {
                         setCategorySelect(category3Select, matchedOptions[0]);
                     } else if (matchedOptions.length > 1) {
+                        // safety: don't open multiple popups
                         if (!popupOpen) {
                             showCategoryPopup(matchedOptions, selected => {
                                 setCategorySelect(category3Select, selected);
@@ -1302,6 +1275,8 @@ function setCategory2Value(select, matchCategory) {
         }, 100);
     }
 }
+
+
 
 document.addEventListener("DOMContentLoaded", function () {
     const quillInput = new Quill("#editor_input", {
@@ -1407,7 +1382,6 @@ document.addEventListener("DOMContentLoaded", function () {
     updateSize();
 });
 
-// scroll down show product name below
 (function() {
   function getEl(selector) {
     return document.querySelector(selector);

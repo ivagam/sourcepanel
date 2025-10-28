@@ -101,7 +101,7 @@ class ParseImageController extends Controller
         $product->sku = 'SKU' . rand(100000, 999999);
         $product->created_by = session('user_id');
         $product->seo = 0;
-        $product->size = '25cms';
+        $product->size = '25cm';
         $product->purchase_value = '715';
         $product->save();
 

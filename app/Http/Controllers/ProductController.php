@@ -26,7 +26,7 @@ class ProductController extends Controller
         $product->sku                 = 'SKU' . rand(100000, 999999);
         $product->created_by          = session('user_id');
         $product->seo                 = 0;
-        $product->size                = '25cms';
+        $product->size                = '25cm';
         $product->purchase_value      = '715';
         $product->save();
 
@@ -349,19 +349,19 @@ class ProductController extends Controller
         if ($request->is_updated == 0 && $request->is_product_c != 1) {
             return redirect()->route('addProduct', ['main_category' => 113]);
         }else{          
-            $latestProduct = Product::where('products.is_updated', 0)
-                ->where('products.is_product_c', '!=', 1)
-                ->where('products.is_delete', 0)
-                ->orderBy('products.product_id', 'asc')
-                ->first();
-            
-            if ($latestProduct) {        
-                return redirect()->route('editProduct', ['id' => $latestProduct->product_id]);
-            } else {        
-                return redirect()->route('productListA')->with('success', 'Product updated successfully!');
-            }
+        $latestProduct = Product::where('products.product_id', '>', $request->id)
+            ->where('products.is_updated', 0)
+            ->where('products.is_product_c', '!=', 1)
+            ->where('products.is_delete', 0)
+            ->orderBy('products.product_id', 'asc')
+            ->first();
+
+        if ($latestProduct) {        
+            return redirect()->route('editProduct', ['id' => $latestProduct->product_id]);
+        } else {        
+            return redirect()->route('productListA')->with('success', 'Product updated successfully!');
         }
-        
+    }        
     }
     
     public function deleteProduct($product_id)

@@ -22,6 +22,7 @@ use App\Http\Controllers\ScrapeController;
 use App\Http\Controllers\WhatsappController;
 use App\Http\Controllers\ParseImageController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\Api\ApiwebsiteController;
 
 Route::controller(AuthenticationController::class)->group(function () {
     Route::get('/', 'signin')->name('signin');
@@ -81,7 +82,7 @@ Route::prefix('category')->middleware('auth')->group(function () {
         Route::get('/filterCategory', 'filterCategory')->name('filterCategory');
         Route::post('/update-alice-names', 'updateAliceNames')->name('updateAliceNames');
         Route::post('/update-all-alice-names', 'updateAllAliceNames')->name('updateAllAliceNames');
-
+        Route::post('/update-brand-names', 'updateBrandNames')->name('updateBrandNames');
     });
 });
 
@@ -207,7 +208,6 @@ Route::prefix('task')->middleware('auth')->group(function () {
         Route::put('/update/{id}', 'update')->name('updatetask');
         Route::delete('/delete/{id}', 'destroy')->name('deletetask');
         Route::post('/update-status', 'updateStatus')->name('updatetaskstatus');
-
     });
 });
 

@@ -1238,11 +1238,23 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (matchedOptions.length === 1) {
                         setCategorySelect(category3Select, matchedOptions[0]);
                     } else if (matchedOptions.length > 1) {
-                        // safety: don't open multiple popups
                         if (!popupOpen) {
                             showCategoryPopup(matchedOptions, selected => {
                                 setCategorySelect(category3Select, selected);
                             });
+                        }
+                    } else {
+                        // 🆕 NEW CONDITION — fallback if no match found
+                        const category2Select = categoryContainer.querySelector('.subcat-level[data-level="2"] select');
+                        if (category2Select && category2Select.value) {
+                            const selectedText2 = category2Select.selectedOptions[0]?.text.toLowerCase() || "";
+                            if (selectedText2.includes("handbag") || selectedText2.includes("wallet")) {
+                                const fallback = Array.from(category3Select.options)
+                                    .find(opt => opt.text.toLowerCase().includes("shoulder bag"));
+                                if (fallback) {
+                                    setCategorySelect(category3Select, fallback);
+                                }
+                            }
                         }
                     }
 

@@ -24,7 +24,8 @@ class ProductController extends Controller
         $product->category_id         = $mainCategory;
         $sku = 'SKU' . rand(100000, 999999);
         $product->sku = $sku;
-        $product->product_url = $sku . '-' . Str::slug($product->product_name);        
+        $url = $sku . '-' . Str::slug($product->product_name);
+        $product->product_url = str_replace([',', "'", '"'], '', $url);
         $product->created_by          = session('user_id');
         $product->seo                 = 0;
         $product->size                = '25cm';
@@ -245,7 +246,9 @@ class ProductController extends Controller
         $original = Product::with('images')->findOrFail($id);
         
         $newProduct = $original->replicate();        
-        $newProduct->product_url = Str::slug($original->product_name) . '-' . rand(1000, 9999);
+
+        $url = $original->sku . '-' . Str::slug($original->product_name) . '-' . rand(1000, 9999);
+        $newProduct->product_url = str_replace([',', "'", '"'], '', $url);        
         $newProduct->created_by = session('user_id');
         $newProduct->save();
 
@@ -333,8 +336,9 @@ class ProductController extends Controller
 
                 $product->sku = $sku;
             }
-
-            $product->product_url = $product->sku . '-' . Str::slug($product->product_name) . '-' . rand(1000, 9999);
+            
+            $url = $product->sku . '-' . Str::slug($product->product_name) . '-' . rand(1000, 9999);
+            $product->product_url = str_replace([',', "'", '"'], '', $url);
         }        
 
         if ($request->input('is_updated') == 1) {

@@ -22,8 +22,9 @@ class ProductController extends Controller
         $product->product_name        = 'xyz ' .$totalProducts;
         $product->category_ids        = $mainCategory . ',';
         $product->category_id         = $mainCategory;
-        $product->product_url         = Str::slug($product->product_name);
-        $product->sku                 = 'SKU' . rand(100000, 999999);
+        $sku = 'SKU' . rand(100000, 999999);
+        $product->sku = $sku;
+        $product->product_url = $sku . '-' . Str::slug($product->product_name);        
         $product->created_by          = session('user_id');
         $product->seo                 = 0;
         $product->size                = '25cm';
@@ -39,18 +40,16 @@ class ProductController extends Controller
     public function productListA(Request $request)
     {
         $search = strtolower($request->input('search'));
+        
         $categoryFilter = $request->input('category_filter');
 
-        // Base query
         $query = Product::query()
             ->select([
                 'products.*',
-                // Category names
                 DB::raw("(SELECT GROUP_CONCAT(category_name SEPARATOR ', ') 
                         FROM category 
                         WHERE FIND_IN_SET(category.category_id, products.category_ids)
                         ) as category_name"),
-                // Count of images per product
                 DB::raw("(SELECT COUNT(*) FROM product_images WHERE product_images.product_id = products.product_id) as image_count")
             ])
             ->where('products.is_updated', 0)
@@ -63,14 +62,24 @@ class ProductController extends Controller
         }
 
         // Search filter
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->whereRaw("MATCH(products.product_name, products.description) AGAINST(? IN BOOLEAN MODE)", [$search])
-                ->orWhereRaw("LOWER(products.product_name) LIKE ?", ['%' . $search . '%'])
-                ->orWhereRaw("LOWER(products.description) LIKE ?", ['%' . $search . '%'])
-                ->orWhereRaw("LOWER(products.sku) LIKE ?", ['%' . $search . '%']);
-            });
-        }
+        if (!empty($search))
+            {
+
+                $keywords = preg_split('/\s+/', $search);
+
+                $query->where(function ($q) use ($keywords) {
+                    foreach ($keywords as $word) {
+                        $word = trim($word);
+                        if ($word !== '') {
+                            $q->where(function ($sub) use ($word) {
+                                $sub->whereRaw("LOWER(products.product_name) LIKE ?", ["%$word%"])
+                                    ->orWhereRaw("LOWER(products.description) LIKE ?", ["%$word%"])
+                                    ->orWhereRaw("LOWER(products.sku) LIKE ?", ["%$word%"]);
+                            });
+                        }
+                    }
+                });
+            }
 
         // Order: no images first, then by creation date
         $query->orderByRaw('image_count = 0 DESC')
@@ -104,14 +113,24 @@ class ProductController extends Controller
             $query->whereRaw("FIND_IN_SET(?, products.category_ids)", [$categoryFilter]);
         }
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->whereRaw("MATCH(products.product_name, products.description) AGAINST(? IN BOOLEAN MODE)", [$search])
-                ->orWhereRaw("LOWER(products.product_name) LIKE ?", ['%' . $search . '%'])
-                ->orWhereRaw("LOWER(products.description) LIKE ?", ['%' . $search . '%'])
-                ->orWhereRaw("LOWER(products.sku) LIKE ?", ['%' . $search . '%']);
-            });
-        }
+        if (!empty($search))
+            {
+
+                $keywords = preg_split('/\s+/', $search);
+
+                $query->where(function ($q) use ($keywords) {
+                    foreach ($keywords as $word) {
+                        $word = trim($word);
+                        if ($word !== '') {
+                            $q->where(function ($sub) use ($word) {
+                                $sub->whereRaw("LOWER(products.product_name) LIKE ?", ["%$word%"])
+                                    ->orWhereRaw("LOWER(products.description) LIKE ?", ["%$word%"])
+                                    ->orWhereRaw("LOWER(products.sku) LIKE ?", ["%$word%"]);
+                            });
+                        }
+                    }
+                });
+            }
 
         $products = $query->orderBy('products.created_at', 'desc')->paginate(50);
 
@@ -139,18 +158,28 @@ class ProductController extends Controller
             $query->whereRaw("FIND_IN_SET(?, products.category_ids)", [$categoryFilter]);
         }
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->whereRaw("MATCH(products.product_name, products.description) AGAINST(? IN BOOLEAN MODE)", [$search])
-                ->orWhereRaw("LOWER(products.product_name) LIKE ?", ['%' . $search . '%'])
-                ->orWhereRaw("LOWER(products.description) LIKE ?", ['%' . $search . '%'])
-                ->orWhereRaw("LOWER(products.sku) LIKE ?", ['%' . $search . '%']);
-            });
-        }
+        if (!empty($search))
+            {
+
+                $keywords = preg_split('/\s+/', $search);
+
+                $query->where(function ($q) use ($keywords) {
+                    foreach ($keywords as $word) {
+                        $word = trim($word);
+                        if ($word !== '') {
+                            $q->where(function ($sub) use ($word) {
+                                $sub->whereRaw("LOWER(products.product_name) LIKE ?", ["%$word%"])
+                                    ->orWhereRaw("LOWER(products.description) LIKE ?", ["%$word%"])
+                                    ->orWhereRaw("LOWER(products.sku) LIKE ?", ["%$word%"]);
+                            });
+                        }
+                    }
+                });
+            }
 
         $products = $query->orderBy('products.created_at', 'desc')->paginate(50);
 
-        return view('product.productListA', compact('products'));
+        return view('product.productListC', compact('products'));
     }
 
     public function store(Request $request)
@@ -297,16 +326,16 @@ class ProductController extends Controller
         $product->status = ($request->input('is_updated', 0) != 0 || $request->has('is_product_c')) ? 1 : 0;
        
         if (Str::contains(strtolower($oldName), 'xyz')) {
-            $product->product_url = Str::slug($request->product_name) . '-' . rand(1000, 9999);
-        }
+            if (empty($product->sku)) {
+                do {
+                    $sku = 'sku' . rand(100000, 999999);
+                } while (Product::where('sku', $sku)->exists());
 
-        if (empty($product->sku)) {
-            do {
-                $sku = 'sku' . rand(100000, 999999);
-            } while (Product::where('sku', $sku)->exists());
+                $product->sku = $sku;
+            }
 
-            $product->sku = $sku;
-        }
+            $product->product_url = $product->sku . '-' . Str::slug($product->product_name) . '-' . rand(1000, 9999);
+        }        
 
         if ($request->input('is_updated') == 1) {
             $product->is_product_c = 0;
@@ -559,12 +588,22 @@ class ProductController extends Controller
             $query->whereRaw("FIND_IN_SET(?, products.category_ids)", [$categoryFilter]);
         }
 
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->whereRaw("MATCH(products.product_name, products.description) AGAINST(? IN BOOLEAN MODE)", [$search])
-                ->orWhereRaw("LOWER(products.product_name) LIKE ?", ['%' . $search . '%'])
-                ->orWhereRaw("LOWER(products.description) LIKE ?", ['%' . $search . '%'])
-                ->orWhereRaw("LOWER(products.sku) LIKE ?", ['%' . $search . '%']);
+        if (!empty($search))
+        {
+
+            $keywords = preg_split('/\s+/', $search);
+
+            $query->where(function ($q) use ($keywords) {
+                foreach ($keywords as $word) {
+                    $word = trim($word);
+                    if ($word !== '') {
+                        $q->where(function ($sub) use ($word) {
+                            $sub->whereRaw("LOWER(products.product_name) LIKE ?", ["%$word%"])
+                                ->orWhereRaw("LOWER(products.description) LIKE ?", ["%$word%"])
+                                ->orWhereRaw("LOWER(products.sku) LIKE ?", ["%$word%"]);
+                        });
+                    }
+                }
             });
         }
 

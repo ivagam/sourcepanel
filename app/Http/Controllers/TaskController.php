@@ -10,6 +10,7 @@ class TaskController extends Controller
     public function index()
     {        
         $task = Task::orderBy('created_at', 'desc')->get();
+        
 
         return view('task.taskList', compact('task'));
     }

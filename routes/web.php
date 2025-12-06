@@ -27,21 +27,18 @@ use App\Http\Controllers\Api\ApiwebsiteController;
 Route::controller(AuthenticationController::class)->group(function () {
     Route::get('/', 'signin')->name('signin');
     Route::post('/logout', 'logout')->name('logout');
-
 });
 
 
 // Authentication
 Route::prefix('authentication')->group(function () {
-    Route::controller(AuthenticationController::class)->group(function () {
-        Route::get('/signin', 'signin')->name('signin');
+    Route::controller(AuthenticationController::class)->group(function () {        
         Route::post('/login', 'login')->name('login');
         Route::get('/login', function () {
             return redirect()->route('signin');
         }); 
          Route::get('/forgotpassword', 'forgotPassword')->name('forgotPassword'); 
-        Route::post('/forgotpassword', 'forgotPassword')->name('forgotPassword');  
-        Route::match(['get', 'post'], '/forgotPassword', 'forgotPassword')->name('forgotpassword');
+        Route::post('/forgotpassword', 'forgotPassword')->name('forgotPassword');          
         Route::get('/signup', 'signup')->name('signup');        
     });
 });
@@ -212,3 +209,10 @@ Route::prefix('task')->middleware('auth')->group(function () {
 });
 
 Route::get('/scrape', [ScrapeController::class, 'index'])->name('scrape');
+
+Route::get('/homeProduct', [ApiwebsiteController::class, 'homeProduct']);
+Route::get('/galleryProduct', [ApiwebsiteController::class, 'galleryProduct']);
+Route::get('/gallerySearchProduct', [ApiwebsiteController::class, 'gallerySearchProduct']);
+Route::get('/loadMoreProducts', [ApiwebsiteController::class, 'loadMoreProducts']);
+Route::get('/liveSearchProduct', [ApiwebsiteController::class, 'liveSearchProduct']);
+Route::get('/msgList', [ApiwebsiteController::class, 'msgList']);

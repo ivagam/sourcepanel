@@ -36,7 +36,7 @@
     {{-- First row: Search bar --}}
     <div class="row align-items-center mt-3">
         <div class="col-md-7">
-            <form method="GET" action="{{ route('productListA') }}">
+            <form method="GET" action="{{ route('productListC') }}">
                 <div class="d-flex gap-2">
                     {{-- Dropdown Filter --}}
                     <select name="category_filter" class="form-select">
@@ -49,7 +49,7 @@
                     <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search">
 
                     <button class="btn btn-primary" type="submit">Search</button>
-                    <a href="{{ route('productListA') }}" class="btn btn-secondary">Reset</a>
+                    <a href="{{ route('productListC') }}" class="btn btn-secondary">Reset</a>
                 </div>
             </form>
         </div>

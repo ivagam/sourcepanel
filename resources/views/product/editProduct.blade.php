@@ -1145,61 +1145,82 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function runCategoryMatch() {
-        if (popupOpen) return;
-        if (mainCategorySelect.value !== '113') return;
+    if (popupOpen) return;
+    if (mainCategorySelect.value !== '113') return;
 
-        const words = (productInput.value || '').trim().split(/\s+/);
-        const lowerWords = words.map(w => w.toLowerCase());
-        const categoryContainer = document.querySelector('#dynamic-subcategories');
-        if (!categoryContainer) return;
+    const words = (productInput.value || '').trim().split(/\s+/);
+    const lowerWords = words.map(w => w.toLowerCase());
+    const categoryContainer = document.querySelector('#dynamic-subcategories');
+    if (!categoryContainer) return;
 
-        const category1Select = categoryContainer.querySelector('.subcat-level[data-level="1"] select');
-        if (!category1Select) return;
+    const category1Select = categoryContainer.querySelector('.subcat-level[data-level="1"] select');
+    if (!category1Select) return;
 
-        // ---------- CATEGORY 1 MATCH ----------
-        let match1 = null;
-        for (const word of lowerWords) {
-            match1 = Array.from(category1Select.options)
-                .find(opt => opt.text.trim().toLowerCase().includes(word));
-            if (match1) break;
+    // ---------- CATEGORY 1 MATCH (updated to use alice_name) ----------
+    const normalize = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+
+    let match1 = null;
+    const options1 = Array.from(category1Select.options);
+
+    outer1:
+    for (const opt of options1) {
+        const rawAlice = opt.dataset.alice_name || opt.text || "";
+        const aliceParts = rawAlice.split(/[,\/|]+/)
+            .map(p => p.trim().toLowerCase())
+            .filter(Boolean);
+
+        for (const alice of aliceParts) {
+            const aliceNorm = normalize(alice);
+            for (const word of lowerWords) {
+                const wordNorm = normalize(word);
+
+                if (
+                    wordNorm === aliceNorm ||
+                    wordNorm === aliceNorm.replace(/s$/, '') ||
+                    wordNorm.replace(/s$/, '') === aliceNorm
+                ) {
+                    match1 = opt;
+                    break outer1;
+                }
+            }
         }
+    }
 
-        setCategorySelect(category1Select, match1);
+    setCategorySelect(category1Select, match1);
 
-        // ---------- CATEGORY 2 MATCH ----------
-        const category2Observer = new MutationObserver((mutations, obs) => {
-            const category2Select = categoryContainer.querySelector('.subcat-level[data-level="2"] select');
-            if (category2Select) {
-                let match2 = null;
-                const options = Array.from(category2Select.options);
+    // ---------- CATEGORY 2 MATCH ----------
+    const category2Observer = new MutationObserver((mutations, obs) => {
+        const category2Select = categoryContainer.querySelector('.subcat-level[data-level="2"] select');
+        if (category2Select) {
+            let match2 = null;
+            const options = Array.from(category2Select.options);
 
-                outerLoop:
-                for (const opt of options) {
-                    const rawAlice = opt.dataset.alice_name || opt.text || "";
-                    const aliceParts = rawAlice.split(',').map(p => p.trim().toLowerCase()).filter(Boolean);
+            outerLoop:
+            for (const opt of options) {
+                const rawAlice = opt.dataset.alice_name || opt.text || "";
+                const aliceParts = rawAlice.split(',').map(p => p.trim().toLowerCase()).filter(Boolean);
 
-                    for (const alice of aliceParts) {
-                        for (const word of lowerWords) {
-                            if (word === alice) {
-                                match2 = opt;
-                                break outerLoop;
-                            }
+                for (const alice of aliceParts) {
+                    for (const word of lowerWords) {
+                        if (word === alice) {
+                            match2 = opt;
+                            break outerLoop;
                         }
                     }
                 }
+            }
 
-                setCategorySelect(category2Select, match2);
-                obs.disconnect();
+            setCategorySelect(category2Select, match2);
+            obs.disconnect();
 
-                // ---------- CATEGORY 3 MATCH ----------
-                const category3Observer = new MutationObserver((mutations, obs3) => {
+            // ---------- CATEGORY 3 MATCH ----------
+            const category3Observer = new MutationObserver((mutations, obs3) => {
                 const category3Select = categoryContainer.querySelector('.subcat-level[data-level="3"] select');
                 if (category3Select) {
                     const options3 = Array.from(category3Select.options);
                     const matchedOptions = [];
                     const seenValues = new Set();
 
-                    // helper to normalize tokens (lowercase + strip non-alnum)
                     const normalize = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
 
                     outer:
@@ -1207,7 +1228,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         const rawAlice = opt.dataset.alice_name || "";
                         if (!rawAlice.trim()) continue;
 
-                        // split on comma, slash, pipe, etc — more robust than only comma
                         const aliceParts = rawAlice.split(/[,\/|]+/)
                             .map(p => p.trim().toLowerCase())
                             .filter(Boolean);
@@ -1217,18 +1237,15 @@ document.addEventListener('DOMContentLoaded', function () {
                             for (const word of lowerWords) {
                                 const wordNorm = normalize(word);
 
-                                // match exact or singular/plural variants (simple heuristic)
                                 if (
                                     wordNorm === aliceNorm ||
                                     wordNorm === aliceNorm.replace(/s$/, '') ||
                                     wordNorm.replace(/s$/, '') === aliceNorm
                                 ) {
-                                    // dedupe by option value (so same option isn't pushed twice)
                                     if (!seenValues.has(opt.value)) {
                                         matchedOptions.push(opt);
                                         seenValues.add(opt.value);
                                     }
-                                    // once this option matched, skip remaining aliceParts/words
                                     continue outer;
                                 }
                             }
@@ -1244,7 +1261,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             });
                         }
                     } else {
-                        // 🆕 NEW CONDITION — fallback if no match found
+                        // 🆕 Fallback condition
                         const category2Select = categoryContainer.querySelector('.subcat-level[data-level="2"] select');
                         if (category2Select && category2Select.value) {
                             const selectedText2 = category2Select.selectedOptions[0]?.text.toLowerCase() || "";
@@ -1262,17 +1279,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
             category3Observer.observe(categoryContainer, { childList: true, subtree: true });
-            }
-        });
-        category2Observer.observe(categoryContainer, { childList: true, subtree: true });
-    }
-
-    productInput.addEventListener('blur', runCategoryMatch);
-    productInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ') {
-            runCategoryMatch();
         }
     });
+    category2Observer.observe(categoryContainer, { childList: true, subtree: true });
+}
+
+productInput.addEventListener('blur', runCategoryMatch);
+productInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+        runCategoryMatch();
+    }
+});
 });
 
 

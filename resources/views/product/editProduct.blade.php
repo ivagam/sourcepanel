@@ -112,10 +112,30 @@
                         <input type="hidden" name="category_id" id="final_category_id" value="{{ old('category_id', $product->category_id) }}">
                         <input type="hidden" name="category_ids" id="category_ids" value="{{ old('category_ids', $product->category_ids) }}">
                         
-                        <div class="form-buttons sticky-top-buttons">
-                            <button type="submit" name="is_updated" value="0" class="btn btn-primary">Update</button>
-                            <button type="submit" name="is_updated" value="1" class="btn btn-success">Complete</button>
-                            <button type="submit" name="is_product_c" value="1" class="btn btn-warning">Is Product C</button>
+                        <div class="form-buttons sticky-top-buttons d-flex align-items-center gap-3">
+                            <button type="submit" name="is_updated" value="0" class="btn btn-primary">
+                                Update
+                            </button>
+
+                            <button type="submit" name="is_updated" value="1" class="btn btn-success">
+                                Complete
+                            </button>
+
+                            <button type="submit" name="is_product_c" value="1" class="btn btn-warning">
+                                Is Product C
+                            </button>
+
+                            <div class="form-check m-0 d-flex align-items-center">
+                                <input class="form-check-input mt-0"
+                                    type="checkbox"
+                                    name="auto_process"
+                                    id="auto_process"
+                                    value="1"
+                                    checked>
+                                     <label class="form-check-label" for="auto_process">
+                                        Auto Process
+                                    </label>
+                            </div>
                         </div>
 
                         <div class="col-12">

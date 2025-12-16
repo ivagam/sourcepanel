@@ -105,6 +105,14 @@
                             {{-- ✅ Action --}}
                             <td class="text-center align-middle">
                                 <div class="d-flex align-items-center gap-10 justify-content-center">
+                                    
+                                <a href="{{ config('services.repladeez.url') }}product/{{ $product->product_url }}"
+                                    target="_blank">
+                                        <button type="button"
+                                            class="bg-info-focus text-info-600 bg-hover-info-200 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle">
+                                            <iconify-icon icon="lucide:eye" class="menu-icon"></iconify-icon>
+                                        </button>
+                                    </a>
                                     <a href="{{ route('editProduct', $product->product_id) }}">
                                         <button type="button" class="bg-success-focus text-success-600 bg-hover-success-200 fw-medium w-40-px h-40-px d-flex justify-content-center align-items-center rounded-circle">
                                             <iconify-icon icon="lucide:edit" class="menu-icon"></iconify-icon>

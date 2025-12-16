@@ -265,7 +265,7 @@ class ProductController extends Controller
     public function updateProduct(Request $request, $id)
     {
         $isDuplicate = $request->query('duplicate') == 1;
-        
+        $autoProcess = $request->boolean('auto_process');
         $product = Product::findOrFail($id);
         $oldName = $product->product_name;
 
@@ -377,6 +377,10 @@ class ProductController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json(['success' => true, 'message' => 'Product updated successfully!']);
+        }
+
+        if (!$autoProcess) {
+           return redirect()->route('productListA')->with('success', 'Product updated successfully!');
         }
 
         if ($request->is_updated == 0 && $request->is_product_c != 1) {

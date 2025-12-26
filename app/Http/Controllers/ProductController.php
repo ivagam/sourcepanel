@@ -10,6 +10,7 @@ use App\Models\Media;
 use App\Models\Image;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class ProductController extends Controller
 {
@@ -618,6 +619,107 @@ class ProductController extends Controller
         $products = $query->orderBy('products.created_at', 'desc')->paginate(50);
 
         return view('product.deletedProductList', compact('products'));
+    }
+
+    public function sourcePanel(Request $request)
+    {
+        // Convert URL → filesystem path
+        $dumpPath = public_path('images');
+
+        $perPage = 30;
+        $page = $request->get('page', 1);
+        $offset = ($page - 1) * $perPage;
+
+        $files = [];
+
+        foreach (new \DirectoryIterator($dumpPath) as $file) {
+            if ($file->isFile()) {
+                $files[] = [
+                    'name' => $file->getFilename(),
+                    'time' => $file->getMTime(),
+                    'ext'  => strtolower($file->getExtension()),
+                ];
+            }
+        }
+
+        usort($files, fn ($a, $b) => $b['time'] <=> $a['time']);
+
+        return view('product.source-panel', [
+            'files'   => array_slice($files, $offset, $perPage),
+            'page'    => $page,
+            'hasMore' => count($files) > ($offset + $perPage),
+        ]);
+    }
+
+    public function createFromSource(Request $request)
+    {
+        $request->validate([
+            'files' => 'required|array|min:1'
+        ]);
+
+        $mainCategory = 113;
+
+        /** 1️⃣ CREATE PRODUCT */
+        $totalProducts = DB::table('products')->count();
+
+        // ❗ FIRST create the object
+        $product = new Product();
+
+        // ✅ THEN assign values
+        $product->product_name   = 'xyz ' . $totalProducts;
+        $product->category_ids   = $mainCategory . ',';
+        $product->category_id    = $mainCategory;
+
+        $sku = 'SKU' . rand(100000, 999999);
+        $product->sku            = $sku;
+        $product->product_url    = $sku . '-xyz';
+
+        $product->seo            = 0;
+        $product->size           = '25cm';
+        $product->purchase_value = '715';
+        $product->created_by     = session('user_id');
+
+        $product->save();
+
+        $productId = $product->product_id;
+
+        /** 2️⃣ IMAGE MOVE + ATTACH */
+        $fromPath = public_path('images');
+        $toPath   = public_path('uploads');
+
+        if (!File::exists($toPath)) {
+            File::makeDirectory($toPath, 0755, true);
+        }
+
+        $serialNo = 1;
+        $selectedFiles = $request->input('files');
+
+        foreach ($selectedFiles as $fileName) {
+
+            $from = $fromPath . '/' . $fileName;
+            $to   = $toPath . '/' . $fileName;
+
+            if (File::exists($from)) {
+
+                File::move($from, $to);
+
+                DB::table('product_images')->insert([
+                    'serial_no'      => $serialNo,
+                    'product_id'     => $productId,
+                    'file_path'      => $fileName,
+                    'created_by'     => session('user_id'),
+                    'is_watermarked' => 0,
+                    'created_at'     => now(),
+                    'updated_at'     => now(),
+                ]);
+
+                $serialNo++;
+            }
+        }
+
+        return redirect()
+            ->route('editProduct', ['id' => $productId])
+            ->with('success', 'Product created, files moved & images attached successfully');
     }
  
     

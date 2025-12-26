@@ -64,16 +64,18 @@ Route::prefix('users')->middleware('auth')->group(function () {
     });
 });
 
-Route::prefix('category')->middleware('auth')->group(function () {
-    Route::controller(CategoryController::class)->group(function () {
+Route::prefix('category')->group(function () {
+
+    Route::get('/get-subcategories/{id}', [CategoryController::class, 'getSubcategories']);
+    Route::get('/get-watch-subcategories/{id}', [CategoryController::class, 'getWatchSubcategories']);
+
+    Route::middleware('auth')->controller(CategoryController::class)->group(function () {
         Route::get('/list', 'index')->name('categoryList');
         Route::get('/add', 'create')->name('addcategory');
         Route::post('/store', 'store')->name('storecategory');
         Route::get('/edit/{id}', 'edit')->name('editcategory');
         Route::put('/update/{id}', 'update')->name('updatecategory');
         Route::delete('/delete/{id}', 'destroy')->name('deletecategory');
-        Route::get('/get-subcategories/{id}', 'getSubcategories');
-        Route::get('/get-watch-subcategories/{id}', 'getWatchSubcategories');
         Route::post('/bulk-edit-category', 'bulkEditCategory')->name('bulkEditCategory');
         Route::post('/bulk-delete-category', 'bulkDeleteCategory')->name('bulkDeleteCategory');
         Route::get('/filterCategory', 'filterCategory')->name('filterCategory');
@@ -124,6 +126,9 @@ Route::prefix('product')->middleware('auth')->group(function () {
         Route::get('/duplicate/{id}', 'duplicateProduct')->name('duplicateProduct');        
         Route::post('/bulk-update-sku', 'bulkUpdateSku')->name('bulkUpdateSku');
         Route::get('/deletedProductList', 'deletedProductList')->name('deletedProductList');
+
+        Route::get('/source-panel', 'sourcePanel')->name('sourcePanel');
+        Route::post('/source-panel/create', 'createFromSource')->name('createFromSource');
     });
 });
 
@@ -134,7 +139,6 @@ Route::prefix('seo')->middleware('auth')->group(function () {
         Route::post('/seo/import', 'import')->name('seo.import');
     });
 });
-
 
 Route::prefix('media')->middleware('auth')->group(function () {
     Route::controller(MediaController::class)->group(function () {

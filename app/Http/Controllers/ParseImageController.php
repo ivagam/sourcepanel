@@ -102,7 +102,7 @@ class ParseImageController extends Controller
         $product->created_by = session('user_id');
         $product->seo = 0;
         $product->size = '25cm';
-        $product->purchase_value = '715';
+        $product->purchase_value = '665';
         $product->save();
 
         $productId = $product->product_id;

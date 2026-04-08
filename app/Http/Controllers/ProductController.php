@@ -30,7 +30,7 @@ class ProductController extends Controller
         $product->created_by          = session('user_id');
         $product->seo                 = 0;
         $product->size                = '25cm';
-        $product->purchase_value      = '715';
+        $product->purchase_value      = '665';
         $product->save();
 
         $lastInsertedId = $product->product_id;
@@ -58,15 +58,12 @@ class ProductController extends Controller
             ->where('products.is_product_c', '!=', 1)
             ->where('products.is_delete', 0);
 
-        // Category filter
         if ($categoryFilter) {
             $query->whereRaw("FIND_IN_SET(?, products.category_ids)", [$categoryFilter]);
         }
 
-        // Search filter
         if (!empty($search))
             {
-
                 $keywords = preg_split('/\s+/', $search);
 
                 $query->where(function ($q) use ($keywords) {
@@ -92,7 +89,6 @@ class ProductController extends Controller
 
         return view('product.productListA', compact('products'));
     }
-
 
     public function productListB(Request $request)
     {
@@ -247,7 +243,7 @@ class ProductController extends Controller
         $original = Product::with('images')->findOrFail($id);
         
         $newProduct = $original->replicate();        
-
+        $newProduct->product_name = $original->product_name . ' ' . rand(10, 99);
         $url = $original->sku . '-' . Str::slug($original->product_name) . '-' . rand(1000, 9999);
         $newProduct->product_url = str_replace([',', "'", '"'], '', $url);        
         $newProduct->created_by = session('user_id');
@@ -319,7 +315,7 @@ class ProductController extends Controller
         $product->meta_description = $request->meta_description ?? '';
         $product->purchase_value  = $request->filled('purchase_value') 
         ? $request->purchase_value 
-        : 715;
+        : 665;
         $product->purchase_code = $request->purchase_code ?? $product->purchase_code;
         $product->note = $request->note ?? '';
         $product->domains = is_array($request->domains) ? implode(',', $request->domains) : $product->domains;        
@@ -386,15 +382,15 @@ class ProductController extends Controller
 
         if ($request->is_updated == 0 && $request->is_product_c != 1) {
             return redirect()->route('addProduct', ['main_category' => 113]);
-        }else{          
-        $latestProduct = Product::where('products.product_id', '>', $request->id)
+        }else{                
+        $latestProduct = Product::where('products.product_id', '<', $request->id) 
             ->where('products.is_updated', 0)
             ->where('products.is_product_c', '!=', 1)
-            ->where('products.is_delete', 0)
-            ->orderBy('products.product_id', 'asc')
+            ->where('products.is_delete', 0)         
+            ->orderBy('products.product_id', 'desc')
             ->first();
-
-        if ($latestProduct) {        
+    
+        if ($latestProduct) {
             return redirect()->route('editProduct', ['id' => $latestProduct->product_id]);
         } else {        
             return redirect()->route('productListA')->with('success', 'Product updated successfully!');
@@ -530,7 +526,7 @@ class ProductController extends Controller
     }
         
     public function search(Request $request)
-    {
+    {        
         $search = strtolower($request->input('search'));
         $categoryId = $request->input('category_id');
 
@@ -623,10 +619,9 @@ class ProductController extends Controller
 
     public function sourcePanel(Request $request)
     {
-        // Convert URL → filesystem path
         $dumpPath = public_path('images');
 
-        $perPage = 30;
+        $perPage = 63;
         $page = $request->get('page', 1);
         $offset = ($page - 1) * $perPage;
 
@@ -676,7 +671,7 @@ class ProductController extends Controller
 
         $product->seo            = 0;
         $product->size           = '25cm';
-        $product->purchase_value = '715';
+        $product->purchase_value = '665';
         $product->created_by     = session('user_id');
 
         $product->save();

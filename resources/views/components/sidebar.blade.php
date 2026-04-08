@@ -48,6 +48,33 @@
                 </ul>
             </li>
 
+            <li class="dropdown">
+                <a  href="javascript:void(0)">
+                    <iconify-icon icon="heroicons:user" class="menu-icon"></iconify-icon>
+                    <span>Theluxury</span>
+                </a>
+                <ul class="sidebar-submenu">
+                    <li>
+                        <a href="{{ route('theluxuryListA') }}">
+                            <iconify-icon icon="mdi:format-list-bulleted" class="menu-icon"></iconify-icon>
+                            <span>Theluxury List A</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('theluxuryListB') }}">
+                            <iconify-icon icon="mdi:format-list-bulleted" class="menu-icon"></iconify-icon>
+                            <span>Theluxury List B</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ route('theluxuryListC') }}">
+                            <iconify-icon icon="mdi:format-list-bulleted" class="menu-icon"></iconify-icon>
+                            <span>Theluxury List C</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
             <li>
                   <a href="{{ route('productListA') }}">
                         <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
@@ -67,7 +94,14 @@
                         <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
                     <span>Product List C</span>
                 </a>
-            </li>            
+            </li>
+
+            <li>
+                  <a href="{{ route('sourcePanel') }}">
+                        <iconify-icon icon="mdi:shopping-outline" class="menu-icon"></iconify-icon>
+                    <span>Source Panel</span>
+                </a>
+            </li> 
 
             <li>
                 <a href="{{ route('addProduct', ['main_category' => 1]) }}">

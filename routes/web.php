@@ -23,6 +23,7 @@ use App\Http\Controllers\WhatsappController;
 use App\Http\Controllers\ParseImageController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\Api\ApiwebsiteController;
+use App\Http\Controllers\TheluxuryController;
 
 Route::controller(AuthenticationController::class)->group(function () {
     Route::get('/', 'signin')->name('signin');
@@ -184,6 +185,19 @@ Route::prefix('scrape')->middleware('auth')->group(function () {
     });
 });
 
+Route::prefix('theluxury')->middleware('auth')->group(function () {
+    Route::controller(TheluxuryController::class)->group(function () {        
+        Route::get('/theluxuryListA', 'theluxuryListA')->name('theluxuryListA');
+        Route::get('/theluxuryListB', 'theluxuryListB')->name('theluxuryListB');
+        Route::get('/theluxuryListC', 'theluxuryListC')->name('theluxuryListC');
+        Route::get('/editTheluxury/{id}', 'editTheluxury')->name('editTheluxury');
+        Route::get('/theluxuryList', 'theluxuryList')->name('theluxuryList');
+        Route::get('/searchtheluxury', 'searchtheluxury')->name('searchtheluxury');
+        Route::put('/updateTheluxuryProduct/{id}', 'updateTheluxuryProduct')->name('updateTheluxuryProduct');
+        Route::get('/duplicateTheluxuryProduct/{id}', 'duplicateTheluxuryProduct')->name('duplicateTheluxuryProduct');
+    });
+});
+
 Route::prefix('whatsapp')->middleware('auth')->group(function () {
     Route::controller(WhatsappController::class)->group(function () {
         Route::get('/', 'index')->name('whatsappIndex');
@@ -213,6 +227,11 @@ Route::prefix('task')->middleware('auth')->group(function () {
 });
 
 Route::get('/scrape', [ScrapeController::class, 'index'])->name('scrape');
+Route::get('/scrape-jessica', [ScrapeController::class, 'scrapeJessica'])->name('scrape.jessica');
+Route::get('/scrape-79karat', [ScrapeController::class, 'scrape79karat'])->name('scrape.79karat');
+Route::get('/scrape-hmsvip', [ScrapeController::class, 'scrapeHmsVip'])->name('scrape.HmsVip');
+Route::get('/scrape-opReps', [ScrapeController::class, 'scrapeopReps'])->name('scrape.opReps');
+Route::get('/scrape-ldj', [ScrapeController::class, 'scrapeldj'])->name('scrape.ldj');
 
 Route::get('/homeProduct', [ApiwebsiteController::class, 'homeProduct']);
 Route::get('/galleryProduct', [ApiwebsiteController::class, 'galleryProduct']);

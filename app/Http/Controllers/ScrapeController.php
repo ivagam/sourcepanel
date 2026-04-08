@@ -144,26 +144,50 @@ class ScrapeController extends Controller
     private function downloadFile($fileUrl)
     {
         try {
-            $fileContent = @file_get_contents($fileUrl);
-            if (!$fileContent) return null;
+
+            $ch = curl_init();
+
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $fileUrl,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_TIMEOUT => 60,
+                CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36',
+                CURLOPT_REFERER => 'https://www.hmsvip.com/'
+            ]);
+
+            $fileContent = curl_exec($ch);
+            curl_close($ch);
+
+            if (!$fileContent) {
+                return null;
+            }
 
             $ext = strtolower(pathinfo(parse_url($fileUrl, PHP_URL_PATH), PATHINFO_EXTENSION));
+
             if (!in_array($ext, ['jpg','jpeg','png','gif','bmp','webp','mp4','webm','ogg'])) {
                 $ext = 'jpg';
             }
 
-            $filename = time() . '_' . substr(md5(uniqid(mt_rand(), true)), 0, 3) . '.' . $ext;
+            $filename = time().'_'.substr(md5(uniqid(mt_rand(), true)),0,3).'.'.$ext;
 
-            $uploadPath = public_path('uploads');
+            $uploadPath = public_path('images');
+
             if (!File::exists($uploadPath)) {
                 File::makeDirectory($uploadPath, 0777, true);
             }
 
-            file_put_contents($uploadPath . '/' . $filename, $fileContent);
+            file_put_contents($uploadPath.'/'.$filename, $fileContent);            
+
             return $filename;
+
         } catch (\Exception $e) {
-            \Log::error("File download failed: " . $e->getMessage());
+
+            \Log::error("File download failed: ".$e->getMessage());
             return null;
+
         }
     }
 
@@ -281,7 +305,7 @@ class ScrapeController extends Controller
 
             $filename = time() . '_' . $randomString . '.' . $ext;
 
-            $uploadPath = public_path('uploads');
+            $uploadPath = public_path('images');
             if (!File::exists($uploadPath)) {
                 File::makeDirectory($uploadPath, 0777, true);
             }
@@ -461,7 +485,8 @@ class ScrapeController extends Controller
     {
         $original = ScrapeProduct::with('images')->findOrFail($id);
         
-        $newProduct = $original->replicate();        
+        $newProduct = $original->replicate();
+        $newProduct->product_name = $original->product_name . ' ' . rand(10, 99);
         $newProduct->product_url = Str::slug($original->product_name) . '-' . rand(1000, 9999);
         $newProduct->created_by = session('user_id');
         $newProduct->save();
@@ -547,4 +572,828 @@ class ScrapeController extends Controller
         }
         return redirect()->route('scrapeUrl')->with('success', 'No URLs selected.');
     }
+
+    public function scrapeJessica()
+    {
+        set_time_limit(0);
+        ini_set('max_execution_time', 0);
+        ini_set('memory_limit', '1024M');
+        ignore_user_abort(true);
+
+        $scrapes = ScrapeUrl::where('product_status', 0)
+            ->where('domain', 'jessicafinds.com')            
+            ->get();
+
+        if ($scrapes->isEmpty()) {
+            return "No JessicaFinds URLs to scrape.";
+        }
+
+        foreach ($scrapes as $scrape) {
+
+            $url = $scrape->url;
+
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_TIMEOUT => 60, // increased request timeout
+                CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36'
+            ]);
+
+            $html = curl_exec($ch);
+            curl_close($ch);
+
+            if (!$html) {
+                $scrape->product_status = 2;
+                $scrape->save();
+                continue;
+            }
+
+            libxml_use_internal_errors(true);
+            $dom = new \DOMDocument();
+            $dom->loadHTML($html);
+            libxml_clear_errors();
+
+            $xpath = new \DOMXPath($dom);
+
+            // H1
+            $product_name = '';
+            $h1 = $xpath->query("//h1");
+            if ($h1->length > 0) {
+                $product_name = trim($h1->item(0)->textContent);
+            }
+
+            // P
+            $description = '';
+            $p_tags = $xpath->query("//p");
+            foreach ($p_tags as $p) {
+                $text = trim($p->textContent);
+                if ($text) {
+                    $description .= $text . "\n";
+                }
+            }
+
+            // IMG (No limit)
+            $foundFiles = [];
+            $images = $xpath->query("//img");
+
+            foreach ($images as $img) {
+
+                $src = $img->getAttribute('src') ?: $img->getAttribute('data-src');
+                if (!$src) continue;
+
+                if (!str_starts_with($src, 'http')) {
+                    $parsed = parse_url($url);
+                    $base = $parsed['scheme'] . '://' . $parsed['host'];
+                    $src = $base . '/' . ltrim($src, '/');
+                }
+
+                $savedFile = $this->downloadFile($src);
+
+                if ($savedFile) {
+                    $foundFiles[] = $savedFile;
+                }
+            }
+
+            if (!empty($foundFiles)) {
+
+                $product = ScrapeProduct::create([
+                    'scrape_id' => $scrape->id,
+                    'product_name' => $product_name ?: 'Jessica Product',
+                    'description' => $description,
+                    'category_id' => 113,
+                    'category_ids' => '113,',
+                    'size' => 'S,L,M,XL,XXL',
+                    'sku' => 'SKU' . rand(100000, 999999),
+                    'product_url' => Str::slug($product_name) . '_' . rand(1000, 9999),
+                    'created_at' => now(),
+                ]);
+
+                $serial = 1;
+                foreach ($foundFiles as $file) {
+                    ScrapeImage::create([
+                        'scrape_product_id' => $product->scrape_product_id,
+                        'file_path' => $file,
+                        'serial_no' => $serial++,
+                        'created_by' => session('user_id') ?? 1,
+                    ]);
+                }
+
+                $scrape->product_status = 1;
+            } else {
+                $scrape->product_status = 2;
+            }
+
+            $scrape->save();
+        }
+
+        return "JessicaFinds scraping completed.";
+    }
+    public function scrape79karat()
+    {
+        set_time_limit(0);
+        ini_set('max_execution_time', 0);
+        ini_set('memory_limit', '1024M');
+        ignore_user_abort(true);
+
+        $scrapes = ScrapeUrl::where('product_status', 0)
+            ->where('domain', '79karat.co')
+            ->get();
+
+        if ($scrapes->isEmpty()) {
+            return "No 79karat URLs to scrape.";
+        }
+
+        foreach ($scrapes as $scrape) {
+
+            $url = $scrape->url;
+
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_TIMEOUT => 60,
+                CURLOPT_USERAGENT => 'Mozilla/5.0'
+            ]);
+
+            $html = curl_exec($ch);
+            curl_close($ch);
+
+            if (!$html) {
+                $scrape->product_status = 2;
+                $scrape->save();
+                continue;
+            }
+
+            libxml_use_internal_errors(true);
+            $dom = new \DOMDocument();
+            $dom->loadHTML($html);
+            libxml_clear_errors();
+
+            $xpath = new \DOMXPath($dom);
+
+            $headerNodes = $xpath->query("//header-menu");
+            foreach ($headerNodes as $node) {
+                $node->parentNode->removeChild($node);
+            }
+
+            $product_name = '';
+            $titleTag = $xpath->query("//title");
+
+            if ($titleTag->length > 0) {
+                $product_name = trim($titleTag->item(0)->textContent);
+            }
+
+            if (!$product_name) {
+                $scrape->product_status = 2;
+                $scrape->save();
+                continue;
+            }
+
+            $product_name = strtolower(trim(preg_replace('/\s+/', ' ', $product_name)));
+
+            
+
+            $exists = ScrapeProduct::whereRaw(
+                'LOWER(TRIM(product_name)) = ?',
+                [$product_name]
+            )->exists();            
+
+            if ($exists) {
+
+                $scrape->product_status = 1;
+                $scrape->save();
+
+                \DB::table('website_links')
+                    ->where('url', $url)
+                    ->update(['product_status' => 1]);
+
+                continue; // 🚫 STOP INSERT
+            }
+
+            $description = '';
+            $metaDesc = $xpath->query("//meta[@name='description']");
+            if ($metaDesc->length > 0) {
+                $description = trim($metaDesc->item(0)->getAttribute('content'));
+            }
+
+            $foundFiles = [];
+            $uniqueImages = [];
+
+            $images = $xpath->query("
+                //img[
+                    not(ancestor::header-menu)
+                    and not(ancestor::p)
+                    and not(contains(concat(' ', normalize-space(@class), ' '), ' mega_product_image '))
+                    and not(contains(concat(' ', normalize-space(@class), ' '), ' header__heading-logo '))
+                    and not(contains(concat(' ', normalize-space(@class), ' '), ' header__heading-link '))
+                    and not(contains(concat(' ', normalize-space(@class), ' '), ' mega_zoom_img '))
+                    and not(contains(concat(' ', normalize-space(@class), ' '), ' global-media-settings '))
+                    and not(contains(concat(' ', normalize-space(@class), ' '), ' footer_logo '))
+                ]
+            ");
+
+            foreach ($images as $img) {
+
+                $src = '';
+
+                $srcset = $img->getAttribute('srcset');
+                if ($srcset) {
+                    $parts = explode(',', $srcset);
+                    $last = trim(end($parts));
+                    $src = explode(' ', $last)[0];
+                }
+
+                if (!$src) {
+                    $src = $img->getAttribute('src');
+                }
+
+                if (!$src) continue;
+
+                if (str_starts_with($src, '//')) {
+                    $src = 'https:' . $src;
+                }
+
+                $src = strtok($src, '&');
+
+                if (in_array($src, $uniqueImages)) continue;
+                $uniqueImages[] = $src;
+
+                $savedFile = $this->downloadFile($src);
+
+                if ($savedFile) {
+                    $foundFiles[] = $savedFile;
+                }
+            }
+
+            if (!empty($foundFiles)) {
+
+                $product = ScrapeProduct::create([
+                    'scrape_id' => $scrape->id,
+                    'product_name' => $product_name, // normalized saved
+                    'description' => $description,
+                    'category_id' => 113,
+                    'category_ids' => '113,',
+                    'size' => 'S,L,M,XL,XXL',
+                    'sku' => 'SKU' . rand(100000, 999999),
+                    'product_url' => Str::slug($product_name) . '_' . rand(1000, 9999),
+                    'created_at' => now(),
+                ]);
+
+                $serial = 1;
+                foreach ($foundFiles as $file) {
+                    ScrapeImage::create([
+                        'scrape_product_id' => $product->scrape_product_id,
+                        'file_path' => $file,
+                        'serial_no' => $serial++,
+                        'created_by' => session('user_id') ?? 1,
+                    ]);
+                }
+
+                $scrape->product_status = 1;
+
+                \DB::table('website_links')
+                    ->where('url', $url)
+                    ->update(['product_status' => 1]);
+
+            } else {
+                $scrape->product_status = 2;
+            }
+
+            $scrape->save();
+        }
+
+        return "79karat scraping completed.";
+    }
+
+    public function scrapeHmsVip()
+    {
+        set_time_limit(0);
+        ini_set('max_execution_time', 0);
+        ini_set('memory_limit', '1024M');
+        ignore_user_abort(true);
+
+        $scrapes = ScrapeUrl::where('product_status', 0)
+            ->where('domain', 'hmsvip.com')            
+            ->get();
+
+        if ($scrapes->isEmpty()) {
+            return "No HMSVIP URLs to scrape.";
+        }
+
+        foreach ($scrapes as $scrape) {
+
+            $url = $scrape->url;
+
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_TIMEOUT => 60,
+                CURLOPT_USERAGENT => 'Mozilla/5.0'
+            ]);
+
+            $html = curl_exec($ch);
+            curl_close($ch);
+
+            if (!$html) {
+                echo "twsfsdfdo"; exit;
+                $scrape->product_status = 2;
+                $scrape->save();
+                continue;
+            }
+
+            libxml_use_internal_errors(true);
+            $dom = new \DOMDocument();
+            $dom->loadHTML($html);
+            libxml_clear_errors();
+
+            $xpath = new \DOMXPath($dom);
+
+            $product_name = '';
+            $titleTag = $xpath->query("//title");
+
+            if ($titleTag->length > 0) {
+                $product_name = trim($titleTag->item(0)->textContent);
+            }
+
+            if (!$product_name) {
+                echo "tsswo"; exit;
+                $scrape->product_status = 2;
+                $scrape->save();
+                continue;
+            }
+
+            $product_name = strtolower(trim(preg_replace('/\s+/', ' ', $product_name)));
+
+            $exists = ScrapeProduct::whereRaw(
+                'LOWER(TRIM(product_name)) = ?',
+                [$product_name]
+            )->exists();
+
+            if ($exists) {
+
+                $scrape->product_status = 1;
+                $scrape->save();
+
+                \DB::table('website_links')
+                    ->where('url', $url)
+                    ->update(['product_status' => 1]);
+
+                continue;
+            }
+
+            $description = '';
+            $metaDesc = $xpath->query("//meta[@name='description']");
+            if ($metaDesc->length > 0) {
+                $description = trim($metaDesc->item(0)->getAttribute('content'));
+            }
+
+            $foundFiles = [];
+            $uniqueImages = [];
+
+            $images = $xpath->query("//img");
+
+            foreach ($images as $img) {
+
+                $src = '';
+
+                $srcset = $img->getAttribute('srcset');
+                if ($srcset) {
+                    $parts = explode(',', $srcset);
+                    $last = trim(end($parts));
+                    $src = explode(' ', $last)[0];
+                }
+
+                if (!$src) {
+                    $src = $img->getAttribute('src');
+                }
+
+                if (!$src) continue;
+
+                if (str_starts_with($src, '//')) {
+                    $src = 'https:' . $src;
+                }
+
+                $src = strtok($src, '&');
+
+                if (in_array($src, $uniqueImages)) continue;
+                $uniqueImages[] = $src;
+
+                $savedFile = $this->downloadFile($src);
+
+                if ($savedFile) {
+                    $foundFiles[] = $savedFile;
+                }
+            }
+
+            if (!empty($foundFiles)) {
+
+                $product = ScrapeProduct::create([
+                    'scrape_id' => $scrape->id,
+                    'product_name' => $product_name,
+                    'description' => $description,
+                    'category_id' => 113,
+                    'category_ids' => '113,',
+                    'size' => 'S,L,M,XL,XXL',
+                    'sku' => 'SKU' . rand(100000, 999999),
+                    'product_url' => Str::slug($product_name) . '_' . rand(1000, 9999),
+                    'created_at' => now(),
+                ]);
+
+                $serial = 1;
+                foreach ($foundFiles as $file) {
+                    ScrapeImage::create([
+                        'scrape_product_id' => $product->scrape_product_id,
+                        'file_path' => $file,
+                        'serial_no' => $serial++,
+                        'created_by' => session('user_id') ?? 1,
+                    ]);
+                }
+
+                $scrape->product_status = 1;
+
+                \DB::table('website_links')
+                    ->where('url', $url)
+                    ->update(['product_status' => 1]);
+
+            } else {
+                $scrape->product_status = 2;
+            }
+
+            $scrape->save();
+        }
+
+        return "HMSVIP scraping completed.";
+    }
+
+
+    public function scrapeopReps()
+    {
+        set_time_limit(0);
+        ini_set('max_execution_time', 0);
+        ini_set('memory_limit', '1024M');
+        ignore_user_abort(true);
+
+        $scrapes = ScrapeUrl::where('product_status', 0)
+            ->where('domain', 'op-reps.com')
+            ->get();
+
+        if ($scrapes->isEmpty()) {
+            return "No HMSVIP URLs to scrape.";
+        }
+
+        foreach ($scrapes as $scrape) {
+
+            $url = $scrape->url;
+
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_TIMEOUT => 60,
+                CURLOPT_USERAGENT => 'Mozilla/5.0'
+            ]);
+
+            $html = curl_exec($ch);
+            curl_close($ch);
+
+            if (!$html) {
+                $scrape->product_status = 2;
+                $scrape->save();
+                continue;
+            }
+
+            libxml_use_internal_errors(true);
+            $dom = new \DOMDocument();
+            $dom->loadHTML($html);
+            libxml_clear_errors();
+
+            $xpath = new \DOMXPath($dom);
+
+            $product_name = '';
+            $titleTag = $xpath->query("//title");
+
+            if ($titleTag->length > 0) {
+                $product_name = trim($titleTag->item(0)->textContent);
+            }
+
+            if (!$product_name) {
+                $scrape->product_status = 2;
+                $scrape->save();
+                continue;
+            }
+
+            $product_name = strtolower(trim(preg_replace('/\s+/', ' ', $product_name)));
+
+            $exists = ScrapeProduct::whereRaw(
+                'LOWER(TRIM(product_name)) = ?',
+                [$product_name]
+            )->exists();
+
+            if ($exists) {
+
+                $scrape->product_status = 1;
+                $scrape->save();
+
+                \DB::table('website_links')
+                    ->where('url', $url)
+                    ->update(['product_status' => 1]);
+
+                continue;
+            }
+
+            $description = '';
+            $metaDesc = $xpath->query("//meta[@name='description']");
+            if ($metaDesc->length > 0) {
+                $description = trim($metaDesc->item(0)->getAttribute('content'));
+            }
+
+            $foundFiles = [];
+            $uniqueImages = [];
+
+            $images = $xpath->query("
+                //img[
+                    not(contains(@class,'logo'))                    
+                    and not(contains(@class,'fkcart-icon-checkout'))                    
+                    and not(contains(@class,'swiper-slide-image lazyload'))
+
+                    and not(contains(@src,'프라다.png'))
+                    and not(contains(@src,'루이비통.png'))
+                    and not(contains(@src,'세인트로랑.png'))
+                    and not(contains(@src,'로렉스.png'))
+                    and not(contains(@src,'에르메스.png'))
+                    and not(contains(@src,'지방시-로고.png'))
+
+                    and not(contains(@alt,'프라다'))
+                    and not(contains(@alt,'루이비통'))
+                    and not(contains(@alt,'세인트로랑'))
+                    and not(contains(@alt,'로렉스'))
+                    and not(contains(@alt,'에르메스'))
+                    and not(contains(@alt,'지방시'))
+                ]
+            ");
+         
+            foreach ($images as $img) {
+
+                $src = '';
+
+                $srcset = $img->getAttribute('srcset');
+                if ($srcset) {
+                    $parts = explode(',', $srcset);
+                    $last = trim(end($parts));
+                    $src = explode(' ', $last)[0];
+                }
+
+                if (!$src) {
+                    $src = $img->getAttribute('src');
+                }
+
+                if (!$src) continue;
+
+                if (str_starts_with($src, '//')) {
+                    $src = 'https:' . $src;
+                }
+
+                $src = strtok($src, '&');
+
+                if (!preg_match('/\.(jpg|jpeg|png|webp)/i', $src)) {
+                    continue;
+                }
+
+                if (in_array($src, $uniqueImages)) continue;
+                $uniqueImages[] = $src;
+
+                $width = $img->getAttribute('width');
+                $height = $img->getAttribute('height');
+
+                if ($width && $width < 200) continue;
+                if ($height && $height < 200) continue;
+
+                $savedFile = $this->downloadFile($src);
+
+                if ($savedFile) {
+                    $foundFiles[] = $savedFile;
+                }
+            }
+
+            if (!empty($foundFiles)) {
+
+                $product = ScrapeProduct::create([
+                    'scrape_id' => $scrape->id,
+                    'product_name' => $product_name,
+                    'description' => $description,
+                    'category_id' => 113,
+                    'category_ids' => '113,',
+                    'size' => 'S,L,M,XL,XXL',
+                    'sku' => 'SKU' . rand(100000, 999999),
+                    'product_url' => Str::slug($product_name) . '_' . rand(1000, 9999),
+                    'created_at' => now(),
+                ]);
+
+                $serial = 1;
+                foreach ($foundFiles as $file) {
+                    ScrapeImage::create([
+                        'scrape_product_id' => $product->scrape_product_id,
+                        'file_path' => $file,
+                        'serial_no' => $serial++,
+                        'created_by' => session('user_id') ?? 1,
+                    ]);
+                }
+
+                $scrape->product_status = 1;
+
+                \DB::table('website_links')
+                    ->where('url', $url)
+                    ->update(['product_status' => 1]);
+
+            } else {
+
+                $scrape->product_status = 2;
+
+            }
+
+            $scrape->save();
+        }
+
+        return "opReps scraping completed.";
+    }
+
+    public function scrapeldj()
+    {
+        set_time_limit(0);
+        ini_set('max_execution_time', 0);
+        ini_set('memory_limit', '1024M');
+        ignore_user_abort(true);
+
+        $scrapes = ScrapeUrl::where('product_status', 0)
+            ->where('domain', 'ldj.com')
+            ->limit(2)
+            ->get();
+
+        if ($scrapes->isEmpty()) {
+            return "No HMSVIP URLs to scrape.";
+        }
+
+        foreach ($scrapes as $scrape) {
+
+            $url = $scrape->url;
+
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_TIMEOUT => 60,
+                CURLOPT_USERAGENT => 'Mozilla/5.0'
+            ]);
+
+            $html = curl_exec($ch);
+            curl_close($ch);
+
+            if (!$html) {
+                echo "twsfsdfdo"; exit;
+                $scrape->product_status = 2;
+                $scrape->save();
+                continue;
+            }
+
+            libxml_use_internal_errors(true);
+            $dom = new \DOMDocument();
+            $dom->loadHTML($html);
+            libxml_clear_errors();
+
+            $xpath = new \DOMXPath($dom);
+
+            $product_name = '';
+            $titleTag = $xpath->query("//title");
+
+            if ($titleTag->length > 0) {
+                $product_name = trim($titleTag->item(0)->textContent);
+            }
+
+            if (!$product_name) {
+                echo "tsswo"; exit;
+                $scrape->product_status = 2;
+                $scrape->save();
+                continue;
+            }
+
+            $product_name = strtolower(trim(preg_replace('/\s+/', ' ', $product_name)));
+
+            $exists = ScrapeProduct::whereRaw(
+                'LOWER(TRIM(product_name)) = ?',
+                [$product_name]
+            )->exists();
+
+            if ($exists) {
+
+                $scrape->product_status = 1;
+                $scrape->save();
+
+                \DB::table('website_links')
+                    ->where('url', $url)
+                    ->update(['product_status' => 1]);
+
+                continue;
+            }
+
+            $description = '';
+            $metaDesc = $xpath->query("//meta[@name='description']");
+            if ($metaDesc->length > 0) {
+                $description = trim($metaDesc->item(0)->getAttribute('content'));
+            }
+
+            $foundFiles = [];
+            $uniqueImages = [];
+
+            $images = $xpath->query("//img");
+
+            foreach ($images as $img) {
+
+                $src = '';
+
+                $srcset = $img->getAttribute('srcset');
+                if ($srcset) {
+                    $parts = explode(',', $srcset);
+                    $last = trim(end($parts));
+                    $src = explode(' ', $last)[0];
+                }
+
+                if (!$src) {
+                    $src = $img->getAttribute('src');
+                }
+
+                if (!$src) continue;
+
+                if (str_starts_with($src, '//')) {
+                    $src = 'https:' . $src;
+                }
+
+                $src = strtok($src, '&');
+
+                if (in_array($src, $uniqueImages)) continue;
+                $uniqueImages[] = $src;
+
+                $savedFile = $this->downloadFile($src);
+
+                if ($savedFile) {
+                    $foundFiles[] = $savedFile;
+                }
+            }
+
+            if (!empty($foundFiles)) {
+
+                $product = ScrapeProduct::create([
+                    'scrape_id' => $scrape->id,
+                    'product_name' => $product_name,
+                    'description' => $description,
+                    'category_id' => 113,
+                    'category_ids' => '113,',
+                    'size' => 'S,L,M,XL,XXL',
+                    'sku' => 'SKU' . rand(100000, 999999),
+                    'product_url' => Str::slug($product_name) . '_' . rand(1000, 9999),
+                    'created_at' => now(),
+                ]);
+
+                $serial = 1;
+                foreach ($foundFiles as $file) {
+                    ScrapeImage::create([
+                        'scrape_product_id' => $product->scrape_product_id,
+                        'file_path' => $file,
+                        'serial_no' => $serial++,
+                        'created_by' => session('user_id') ?? 1,
+                    ]);
+                }
+
+                $scrape->product_status = 1;
+
+                \DB::table('website_links')
+                    ->where('url', $url)
+                    ->update(['product_status' => 1]);
+
+            } else {
+                $scrape->product_status = 2;
+            }
+
+            $scrape->save();
+        }
+
+        return "HMSVIP scraping completed.";
+    }
+
 }

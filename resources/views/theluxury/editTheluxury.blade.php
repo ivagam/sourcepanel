@@ -75,7 +75,7 @@
     z-index: 10;
 }
 
-#editor, #editor_en {
+#editor {
     height: 150px;
     max-height: 200px;
     overflow-y: auto;
@@ -87,24 +87,16 @@
     min-height:120px !important;
     border:1px solid #000 !important;
 }
-
-.form-buttons {
-    position: sticky;
-    top: 0;
-    background: #fff;
-    padding: 10px 0;
-    z-index: 999;
-    display: flex;
-    gap: 10px;
-}
-
 </style>
 
 <div class="card h-100 p-0 radius-12">
     <div class="card-body p-24">
-                       
-                <form id="productEditForm" class="row gy-3 needs-validation" method="POST"
-                        action="{{ route('updateProduct', ['id' => $product->product_id] + ($isDuplicate ? ['duplicate' => 1] : [])) }}"
+        <div class="col-lg-12">
+            <div class="card">
+               
+                <div class="card-body">
+                    <form id="productEditForm" class="row gy-3 needs-validation" method="POST"
+                        action="{{ route('updateTheluxuryProduct', ['id' => $product->scrape_product_id] + ($isDuplicate ? ['duplicate' => 1] : [])) }}"
                         novalidate enctype="multipart/form-data">
                         @csrf
                         @method('PUT')
@@ -112,30 +104,10 @@
                         <input type="hidden" name="category_id" id="final_category_id" value="{{ old('category_id', $product->category_id) }}">
                         <input type="hidden" name="category_ids" id="category_ids" value="{{ old('category_ids', $product->category_ids) }}">
                         
-                        <div class="form-buttons sticky-top-buttons d-flex align-items-center gap-3">
-                            <button type="submit" name="is_updated" value="0" class="btn btn-primary">
-                                Update
-                            </button>
-
-                            <button type="submit" name="is_updated" value="1" class="btn btn-success">
-                                Complete
-                            </button>
-
-                            <button type="submit" name="is_product_c" value="1" class="btn btn-warning">
-                                Is Product C
-                            </button>
-
-                            <div class="form-check m-0 d-flex align-items-center">
-                                <input class="form-check-input mt-0"
-                                    type="checkbox"
-                                    name="auto_process"
-                                    id="auto_process"
-                                    value="1"
-                                    checked>
-                                     <label class="form-check-label" for="auto_process">
-                                        Auto Process
-                                    </label>
-                            </div>
+                        <div class="d-flex gap-3 justify-content-start">
+                            <button type="submit" name="is_updated" value="0" class="btn btn-primary">Update</button>
+                            <button type="submit" name="is_updated" value="1" class="btn btn-success">Complete</button>
+                            <button type="submit" name="is_product_c" value="1" class="btn btn-warning">Is Product C</button>
                         </div>
 
                         <div class="col-12">
@@ -177,7 +149,7 @@
                                     $isVideo = in_array($ext, ['mp4', 'mov', 'avi', 'webm']);
                                 @endphp
 
-                                <div class="position-relative image-box" data-id="{{ $image->image_id }}">
+                                <div class="position-relative image-box" data-id="{{ $image->id }}">
                                     @if($isVideo)
                                         <video width="120" height="120" controls style="cursor: pointer;" onclick="event.stopPropagation(); showFullMedia({{ $index }})">
                                             <source src="{{ $mediaUrl }}" type="video/{{ $ext }}">
@@ -189,48 +161,49 @@
                             @endforeach
                         </div>
 
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <label class="form-label">Product Name <span class="text-danger">*</span></label>
                             <input type="text" name="product_name" class="form-control @error('product_name') is-invalid @enderror" value="{{ old('product_name', $product->product_name) }}">
                             @error('product_name')<div class="text-danger">{{ $message }}</div>@enderror
                         </div>
 
-                        <div class="col-md-4" id="colorSizeBox" style="display: none;">
-                            <label class="form-label">Color & Size</label>
-                            
-                            <div class="d-flex gap-1">
+                        <div class="col-md-6">
+                            <label class="form-label">Product Value</label>
+                            <input type="text" name="sku" class="form-control" value="{{ old('sku', $product->sku) }}" >
+                        </div>
+
+                        <div class="row" style="margin: 0; padding: 0;">
+                            <div class="col-md-3" id="colorSizeBox" style="display: none;">
+                                <label class="form-label">Color & Size</label>
                                 <input 
                                     type="text" 
                                     name="size" 
                                     class="form-control" 
                                     placeholder="Enter size" 
                                     value="{{ old('size', $product->size ?? '') }}"
-                                    style="width: 40%;"
                                 >
+                                <div class="d-flex gap-1">
+                                    <input 
+                                        type="color" 
+                                        id="colorPicker" 
+                                        class="form-control form-control-color form-control-sm" 
+                                        value="{{ old('color', $product->color ?? '#000000') }}"
+                                        style="width: 30%; min-width: 40px;"
+                                    >
 
-                                <input 
-                                    type="color" 
-                                    id="colorPicker" 
-                                    class="form-control form-control-color form-control-sm" 
-                                    value="{{ old('color', $product->color ?? '#000000') }}"
-                                    style="width: 20%; min-width: 40px;"
-                                >
-
-                                <input 
-                                    type="text" 
-                                    id="colorInput" 
-                                    name="color" 
-                                    class="form-control form-control-sm" 
-                                    placeholder="#000000" 
-                                    value="{{ old('color', $product->color ?? '') }}"
-                                    style="width: 40%;"
-                                >
+                                    <input 
+                                        type="text" 
+                                        id="colorInput" 
+                                        name="color" 
+                                        class="form-control form-control-sm" 
+                                        placeholder="#000000" 
+                                        value="{{ old('color', $product->color ?? '') }}"
+                                        style="width: 70%;"
+                                    >
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="row" style="margin: 0; padding: 0;">
-                            
-                            <div class="col-md-4">
+
+                            <div class="col-md-3">
                                 <label class="form-label">Numbers</label>
                                 <input 
                                     type="number" 
@@ -242,7 +215,7 @@
                             </div>
 
                             <!-- Purchase Code -->
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label">Purchase Code</label>
                                 <input 
                                     type="text" 
@@ -254,7 +227,7 @@
                             </div>
 
                             <!-- Product Price -->
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label class="form-label">Product Price</label>
                                 <input 
                                     type="number" 
@@ -267,7 +240,7 @@
                         </div>
 
                     
-                        <div class="col-md-4" style="display: none;">
+                        <div class="col-md-6" style="display: none;">
                             <label class="form-label">Category</label>
                             <select class="form-select" id="mainCategorySelect" disabled>
                                 <option value="">-- Select Main Category --</option>
@@ -284,7 +257,7 @@
 
                         <div class="col-md-12" id="dynamic-subcategories"></div>
 
-                        <!-- Input 2: English Description -->
+
                         <div class="col-md-6">
                             <label class="form-label">Product Description (English)</label>
                             <div class="card-body p-0">
@@ -353,9 +326,7 @@
                                 <div id="editor">{!! old('chinese_description', $product->chinese_description ?? '') !!}</div>
                                 <textarea name="chinese_description" id="chinese_description" hidden></textarea>
                             </div>
-                        </div>
-
-
+                        </div>                    
 
                         <div class="col-md-6">
                             <label class="form-label">Note</label>
@@ -370,12 +341,7 @@
 
                         <div class="col-md-6">
                             <label class="form-label">Meta Description</label>
-                            <textarea name="meta_description" class="form-control">{{ old('meta_description', $product->meta_description) }}</textarea>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Product Value</label>
-                            <input type="text" name="sku" class="form-control" value="{{ old('sku', $product->sku) }}" >
+                            <textarea name="meta_description" class="form-control">{{ old('meta_description', $product->meta_description) }}</textarea>                            
                         </div>
 
                         <div class="col-md-6">
@@ -399,7 +365,9 @@
                         </div>
 
                     </form>
-            
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -446,8 +414,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.2/min/dropzone.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
 
 @php
     $lastSerial = $product->images->max('serial_no') ?? 0;
@@ -475,9 +442,7 @@ $(document).ready(function () {
 
     $('#mainCategorySelect').on('change', function () {
         const selectedId = $(this).val();
-        
-        resetSubcategories(); 
-        
+        resetSubcategories();
         $('#category_ids').val(selectedId || '');
 
         if (selectedId === '1') {
@@ -486,7 +451,6 @@ $(document).ready(function () {
             loadSubcategories(selectedId, 1);
         }
     });
-
 
     $('form').on('submit', function () {
         const selectedIds = [];
@@ -506,15 +470,11 @@ $(document).ready(function () {
     });
 });
 
-    function resetSubcategories(show = false) {
-        $('#watch-subcategories').html('').hide();
-        $('#dynamic-subcategories').html('<div class="row"></div>');
-
-        if (show) $('#dynamic-subcategories').show(); // Show only when needed
-
-        $('#final_category_id').val('');
-    }
-
+function resetSubcategories() {
+    $('#watch-subcategories').html('').hide();
+    $('#dynamic-subcategories').html('<div class="row"></div>').hide();
+    $('#final_category_id').val('');
+}
 
 function loadWatchSubcategories(parentId, chain = []) {
     return $.ajax({
@@ -527,7 +487,7 @@ function loadWatchSubcategories(parentId, chain = []) {
         response.forEach((group, index) => {
             const selectedVal = chain[index + 1] || '';
             html += `
-                <div class="col-md-4 mb-4">
+                <div class="col-md-3 mb-3">
                     <label class="form-label">${group.category_name}</label>
                     <select class="form-select">
                         <option value="">-- Select ${group.category_name} --</option>
@@ -541,6 +501,47 @@ function loadWatchSubcategories(parentId, chain = []) {
         $('#watch-subcategories').html(html).show();
     }).fail(() => {
         console.warn('Watch subcategories request aborted or failed.');
+    });
+}
+
+function loadSubcategories(parentId, level = 2, selectedId = null) {
+    return $.ajax({
+        url: `${BASE_URL}category/get-subcategories/${parentId}`,
+        type: 'GET',
+    }).done(function (response) {
+        $(`#dynamic-subcategories .subcat-level`).filter(function () {
+            return parseInt($(this).data('level')) >= level;
+        }).remove();
+
+        $('#final_category_id').val(parentId);
+
+        if (!response.length) return;
+
+        const labelNumber = level;
+        const options = [
+            `<option value="">-- Select Category --</option>`,
+            ...response.map(cat =>
+                `<option value="${cat.category_id}" ${selectedId == cat.category_id ? 'selected' : ''}>${cat.category_name}</option>`
+            )
+        ].join('');
+
+        const dropdown = `
+            <div class="col-md-6 subcat-level" data-level="${level}">
+                <label class="form-label">Category ${labelNumber}</label>
+                <select class="form-select" onchange="loadSubcategories(this.value, ${level + 1})">
+                    ${options}
+                </select>
+            </div>
+        `;
+
+        if (!$('#dynamic-subcategories .row').length) {
+            $('#dynamic-subcategories').html('<div class="row"></div>');
+        }
+
+        $('#dynamic-subcategories .row').append(dropdown);
+        $('#dynamic-subcategories').show();
+    }).fail(() => {
+        console.warn('Subcategories request aborted or failed.');
     });
 }
 
@@ -560,7 +561,7 @@ Dropzone.autoDiscover = false;
 let uploadIndex = {{ $lastSerial + 1 }};
 
 const editDropzone = new Dropzone("#dropzoneEdit", {
-    url: "{{ route('uploadTempImage') }}",
+    url: "{{ route('uploadScrapeTempImage') }}",
     method: "POST",
     paramName: "file",
     headers: {
@@ -574,10 +575,10 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
 
     init: function () {
         this.on("sending", function (file, xhr, formData) {
-            formData.append("product_id", "{{ $product->product_id }}");
+            formData.append("scrape_product_id", "{{ $product->scrape_product_id }}");
         });
     },
-
+    
     success: function (file, response) {
         if (response.success) {
             let input = document.createElement('input');
@@ -588,7 +589,7 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
 
             file.existing = true;
             file.filePath = response.file_path;
-            file.imageId = response.image_id;
+            file.imageId = response.id;
 
             let checkmark = document.createElement('div');
             checkmark.className = 'dz-success-icon';
@@ -598,7 +599,7 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
             // preview container
             const container = document.createElement('div');
             container.className = "position-relative image-box";
-            container.setAttribute("data-id", response.image_id || 'new-' + Date.now());
+            container.setAttribute("data-id", response.id || 'new-' + Date.now());
 
             let isVideo = response.file_path.match(/\.(mp4|mov|avi|webm)$/i);
             let baseUrl = "{{ rtrim(env('SOURCE_PANEL_IMAGE_URL'), '/') }}";
@@ -652,7 +653,7 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
         status: Dropzone.SUCCESS,
         existing: true,
         filePath: "{{ $image->file_path }}",
-        image_id: "{{ $image->image_id }}"
+        id: "{{ $image->id }}"
     };
     editDropzone.emit("addedfile", file{{ $index }});
     if (mimeType.startsWith('video')) {
@@ -665,7 +666,7 @@ const editDropzone = new Dropzone("#dropzoneEdit", {
 }
 @endforeach
 
-editDropzone.on("removedfile", function(file) {
+editDropzone.on("removedfile", function(file) {    
     if (file.existing && file.filePath) {
         const inputs = document.querySelectorAll('input[name="existing_images[]"]');
         inputs.forEach(input => {
@@ -676,7 +677,7 @@ editDropzone.on("removedfile", function(file) {
 
         document.querySelectorAll('#imageOrderBox .image-box').forEach(box => {
             if (
-                box.getAttribute('data-id') === file.image_id?.toString() ||
+                box.getAttribute('data-id') === file.id?.toString() ||
                 box.querySelector('img')?.getAttribute('src')?.includes(file.filePath) ||
                 box.querySelector('video source')?.getAttribute('src')?.includes(file.filePath)
             ) {
@@ -686,14 +687,15 @@ editDropzone.on("removedfile", function(file) {
 
         updateSerials();
         
-        fetch("{{ route('deleteImage') }}", {
+        fetch("{{ route('deleteScrapeImage') }}", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
-            body: JSON.stringify({ image_id: file.image_id })
+            body: JSON.stringify({ id: file.id })
         })
+        
         .then(response => response.json())
         .then(data => {
             if (!data.success) {
@@ -715,7 +717,7 @@ function updateSerials() {
         imageOrder.push({ id: imageId, serial_no: index + 1 });
     });
 
-    fetch("{{ route('updateImageOrder') }}", {
+    fetch("{{ route('updateScrapeImageOrder') }}", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -796,44 +798,12 @@ $(document).ready(function () {
     const categoryIds = $('#category_ids').val();
     const mainCatId = categoryIds ? categoryIds.split(',')[0] : null;
 
-    // Pre-check main category
     if (mainCatId === '1') {
         $('#checkboxWatches').prop('checked', true);
     } else if (mainCatId === '113') {
-    $('#checkboxOther1').prop('checked', true);
-
-    const productInput = $('#product_name');
-    if (productInput.length) {
-        const productName = (productInput.val() || '').trim();
-        const firstWord = productName.split(' ')[0].toLowerCase();
-
-        const category1Select = $('#dynamic-subcategories select').first();
-        let matched = false;
-
-        if (category1Select.length) {
-            category1Select.find('option').each(function() {
-                const optionText = $(this).text().trim().toLowerCase();
-                if(optionText === firstWord) {
-                    $(this).prop('selected', true);
-                    matched = true;
-                    return false; // break loop
-                }
-            });
-
-            if(matched) {
-                const selectedCategory1 = category1Select.val();
-                if(selectedCategory1) {
-                    loadSubcategories(selectedCategory1, 2);
-                }
-            }
-        }
+        $('#checkboxOther1').prop('checked', true);
     }
-}
 
-
-    calculatePurchase();
-
-    // Handle category toggle
     $('.category-toggle').on('change', function () {
         if (this.checked) {
             $('.category-toggle').not(this).prop('checked', false);
@@ -854,13 +824,8 @@ $(document).ready(function () {
                 currentAjax = loadSubcategories(selectedCategory, 1);
             }
             toggleColorSizeInputs();
-
-            calculatePurchase(); // Keep calculation after toggle
         }
     });
-
-    // Update purchase on input
-    $('#purchase_value').on('input', calculatePurchase);
 });
 
     function toggleColorSizeInputs() {
@@ -901,125 +866,141 @@ $(document).ready(function () {
     });
 
 
-    function calculatePurchase() {
-        const purchaseValueInput = $('#purchase_value');
-        const purchaseCodeInput = $('#purchase_code');
-        const productPriceInput = $('input[name="product_price"]');
-        const categoryCheckboxes = $('.category-toggle');
+document.addEventListener('DOMContentLoaded', () => {
+    const purchaseValueInput = document.getElementById('purchase_value');
+    const purchaseCodeInput = document.getElementById('purchase_code');
+    const productPriceInput = document.querySelector('input[name="product_price"]');
+    const categoryCheckboxes = document.querySelectorAll('.category-toggle');
 
-        function getSelectedCategory() {
-            return categoryCheckboxes.filter(':checked').val() || null;
+    function getSelectedCategory() {
+        for (const checkbox of categoryCheckboxes) {
+            if (checkbox.checked) {
+                return checkbox.value;
+            }
         }
-
-        const value = parseFloat(purchaseValueInput.val()) || 715;
-        const mainCategory = getSelectedCategory();
-        if (!mainCategory) return;
-
-        const numberToLetter = {
-            '1':'A','2':'B','3':'C','4':'D','5':'E','6':'F','7':'G','8':'H','9':'I'
-        };
-
-        const getRandomLetter = () => 'abcdefghijklmnopqrstuvwxyz'.charAt(Math.floor(Math.random() * 26));
-        const getRandomLetters = (length) => Array.from({length}, getRandomLetter).join('');
-
-        let converted = '';
-        for (let digit of value.toString()) {
-            converted += digit === '0' ? getRandomLetter() : numberToLetter[digit] || '';
-        }
-
-        purchaseCodeInput.val(getRandomLetters(4) + converted);
-
-        let productPrice = 0;
-        const dividedValue = value / 6.8;
-
-        if (mainCategory === '113') {
-            if (dividedValue <= 65) productPrice = dividedValue + 40;
-            else if (dividedValue <= 199) productPrice = dividedValue * 1.6;
-            else productPrice = dividedValue * 1.5;
-        } else if (mainCategory === '1') {
-            if (dividedValue <= 100) productPrice = dividedValue + 80;
-            else if (dividedValue <= 199) productPrice = dividedValue + 90;
-            else if (dividedValue <= 339) productPrice = dividedValue + 100;
-            else productPrice = dividedValue * 1.3;
-        }
-
-        const allowedDigits = [2,4,6,8];
-        let n = Math.round(productPrice);
-        const lastDigit = n % 10;
-        const closest = allowedDigits.reduce((prev,curr)=>{
-            const prevDiff = Math.abs(lastDigit-prev), currDiff = Math.abs(lastDigit-curr);
-            if(currDiff<prevDiff) return curr;
-            if(currDiff===prevDiff) return Math.max(curr,prev);
-            return prev;
-        });
-        productPriceInput.val(n - lastDigit + closest);
+        return null;
     }
 
-    function loadSubcategories(parentId, level = 2, selectedId = null) {
-        return $.ajax({
-            url: `/category/get-subcategories/${parentId}`,
-            type: 'GET',
-        }).done(function (response) {
-        $(`#dynamic-subcategories .subcat-level`).filter(function () {
-            return parseInt($(this).data('level')) >= level;
-        }).remove();
+    function clearInputs() {
+        purchaseValueInput.value = '';
+        purchaseCodeInput.value = '';
+        productPriceInput.value = '';
+    }
 
-        $('#final_category_id').val(parentId);
+    categoryCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            if (checkbox.checked) {
+                categoryCheckboxes.forEach(cb => {
+                    if (cb !== checkbox) cb.checked = false;
+                });
+                clearInputs();
+            } else {
+                clearInputs();
+            }
+        });
+    });
 
-        if (!response.length) return;
+    purchaseValueInput.addEventListener('input', () => {
+    const value = parseFloat(purchaseValueInput.value.trim());
+    const mainCategory = getSelectedCategory();
 
-        const labelNumber = level;
-        const options = [
-            `<option value="">-- Select Category --</option>`,
-            ...response.map(cat =>
-                `<option value="${cat.category_id}" 
-                    ${selectedId == cat.category_id ? 'selected' : ''} 
-                    data-alice_name="${cat.alice_name || ''}">
-                    ${cat.category_name}
-                </option>`
-            )
-        ].join('');
+    if (!value || isNaN(value) || !mainCategory) {
+        purchaseCodeInput.value = '';
+        productPriceInput.value = '';
+        return;
+    }
 
-        const dropdown = `
-            <div class="col-md-4 subcat-level" data-level="${level}">
-                <label class="form-label">Category ${labelNumber}</label>
-                <select class="form-select" onchange="loadSubcategories(this.value, ${level + 1})">
-                    ${options}
-                </select>
-            </div>
-        `;
+    const numberToLetter = {
+        '1': 'A', '2': 'B', '3': 'C', '4': 'D',
+        '5': 'E', '6': 'F', '7': 'G', '8': 'H', '9': 'I'
+    };
 
-        if (!$('#dynamic-subcategories .row').length) {
-            $('#dynamic-subcategories').html('<div class="row"></div>');
+    const getRandomLetter = () => {
+        const chars = 'abcdefghijklmnopqrstuvwxyz';
+        return chars.charAt(Math.floor(Math.random() * chars.length));
+    };
+
+    const getRandomLetters = (length) => {
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += getRandomLetter();
         }
+        return result;
+    };
 
-        $('#dynamic-subcategories .row').append(dropdown);
-        $('#dynamic-subcategories').show();
-    }).fail(() => {
-        console.warn('Subcategories request aborted or failed.');
-    });
-}
+    let converted = '';
+    for (let digit of value.toString()) {
+        if (digit === '0') {
+            converted += getRandomLetter();
+        } else {
+            converted += numberToLetter[digit] || '';
+        }
+    }
 
-    document.addEventListener("DOMContentLoaded", function () {    
-    var quill = new Quill("#editor", {
-        modules: { toolbar: "#toolbar-container" },
-        theme: "snow",
-        formats: ['font','size','bold','list','indent']
-    });
+    const finalCode = getRandomLetters(4) + converted;
+    purchaseCodeInput.value = finalCode;
 
-    const hiddenInput = document.querySelector("#description");
+    let productPrice = 0;
 
-    quill.clipboard.dangerouslyPasteHTML(hiddenInput.value);
+    const dividedValue = value / 7;
 
-    quill.on("text-change", function () {
-        hiddenInput.value = quill.root.innerHTML;
-    });
+    if (mainCategory === '113') {
+        if (dividedValue <= 65) {
+            productPrice = dividedValue + 40;
+        } else if (dividedValue > 65 && dividedValue <= 199) {
+            productPrice = dividedValue * 1.6;
+        } else {
+            productPrice = dividedValue * 1.5;
+        }
+    } else if (mainCategory === '1') {
+        if (dividedValue <= 100) {
+            productPrice = dividedValue + 80;
+        } else if (dividedValue >= 101 && dividedValue <= 199) {
+            productPrice = dividedValue + 90;
+        } else if (dividedValue >= 200 && dividedValue <= 339) {
+            productPrice = dividedValue + 100;
+        } else {
+            productPrice = dividedValue * 1.3;
+        }
+    }
 
-    document.querySelector("form").addEventListener("submit", function () {
-        hiddenInput.value = quill.root.innerHTML;
-    });
-    });
+    function adjustLastDigit(num) {
+        let n = Math.round(num);
+        let lastDigit = n % 10;
+        const allowedDigits = [2, 4, 6, 8];
+        let closest = allowedDigits.reduce((prev, curr) => {
+            const prevDiff = Math.abs(lastDigit - prev);
+            const currDiff = Math.abs(lastDigit - curr);
+            if (currDiff < prevDiff) return curr;
+            if (currDiff === prevDiff) return Math.max(curr, prev);
+            return prev;
+        });
+        return n - lastDigit + closest;
+    }
 
+    productPrice = adjustLastDigit(productPrice);
+
+    productPriceInput.value = productPrice;
+});
+
+});
+
+document.addEventListener("DOMContentLoaded", function () {    
+  var quill = new Quill("#editor", {
+    modules: { toolbar: "#toolbar-container" },
+    theme: "snow",
+    formats: ['font','size','bold','list','indent']
+  });
+
+  const hiddenInput = document.querySelector("#description");
+  // Load old content
+  quill.root.innerHTML = hiddenInput.value;
+
+  // Sync changes back to hidden textarea
+  quill.on("text-change", function () {
+    hiddenInput.value = quill.root.innerHTML;
+  });
+});
 
 const container = document.getElementById('imageOrderBox');
 const reverseBtn1 = document.getElementById('reverseImagesBtn1');
@@ -1052,342 +1033,99 @@ updateReverseButtonText();
     btn.addEventListener('click', reverseImages);
 });
 
-
-document.addEventListener('DOMContentLoaded', function () {
-    const productInput = document.querySelector('input[name="product_name"]');
-    const mainCategorySelect = document.getElementById('mainCategorySelect');
-    if (!productInput || !mainCategorySelect) return;
-
-    let popupOpen = false; // ✅ prevents re-running while popup open
-
-    function clearAllSubcategories(container) {
-        const selects = container.querySelectorAll('.subcat-level select');
-        selects.forEach(select => {
-            select.value = "";
-            if (window.jQuery) $(select).trigger('change');
-            else select.dispatchEvent(new Event('change', { bubbles: true }));
-        });
-    }
-
-    function setCategorySelect(select, matchOption) {
-        if (matchOption) {
-            select.value = matchOption.value;
-            if (window.jQuery) $(select).trigger('change');
-            else select.dispatchEvent(new Event('change', { bubbles: true }));
-        } else {
-            select.value = "";
-            select.selectedIndex = 0;
-            if (window.jQuery) $(select).trigger('change');
-            else select.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-    }
-
-   function showCategoryPopup(matches, callback) {
-        popupOpen = true;
-
-        const overlay = document.createElement('div');
-        overlay.style.position = 'fixed';
-        overlay.style.top = 0;
-        overlay.style.left = 0;
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.background = 'rgba(0,0,0,0.3)';
-        overlay.style.zIndex = 9998;
-
-        const popup = document.createElement('div');
-        popup.style.position = 'fixed';
-        popup.style.top = '50%';
-        popup.style.left = '50%';
-        popup.style.transform = 'translate(-50%, -50%)';
-        popup.style.background = '#fff';
-        popup.style.padding = '20px';
-        popup.style.borderRadius = '10px';
-        popup.style.zIndex = 9999;
-        popup.style.minWidth = '280px';
-        popup.style.boxShadow = '0 4px 10px rgba(0,0,0,0.3)';
-        popup.style.fontFamily = 'Arial, sans-serif';
-
-        const title = document.createElement('div');
-        title.textContent = 'Multiple Category matches found:';
-        title.style.fontWeight = 'bold';
-        title.style.marginBottom = '10px';
-        title.style.fontSize = '15px';
-        popup.appendChild(title);
-
-        // ✅ checkboxes with instant confirm logic
-        matches.forEach((opt, index) => {
-            const label = document.createElement('label');
-            label.style.display = 'flex';
-            label.style.alignItems = 'center';
-            label.style.marginBottom = '8px';
-            label.style.cursor = 'pointer';
-            label.style.gap = '8px';
-
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.name = 'categoryPopup';
-            checkbox.value = index;
-            checkbox.style.appearance = 'auto';
-            checkbox.style.width = '16px';
-            checkbox.style.height = '16px';
-            checkbox.style.cursor = 'pointer';
-
-            // ✅ instant confirm when clicked
-            checkbox.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    // Uncheck all others
-                    popup.querySelectorAll('input[name="categoryPopup"]').forEach(cb => {
-                        if (cb !== e.target) cb.checked = false;
-                    });
-
-                    // Immediately confirm
-                    const selectedIndex = parseInt(e.target.value, 10);
-                    callback(matches[selectedIndex]);
-
-                    // Close popup
-                    document.body.removeChild(popup);
-                    document.body.removeChild(overlay);
-                    popupOpen = false;
-                }
-            });
-
-            const text = document.createElement('span');
-            text.textContent = opt.text;
-            text.style.fontSize = '14px';
-
-            label.appendChild(checkbox);
-            label.appendChild(text);
-            popup.appendChild(label);
-        });
-
-        document.body.appendChild(overlay);
-        document.body.appendChild(popup);
-    }
-
-    function runCategoryMatch() {
-    if (popupOpen) return;
-    if (mainCategorySelect.value !== '113') return;
-
-    const words = (productInput.value || '').trim().split(/\s+/);
-    const lowerWords = words.map(w => w.toLowerCase());
-    const categoryContainer = document.querySelector('#dynamic-subcategories');
-    if (!categoryContainer) return;
-
-    const category1Select = categoryContainer.querySelector('.subcat-level[data-level="1"] select');
-    if (!category1Select) return;
-
-    // ---------- CATEGORY 1 MATCH (updated to use alice_name) ----------
-    const normalize = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
-
-    let match1 = null;
-    const options1 = Array.from(category1Select.options);
-
-    outer1:
-    for (const opt of options1) {
-        const rawAlice = opt.dataset.alice_name || opt.text || "";
-        const aliceParts = rawAlice.split(/[,\/|]+/)
-            .map(p => p.trim().toLowerCase())
-            .filter(Boolean);
-
-        for (const alice of aliceParts) {
-            const aliceNorm = normalize(alice);
-            for (const word of lowerWords) {
-                const wordNorm = normalize(word);
-
-                if (
-                    wordNorm === aliceNorm ||
-                    wordNorm === aliceNorm.replace(/s$/, '') ||
-                    wordNorm.replace(/s$/, '') === aliceNorm
-                ) {
-                    match1 = opt;
-                    break outer1;
-                }
-            }
-        }
-    }
-
-    setCategorySelect(category1Select, match1);
-
-    // ---------- CATEGORY 2 MATCH ----------
-    const category2Observer = new MutationObserver((mutations, obs) => {
-        const category2Select = categoryContainer.querySelector('.subcat-level[data-level="2"] select');
-        if (category2Select) {
-            let match2 = null;
-            const options = Array.from(category2Select.options);
-
-            outerLoop:
-            for (const opt of options) {
-                const rawAlice = opt.dataset.alice_name || opt.text || "";
-                const aliceParts = rawAlice.split(',').map(p => p.trim().toLowerCase()).filter(Boolean);
-
-                for (const alice of aliceParts) {
-                    for (const word of lowerWords) {
-                        if (word === alice) {
-                            match2 = opt;
-                            break outerLoop;
-                        }
-                    }
-                }
-            }
-
-            setCategorySelect(category2Select, match2);
-            obs.disconnect();
-
-            // ---------- CATEGORY 3 MATCH ----------
-            const category3Observer = new MutationObserver((mutations, obs3) => {
-                const category3Select = categoryContainer.querySelector('.subcat-level[data-level="3"] select');
-                if (category3Select) {
-                    const options3 = Array.from(category3Select.options);
-                    const matchedOptions = [];
-                    const seenValues = new Set();
-
-                    const normalize = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
-
-                    outer:
-                    for (const opt of options3) {
-                        const rawAlice = opt.dataset.alice_name || "";
-                        if (!rawAlice.trim()) continue;
-
-                        const aliceParts = rawAlice.split(/[,\/|]+/)
-                            .map(p => p.trim().toLowerCase())
-                            .filter(Boolean);
-
-                        for (const alice of aliceParts) {
-                            const aliceNorm = normalize(alice);
-                            for (const word of lowerWords) {
-                                const wordNorm = normalize(word);
-
-                                if (
-                                    wordNorm === aliceNorm ||
-                                    wordNorm === aliceNorm.replace(/s$/, '') ||
-                                    wordNorm.replace(/s$/, '') === aliceNorm
-                                ) {
-                                    if (!seenValues.has(opt.value)) {
-                                        matchedOptions.push(opt);
-                                        seenValues.add(opt.value);
-                                    }
-                                    continue outer;
-                                }
-                            }
-                        }
-                    }
-
-                    if (matchedOptions.length === 1) {
-                        setCategorySelect(category3Select, matchedOptions[0]);
-                    } else if (matchedOptions.length > 1) {
-                        if (!popupOpen) {
-                            showCategoryPopup(matchedOptions, selected => {
-                                setCategorySelect(category3Select, selected);
-                            });
-                        }
-                    } else {
-                        // 🆕 Fallback condition
-                        const category2Select = categoryContainer.querySelector('.subcat-level[data-level="2"] select');
-                        if (category2Select && category2Select.value) {
-                            const selectedText2 = category2Select.selectedOptions[0]?.text.toLowerCase() || "";
-                            if (selectedText2.includes("handbag") || selectedText2.includes("wallet")) {
-                                const fallback = Array.from(category3Select.options)
-                                    .find(opt => opt.text.toLowerCase().includes("shoulder bag"));
-                                if (fallback) {
-                                    setCategorySelect(category3Select, fallback);
-                                }
-                            }
-                        }
-                    }
-
-                    obs3.disconnect();
-                }
-            });
-            category3Observer.observe(categoryContainer, { childList: true, subtree: true });
-        }
-    });
-    category2Observer.observe(categoryContainer, { childList: true, subtree: true });
-}
-
-productInput.addEventListener('blur', runCategoryMatch);
-productInput.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' || e.key === ' ') {
-        runCategoryMatch();
-    }
-});
-});
-
-
-function setCategory2Value(select, matchCategory) {
-    const matchOption = Array.from(select.options)
-        .find(opt => opt.text.trim().toLowerCase().includes(matchCategory.toLowerCase()));
-    if (matchOption) {
-        select.value = matchOption.value;
-        setTimeout(() => {
-            if (window.jQuery) $(select).trigger('change');
-            else select.dispatchEvent(new Event('change', { bubbles: true }));
-        }, 100);
-    }
-}
-
-
-
 document.addEventListener("DOMContentLoaded", function () {
+
+    // ✅ Initialize Editors
     const quillInput = new Quill("#editor_input", {
         modules: { toolbar: "#toolbar-container-input" },
         theme: "snow"
     });
+
     const quillEn = new Quill("#editor_en", {
         modules: { toolbar: "#toolbar-container-en" },
         theme: "snow"
     });
+
     const quillCn = new Quill("#editor", {
         modules: { toolbar: "#toolbar-container" },
         theme: "snow"
     });
 
+    // ✅ Hidden fields
     const hiddenInput = document.getElementById("input_chinese");
     const hiddenEn = document.getElementById("description_en");
     const hiddenCn = document.getElementById("chinese_description");
 
     if (!hiddenInput || !hiddenEn || !hiddenCn) {
-        console.error("One or more hidden fields are missing!");
+        console.error("Missing hidden fields!");
         return;
     }
 
-    function containsChinese(text) {
-        return /[\u4e00-\u9fff]/.test(text);
+    // ✅ Detect language (Chinese + Korean)
+    function detectLanguage(text) {
+        if (/[\u4e00-\u9fff]/.test(text)) {
+            return 'chinese';
+        } else if (/[\uac00-\ud7af]/.test(text)) {
+            return 'korean';
+        }
+        return 'other';
     }
 
+    // ✅ Translate (AUTO detect language)
     async function translateFree(text) {
-        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=zh&tl=en&dt=t&q=${encodeURIComponent(text)}`;
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`;
         try {
             const res = await fetch(url);
             const data = await res.json();
-            return data[0].map(item => item[0]).join('') || text;
+            return data[0].map(item => item[0]).join('');
         } catch (e) {
+            console.error("Translation failed", e);
             return text;
         }
     }
 
+    // ✅ MAIN LOGIC
     quillInput.root.addEventListener("blur", async function () {
+
         let text = quillInput.getText().trim();
         if (!text) return;
 
+        // Save raw input
         hiddenInput.value = quillInput.root.innerHTML;
 
-        if (containsChinese(text)) {
+        const lang = detectLanguage(text);
+
+        if (lang === 'chinese' || lang === 'korean') {
+
+            // ✅ Copy to Chinese Description
             quillCn.root.innerHTML = quillInput.root.innerHTML;
             hiddenCn.value = quillInput.root.innerHTML;
 
+            // ✅ Translate to English
             const translated = await translateFree(text);
-            quillEn.root.innerHTML = translated;
-            hiddenEn.value = translated;
+            quillEn.root.innerHTML = `<p>${translated}</p>`;
+            hiddenEn.value = `<p>${translated}</p>`;
 
+            // ✅ Clear input (optional)
             quillInput.setText('');
             hiddenInput.value = '';
         }
     });
 
-    quillInput.on("text-change", () => hiddenInput.value = quillInput.root.innerHTML);
-    quillCn.on("text-change", () => hiddenCn.value = quillCn.root.innerHTML);
-    quillEn.on("text-change", () => hiddenEn.value = quillEn.root.innerHTML);
+    // ✅ Sync all editors continuously
+    quillInput.on("text-change", () => {
+        hiddenInput.value = quillInput.root.innerHTML;
+    });
 
+    quillCn.on("text-change", () => {
+        hiddenCn.value = quillCn.root.innerHTML;
+    });
+
+    quillEn.on("text-change", () => {
+        hiddenEn.value = quillEn.root.innerHTML;
+    });
+
+    // ✅ Final safety before submit
     const form = document.querySelector("form");
     if (form) {
         form.addEventListener("submit", () => {
@@ -1396,87 +1134,8 @@ document.addEventListener("DOMContentLoaded", function () {
             hiddenEn.value = quillEn.root.innerHTML;
         });
     }
+
 });
-
-
-document.addEventListener("DOMContentLoaded", function () {
-    const productNameInput = document.querySelector("input[name='product_name']");
-    const sizeInput = document.querySelector("input[name='size']");
-    
-    function setSizeByProductName(name) {
-        const title = name.toLowerCase();
-
-        if (/shirt|hoodie|jacket|cardigan|sweater|coat|jeans|pants|shorts|under garment|bikini|scarf|swim|vest|dress|jumper/.test(title)) {
-            return "S,M,L,XL,XXL";
-        } else if (/handbag|shopping|tote|clutch|wallet|purse/.test(title)) {
-            return "75 cms";
-        } else if (/sneakers|boot|loafers|ballerina|sandal|slide|mule|moccasin|slippers|flip flop|chappal/.test(title)) {
-            return "EU35-46";
-        } else if (/belt/.test(title)) {
-            return "90-125 cms";
-        }
-        return "";
-    }
-
-    function updateSize() {
-        const newSize = setSizeByProductName(productNameInput.value);
-
-        if (newSize) {
-            sizeInput.value = newSize;
-        }        
-    }
-
-    productNameInput.addEventListener("input", updateSize);
-
-    updateSize();
-});
-
-(function() {
-  function getEl(selector) {
-    return document.querySelector(selector);
-  }
-
-  function computeFixedOffset() {
-    const header = getEl('.navbar, .topbar, header, .main-header, .app-topbar');
-    const stickyFormButtons = getEl('.form-buttons.sticky-top-buttons, .sticky-top-buttons, .form-buttons');
-    let offset = 0;
-    if (header && getComputedStyle(header).position !== 'static') offset += header.offsetHeight;
-    if (stickyFormButtons && getComputedStyle(stickyFormButtons).position !== 'static') offset += stickyFormButtons.offsetHeight;
-    offset += 20;
-    return offset;
-  }
-
-  function scrollToImagesOrProduct() {
-    const imageBox = document.getElementById('imageOrderBox');
-    const productInput = document.querySelector('input[name="product_name"]');
-    
-    const targetElement = imageBox || productInput;
-    if (!targetElement) return;
-
-    const rect = targetElement.getBoundingClientRect();
-    const pageY = window.pageYOffset + rect.top;
-    const offset = computeFixedOffset();
-
-    const targetY = Math.max(pageY - offset, 0);
-    window.scrollTo({ top: targetY, behavior: 'smooth' });
-
-    if (productInput) {
-      setTimeout(() => { productInput.focus(); }, 500);
-    }
-  }
-
-  function run() {
-    try { scrollToImagesOrProduct(); } catch (e) { console.error(e); }
-  }
-
-  if (document.readyState === 'complete') {
-    run();
-  } else {
-    window.addEventListener('load', run, { once: true });
-    setTimeout(run, 800);
-    setTimeout(run, 1500);
-  }
-})();
 </script>
 
 @endsection

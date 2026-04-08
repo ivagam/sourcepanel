@@ -31,9 +31,9 @@ class BrandController extends Controller
         if ($request->hasFile('brand_file')) {
             $file = $request->file('brand_file');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads'), $filename);
+            $file->move(public_path('brand'), $filename);
 
-            $filePath  = 'uploads/' . $filename;
+            $filePath  = 'brand/' . $filename;
             $extension = strtolower($file->getClientOriginalExtension());
 
             Brand::create([
